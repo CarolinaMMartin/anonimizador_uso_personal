@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador Judicial
+# Manual de usuario — Anonimizador de uso personal.
 
 Herramienta académica de uso personal (IALAB).
 
@@ -89,6 +89,7 @@ Dos pestañas:
 | Word (.docx) | Documento anonimizado con formato elegido |
 | PDF | Misma versión en PDF |
 | CSV | Tabla de equivalencias (original → etiqueta) |
+| Markdown | Misma versión que pdf. Mas accesible para copiar en tu IA.
 
 ---
 
