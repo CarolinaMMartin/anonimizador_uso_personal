@@ -1,0 +1,65 @@
+Anonimizador Judicial
+Copyright (c) 2024-2026 IALAB — Laboratorio de Innovación e Inteligencia
+Artificial, Facultad de Derecho, Universidad de Buenos Aires (UBA).
+
+Este producto incluye software desarrollado por IALAB-UBA. El código fuente
+de la aplicación se distribuye bajo la licencia Apache 2.0 (ver archivo
+LICENSE).
+
+================================================================================
+MARCAS REGISTRADAS / TRADEMARKS
+================================================================================
+
+Las siguientes marcas, nombres y logotipos NO están cubiertos por la
+licencia Apache 2.0 y su uso requiere autorización institucional expresa
+de IALAB / Facultad de Derecho – UBA:
+
+  * "IALAB"
+  * "Laboratorio de Innovación e Inteligencia Artificial"
+  * Logo IALAB en sus variantes (`frontend/logo-ialab.svg`,
+    `frontend/logo-ialab.png`)
+
+La licencia Apache 2.0 (Sección 6) NO concede licencia para usar las
+marcas registradas, denominaciones comerciales o logos de los
+licenciantes. Forks o derivados del proyecto deben reemplazar estos
+activos por sus propias marcas o eliminarlos antes de redistribuir.
+
+================================================================================
+COMPONENTES DE TERCEROS
+================================================================================
+
+El listado completo de bibliotecas y modelos de terceros con sus
+respectivas licencias se encuentra en:
+
+  * THIRD_PARTY_NOTICES.txt
+  * LICENSES/ (textos completos de Apache 2.0, BSD-3-Clause, MIT, GPL-3.0)
+  * docs/COMPLIANCE.md (informe ejecutivo para IT / despliegue)
+
+Componentes destacados:
+
+  * `es_core_news_md` (modelo spaCy para español) — licencia GPL-3.0.
+    Se distribuye únicamente con el paquete portable (no con el código
+    fuente). Texto completo: LICENSES/GPL-3.0.txt.
+  * FastAPI, Uvicorn, Pydantic, Presidio, python-docx, pdfplumber,
+    ReportLab, RapidFuzz, NetworkX, aiofiles — licencias permisivas
+    (MIT / BSD / Apache 2.0).
+
+================================================================================
+DATOS Y PRIVACIDAD
+================================================================================
+
+El proyecto NO distribuye documentos judiciales reales, sentencias,
+expedientes ni sesiones de uso. La base local `data/sessions.db` se crea
+en tiempo de ejecución junto al binario y queda excluida del repositorio
+público (`.gitignore`). Los diccionarios incluidos en `data/dictionaries/`
+contienen únicamente nombres y apellidos genéricos de uso público, junto
+con expresiones regulares para detección.
+
+================================================================================
+CONTRIBUCIONES
+================================================================================
+
+Las contribuciones al código fuente se rigen por la licencia Apache 2.0.
+Al enviar una contribución, el autor garantiza que tiene los derechos
+necesarios y otorga la misma licencia sobre su aporte (ver
+CONTRIBUTING.md y la sección 5 de Apache 2.0).

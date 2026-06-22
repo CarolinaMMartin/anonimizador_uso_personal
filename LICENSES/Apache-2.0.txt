@@ -1,0 +1,12 @@
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+[Full text: https://www.apache.org/licenses/LICENSE-2.0.txt]
+
+Applies to: python-multipart, aiofiles, and other Apache-2.0 dependencies.
+
+You must retain copyright notices and include a copy of this license when
+redistributing. See the full license at the URL above.

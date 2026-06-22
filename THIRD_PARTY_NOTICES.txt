@@ -1,0 +1,79 @@
+THIRD-PARTY SOFTWARE NOTICES
+Anonimizador Judicial — IALAB
+Version: see /health (app_version)
+
+This application bundles open-source and separately licensed components.
+Full license texts are in the LICENSES/ directory.
+
+================================================================================
+PERMISSIVE COMPONENTS (runtime — requirements.txt)
+================================================================================
+
+Component              Version (ref.)   License
+---------------------  ---------------  -----------------
+FastAPI                0.110+           MIT
+Uvicorn                0.27+            BSD-3-Clause
+python-multipart       0.0.9+           Apache-2.0
+python-docx            1.1+             MIT
+pdfplumber             0.11+            MIT
+reportlab              4.0+             BSD-3-Clause (custom license, permissive)
+RapidFuzz              3.6+             MIT
+NetworkX               3.2+             BSD-3-Clause
+Pydantic               2.6+             MIT
+aiofiles               23.2+            Apache-2.0
+presidio-analyzer      2.2+             MIT
+presidio-anonymizer    2.2+             MIT
+spacy (library)        3.7+             MIT
+
+Transitive dependencies (numpy, lxml, cryptography, etc.) are included in the
+portable build under _internal/ with their respective LICENSE files in
+_internal/*.dist-info/licenses/.
+
+================================================================================
+COPYLEFT / SPECIAL LICENSE COMPONENTS
+================================================================================
+
+El modelo es_core_news_md se distribuye bajo licencia GPL-3.0.
+Texto completo de la licencia: models/es_core_news_md/LICENSE
+
+Component              Version (ref.)   License              Notes
+---------------------  ---------------  -------------------  ------------------
+es_core_news_md        3.8.0            GPL-3.0              Spanish NLP model (Explosion).
+(spaCy model)                                            Bundled in models/es_core_news_md/.
+                                                         Ver LICENSE en esa carpeta.
+
+PyInstaller            6.x              GPL + exception      Build tool only.
+
+NOTE: PyMuPDF was removed in v3.3.8. PDF I/O uses pdfplumber (MIT) + ReportLab (BSD).
+
+Presidio dependency tldextract: configured offline (no publicsuffix.org). Email
+detection via regex AR, not Presidio EmailRecognizer.
+
+================================================================================
+PROprietary / PROJECT-OWNED RESOURCES
+================================================================================
+
+  - Application source code (app/, frontend/, scripts/)
+  - data/dictionaries/*.json (regex_limpio_v2.json, nombres.json, apellidos.json,
+    formulas_judiciales.json) — developed for this project; no real judicial
+    corpus or personal data. See data/README.md.
+
+  - Logo IALAB (frontend/logo-ialab.*) — institutional mark; use requires
+    authorization from IALAB/UBA.
+
+================================================================================
+FONTS
+================================================================================
+
+The production UI uses system fonts only (Segoe UI, Georgia, etc.).
+No web fonts or CDN requests at runtime.
+
+================================================================================
+PRIVACY
+================================================================================
+
+  - No sessions.db or sample documents are distributed in the release ZIP.
+  - Local SQLite database is created at runtime in data/ next to the executable.
+
+For institutional deployment guidance: docs/COMPLIANCE.md and
+docs/DEPLOY_PODER_JUDICIAL.md

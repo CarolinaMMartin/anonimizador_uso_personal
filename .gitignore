@@ -1,0 +1,47 @@
+# Entornos virtuales y caches de Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Artefactos de build
+dist/
+build/
+C:/anon_build/
+dist/*.bak.*
+*.log
+*.exe
+
+# Carpetas legacy / experimentales que NO se publican
+_archivo/
+
+# Dumps locales de entorno (la fuente canónica es requirements.txt)
+dependencias.txt
+pip-freeze*.txt
+tree-proyecto.txt
+
+# Datos locales — no subir ni empaquetar
+data/sessions.db
+data/sessions.db-journal
+data/*.db
+data/*.db-journal
+data/uploads/
+
+# Secretos
+.env
+.env.*
+
+# IDE / editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Metadatos del SO
+.DS_Store
+Thumbs.db
+desktop.ini

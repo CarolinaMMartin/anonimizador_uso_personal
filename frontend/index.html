@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Anonimizador académico · IALAB</title>
+  <link rel="stylesheet" href="/static/styles.css?v=22">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="header-main">
+      <div class="brand-block">
+        <picture class="brand-logo-wrap">
+          <source srcset="/static/logo-ialab.png" type="image/png">
+          <img class="brand-logo" src="/static/logo-ialab.svg" alt="IALAB" width="320" height="80">
+        </picture>
+        <p class="brand-sub">Laboratorio de Innovación e Inteligencia Artificial</p>
+        <span class="badge badge-local brand-badge" id="nlpBadge">Verificando motor local…</span>
+      </div>
+      <div class="header-copy">
+        <h1>Anonimizador académico de uso personal</h1>
+        <p class="header-lead">Detección automatizada de datos personales. Controlá, editá y luego descargá el documento anonimizado.</p>
+        <p class="header-privacy">La anonimización se realiza local en tu PC personal. No se envían datos ni información a servidores externos.</p>
+      </div>
+    </div>
+    <nav class="steps" aria-label="Pasos del flujo">
+      <span class="step active" data-step="1"><span class="step-num">1</span> Cargar</span>
+      <span class="step-connector"></span>
+      <span class="step" data-step="2"><span class="step-num">2</span> Analizar</span>
+      <span class="step-connector"></span>
+      <span class="step" data-step="3"><span class="step-num">3</span> Revisar</span>
+      <span class="step-connector"></span>
+      <span class="step" data-step="4"><span class="step-num">4</span> Verificar y exportar</span>
+    </nav>
+  </header>
+
+  <main class="main-grid">
+    <section class="card" id="panelUpload">
+      <div class="card-head">
+        <h2>Cargar documento</h2>
+        <span class="card-hint">Paso 1</span>
+      </div>
+      <div class="callout callout-info">
+        <strong>Formatos admitidos</strong>
+        <ul>
+          <li><strong>Word (.docx)</strong> — recomendado, carga rápida.</li>
+          <li><strong>PDF digital</strong> — debe tener texto seleccionable (copiá un fragmento con el mouse para comprobarlo).</li>
+        </ul>
+        <p class="callout-note">PDF <strong>digital nativo</strong> (texto seleccionable). En PDFs <strong>mixtos</strong> (algunas páginas imagen y otras con texto) se omiten las páginas sin texto y se procesa el resto — sin OCR. Si <em>ninguna</em> página tiene texto seleccionable, usá Word (.docx) o exportá el PDF con capa de texto.</p>
+      </div>
+      <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Seleccionar archivo">
+        <div class="upload-icon" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        </div>
+        <p class="upload-title">Hacé clic o arrastrá un archivo</p>
+        <p class="upload-sub">.docx o .pdf digital</p>
+      </div>
+      <input type="file" id="fileInput" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+      <div class="file-info" id="fileInfo"></div>
+    </section>
+
+    <section class="card" id="panelConfig">
+      <div class="card-head">
+        <h2>Configuración y análisis</h2>
+        <span class="card-hint">Paso 2</span>
+      </div>
+      <p class="help-text help-intro">Elegí cómo reemplazar los datos detectados y qué tipos buscar. Podés ajustar todo después en la revisión.</p>
+      <div class="config-grid">
+        <div class="config-block">
+          <label class="field-label">Modo de etiquetado</label>
+          <p class="field-hint">Define el texto que reemplazará cada dato en el documento final.</p>
+          <div class="radio-group" role="radiogroup">
+            <label class="radio-option selected">
+              <input type="radio" name="mode" value="cat" checked>
+              <span class="radio-body">
+                <strong>Categorizado</strong>
+                <small>Numerado por tipo: [PERSONA_1], [DNI_1]… Útil para tablas de equivalencia.</small>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="mode" value="gen">
+              <span class="radio-body">
+                <strong>Genérico</strong>
+                <small>Sin numerar: [NOMBRE], [DNI]… Más simple de leer.</small>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="mode" value="ini">
+              <span class="radio-body">
+                <strong>Iniciales</strong>
+                <small>Reemplaza nombres por iniciales: J.P.G.</small>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="config-block">
+          <label class="field-label">Categorías a detectar</label>
+          <p class="field-hint">Desmarcá las que no quieras buscar. Siempre podés agregar datos manualmente en la vista previa.</p>
+          <div class="check-grid" id="catChecks">
+            <label class="check-option" title="Nombres de personas físicas"><input type="checkbox" data-cat="PERSONA" checked><span class="color-dot" style="--c:#9f3343"></span> Personas</label>
+            <label class="check-option" title="Documento Nacional de Identidad"><input type="checkbox" data-cat="DNI" checked><span class="color-dot" style="--c:#8a4a19"></span> DNI</label>
+            <label class="check-option" title="Clave única tributaria / laboral"><input type="checkbox" data-cat="CUIT" checked><span class="color-dot" style="--c:#8a4a19"></span> CUIT/CUIL</label>
+            <label class="check-option" title="Razones sociales y sociedades"><input type="checkbox" data-cat="EMPRESA" checked><span class="color-dot" style="--c:#4a1e78"></span> Empresas</label>
+            <label class="check-option" title="Correos electrónicos"><input type="checkbox" data-cat="EMAIL" checked><span class="color-dot" style="--c:#256c5b"></span> Emails</label>
+            <label class="check-option" title="Teléfonos fijos y celulares"><input type="checkbox" data-cat="TELEFONO" checked><span class="color-dot" style="--c:#24647a"></span> Teléfonos</label>
+            <label class="check-option" title="Direcciones y domicilios"><input type="checkbox" data-cat="DOMICILIO" checked><span class="color-dot" style="--c:#7a476d"></span> Domicilios</label>
+            <label class="check-option" title="Patentes y dominios de vehículos"><input type="checkbox" data-cat="PATENTE" checked><span class="color-dot" style="--c:#5a3d6e"></span> Patentes</label>
+            <label class="check-option" title="Fechas de nacimiento, documentos extranjeros"><input type="checkbox" data-cat="OTRO" checked><span class="color-dot" style="--c:#445a84"></span> Otros sensibles</label>
+            <label class="check-option" title="Suele generar falsos positivos; activar solo si necesitás números de causa">
+              <input type="checkbox" data-cat="EXPEDIENTE"><span class="color-dot" style="--c:#0b2545"></span> Expedientes
+            </label>
+            <label class="check-option" title="Juzgados, fiscalías, tribunales"><input type="checkbox" data-cat="ORGANISMO" checked><span class="color-dot" style="--c:#445a84"></span> Organismos</label>
+          </div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-primary btn-pill" id="analyzeBtn" disabled>
+          <span class="loader" id="loader1"></span>
+          <span class="btn-label">Analizar documento</span>
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="btn btn-outline btn-pill" id="cancelProcessBtn" type="button" hidden>
+          Detener
+        </button>
+      </div>
+    </section>
+
+    <div class="stats-row" id="statsRow" hidden></div>
+
+    <section class="workspace" id="workspace" hidden>
+      <div class="callout callout-tip workspace-tip">
+        <strong>Cómo revisar</strong> En la tabla corregí tipo, sustitución o desmarcá filas incorrectas.
+        Usá <strong>Unir similares</strong> cuando el mismo nombre aparece con distintas variantes (ORIGINAL, DUPLICADO, etc.).
+        En la vista previa seleccioná texto para agregar algo que no se detectó.
+      </div>
+      <div class="split-pane" id="splitPane">
+        <div class="split-pane-left" id="splitLeft">
+          <div class="card card-preview">
+            <div class="card-head card-head-split">
+              <h2>Vista previa</h2>
+              <div class="seg-control" role="tablist">
+                <button class="seg-btn active" id="viewOrig" type="button">Original</button>
+                <button class="seg-btn" id="viewAnon" type="button">Anonimizado</button>
+              </div>
+            </div>
+            <p class="help-text preview-help">Modo <strong>Original</strong>: seleccioná texto para anonimizarlo manualmente. Modo <strong>Anonimizado</strong>: ves el resultado con los reemplazos aplicados.</p>
+            <div class="preview-wrap">
+              <div class="preview-body selectable-preview" id="docPreview"></div>
+              <div class="selection-toolbar" id="selectionToolbar" hidden>
+                <span class="sel-snippet" id="selPreview"></span>
+                <select id="selCat" class="sel-cat" aria-label="Categoría">
+                  <option value="PERSONA">Persona</option>
+                  <option value="DNI">DNI</option>
+                  <option value="CUIT">CUIT</option>
+                  <option value="EMPRESA">Empresa</option>
+                  <option value="EMAIL">Email</option>
+                  <option value="TELEFONO">Teléfono</option>
+                  <option value="DOMICILIO">Domicilio</option>
+                  <option value="PATENTE">Patente</option>
+                  <option value="EXPEDIENTE">Expediente</option>
+                  <option value="ORGANISMO">Organismo</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+                <div id="selGroupPicker" class="combo-host-sel"></div>
+                <button type="button" class="btn btn-sm btn-outline" id="selAnonOnlyBtn">Solo anonimizar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="selAnonGroupBtn">En grupo</button>
+                <button type="button" class="btn btn-sm btn-ghost" id="selCancelBtn">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="split-divider" id="splitDivider" role="separator" aria-orientation="vertical" aria-label="Redimensionar paneles" tabindex="0"></div>
+        <div class="split-pane-right" id="splitRight">
+          <div class="review-column" id="reviewColumn">
+            <div class="card card-review">
+              <div class="review-tabs" role="tablist" aria-label="Revisión de detecciones">
+                <button type="button" class="review-tab active" id="tabDetections" role="tab" aria-selected="true" aria-controls="panelDetections" data-tab="detections">
+                  Detecciones <span class="tab-badge" id="tabDetCount">0</span>
+                </button>
+                <button type="button" class="review-tab" id="tabClusters" role="tab" aria-selected="false" aria-controls="panelClusters" data-tab="clusters">
+                  Identidades o grupos <span class="tab-badge" id="tabClusterCount">0</span>
+                </button>
+              </div>
+
+              <div class="review-tab-panel active" id="panelDetections" role="tabpanel" aria-labelledby="tabDetections">
+                <p class="help-text table-help">Cada fila es un dato encontrado. Cambiá <strong>Tipo</strong>, editá <strong>Sustitución</strong>, desmarcá lo incorrecto o usá <strong>Unir similares</strong>.</p>
+                <div class="table-scroll scroll-panel" id="detTable">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th width="36" title="Incluir en la exportación"></th>
+                        <th width="88">Tipo</th>
+                        <th>Original</th>
+                        <th>Sustitución</th>
+                        <th width="200">Grupo</th>
+                        <th width="36"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="detBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="review-tab-panel" id="panelClusters" role="tabpanel" aria-labelledby="tabClusters" hidden>
+                <div class="clusters-toolbar">
+                  <input type="search" class="search-input" id="clusterFilter" placeholder="Buscar grupo…" autocomplete="off">
+                </div>
+                <p class="help-text clusters-help">Los grupos reúnen distintas formas del mismo dato (ej. nombre completo y abreviado). Confirmá el grupo para unificar el reemplazo.</p>
+                <div class="clusters-scroll scroll-panel" id="clustersList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="exportPanel" hidden>
+      <div class="card-head">
+        <h2>Verificar y exportar</h2>
+        <span class="card-hint">Paso 4</span>
+      </div>
+      <p class="help-text">Revisá el texto anonimizado, ajustá redacción y formato, y exportá en Word o PDF. La tabla CSV de equivalencias se descarga aparte.</p>
+      <div class="callout callout-warn">
+        <strong>Atención</strong>
+        <p class="callout-note">No restaures datos personales reales al editar. Los cambios en esta pantalla no se vuelven a analizar.</p>
+      </div>
+      <div class="export-row">
+        <button class="btn btn-primary btn-pill" id="openEditorBtn" type="button">
+          <span class="loader" id="loaderPreview"></span>
+          <span class="btn-label">Abrir editor y verificar</span>
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </button>
+        <button class="btn btn-outline btn-pill" id="exportCsv" type="button">
+          <span class="btn-label">Tabla CSV</span>
+        </button>
+        <button class="btn btn-ghost" id="resetAll" type="button">Empezar de nuevo</button>
+      </div>
+    </section>
+
+    <section class="card editor-panel" id="editorPanel" hidden>
+      <div class="card-head">
+        <h2>Editor de verificación</h2>
+        <span class="card-hint">Paso 4</span>
+      </div>
+      <p class="help-text">Editá el texto si hace falta y elegí el formato del documento final.</p>
+
+      <div class="editor-layout">
+        <aside class="editor-format" aria-label="Formato del documento">
+          <h3 class="format-title">Formato</h3>
+          <label class="field-label" for="fmtFont">Fuente</label>
+          <select class="field-input" id="fmtFont">
+            <option value="Times New Roman" selected>Times New Roman</option>
+            <option value="Arial">Arial</option>
+            <option value="Calibri">Calibri</option>
+          </select>
+
+          <label class="field-label" for="fmtSize">Tamaño</label>
+          <select class="field-input" id="fmtSize">
+            <option value="11">11 pt</option>
+            <option value="12" selected>12 pt</option>
+            <option value="14">14 pt</option>
+          </select>
+
+          <label class="field-label" for="fmtLine">Interlineado</label>
+          <select class="field-input" id="fmtLine">
+            <option value="1">Simple</option>
+            <option value="1.5" selected>1,5</option>
+            <option value="2">Doble</option>
+          </select>
+
+          <label class="field-label" for="fmtAlign">Alineación</label>
+          <select class="field-input" id="fmtAlign">
+            <option value="justify" selected>Justificado</option>
+            <option value="left">Izquierda</option>
+            <option value="center">Centrado</option>
+            <option value="right">Derecha</option>
+          </select>
+
+          <label class="field-label" for="fmtMargin">Márgenes laterales (cm)</label>
+          <select class="field-input" id="fmtMargin">
+            <option value="2.5">2,5</option>
+            <option value="3" selected>3</option>
+            <option value="3.5">3,5</option>
+          </select>
+        </aside>
+
+        <div class="editor-main">
+          <label class="field-label" for="editorText">Texto anonimizado</label>
+          <textarea class="editor-textarea" id="editorText" rows="22" spellcheck="true"></textarea>
+        </div>
+      </div>
+
+      <div class="export-row editor-actions">
+        <button class="btn btn-primary btn-pill" id="exportDocx" type="button">
+          <span class="loader" id="loader2"></span>
+          <span class="btn-label">Exportar Word</span>
+        </button>
+        <button class="btn btn-outline btn-pill" id="exportPdf" type="button">
+          <span class="loader" id="loaderPdf"></span>
+          <span class="btn-label">Exportar PDF</span>
+        </button>
+        <button class="btn btn-outline btn-pill" id="copyMdBtn" type="button" title="Copia el texto en formato Markdown (ideal para pegar en un chat de IA)">
+          <span class="btn-label">Copiar como Markdown</span>
+        </button>
+        <button class="btn btn-ghost" id="closeEditorBtn" type="button">← Volver a revisión</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/static/app.js?v=21"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+Applies to: spaCy model es_core_news_md (version 3.8.0)
+Author: Explosion (https://explosion.ai)
+Model page: https://spacy.io/models/es#es_core_news_md
+
+Training sources (per model metadata):
+  - UD Spanish AnCora v2.8
+  - WikiNER
+  - spaCy lookups data
+  - Explosion fastText vectors (OSCAR Common Crawl + Wikipedia)
+
+When this model is redistributed inside the portable package (models/es_core_news_md/),
+recipients must receive this GPL-3.0 notice and access to corresponding source
+as required by the GPL.
+
+Full license text:
+  https://www.gnu.org/licenses/gpl-3.0.txt
+  https://www.gnu.org/licenses/gpl-3.0-standalone.html
+
+The model's own README is included in models/es_core_news_md/README.md in the
+portable distribution.
