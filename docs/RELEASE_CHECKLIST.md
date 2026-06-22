@@ -77,8 +77,24 @@ Repositorio: <https://github.com/CarolinaMMartin/anonimizador_uso_personal>
 
 10. **Subir el ZIP y el archivo SHA-256** como assets de la Release.
 
-11. **Comprobar el enlace** desde el README: el botón de Releases del
-    README apunta a `/releases/latest`, que debe resolver a esta Release.
+11. **Subir también una copia con nombre estable** para que el link
+    directo del README siga funcionando sin editarse en cada versión:
+
+    ```powershell
+    Copy-Item AnonimizadorJudicial-NLP-v3.3.10-Windows-x64.zip AnonimizadorJudicial-Windows.zip
+    Copy-Item AnonimizadorJudicial-NLP-v3.3.10-Windows-x64.zip.sha256 AnonimizadorJudicial-Windows.zip.sha256
+    # Reescribir el nombre del archivo dentro del .sha256:
+    (Get-Content AnonimizadorJudicial-Windows.zip.sha256) -replace "AnonimizadorJudicial-NLP-v3.3.10-Windows-x64.zip", "AnonimizadorJudicial-Windows.zip" | Set-Content AnonimizadorJudicial-Windows.zip.sha256
+    gh release upload v3.3.10 AnonimizadorJudicial-Windows.zip AnonimizadorJudicial-Windows.zip.sha256 --clobber
+    ```
+
+    El link del README usa
+    `/releases/latest/download/AnonimizadorJudicial-Windows.zip`, por lo
+    que mientras subas ese asset con el mismo nombre en cada Release, el
+    botón de descarga seguirá apuntando al ZIP correcto.
+
+12. **Comprobar el enlace** desde el README haciendo clic en el botón de
+    descarga: debe bajar el ZIP nuevo directamente.
 
 ---
 

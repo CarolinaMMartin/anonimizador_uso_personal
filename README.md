@@ -13,23 +13,25 @@ a servidores externos.
 
 ## Descargar para Windows
 
-Versión portable para **Windows 10 y 11 de 64 bits**.
+### [➜ Descargar ZIP para Windows 10/11 (64 bits) — 129 MB](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
 
 No requiere instalar Python ni usar una terminal.
 
-1. Descargá el ZIP portable desde **[GitHub Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)**.
-2. Clic derecho en el ZIP → **Extraer todo**.
-3. Abrí la carpeta extraída.
-4. Doble clic en **`INICIAR.bat`**.
+Después de descargar:
+
+1. Clic derecho en el ZIP → **Extraer todo**.
+2. Abrí la carpeta extraída.
+3. Doble clic en **`INICIAR.bat`**.
 
 Se abre solo en el navegador, en <http://127.0.0.1:8787>.
 
-> **No uses "Code → Download ZIP" para instalar la aplicación.** Esa
-> opción descarga el código fuente. Para usar el anonimizador, descargá
-> el ZIP portable desde **Releases**.
+> **No uses "Code → Download ZIP" (el botón verde de arriba).** Eso
+> descarga el código fuente, no la aplicación. Usá únicamente el link
+> de descarga de esta sección.
 
-Guía detallada: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
-Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
+- Notas de versión y verificación SHA-256: <https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest>
+- Guía detallada: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
+- Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
 
 ---
 
