@@ -5,7 +5,7 @@
 [![Tests](https://img.shields.io/badge/tests-pytest-green.svg)](tests/)
 [![Procesamiento 100% local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad-y-seguridad)
 
-Aplicación de escritorio para anonimizar documentos judiciales argentinos
+Aplicación de escritorio de uso personal para anonimizar documentos judiciales argentinos
 (PDF / DOCX) con **procesamiento 100 % local**, detección por capas
 (regex + Presidio + spaCy), resolución de entidades y revisión humana
 asistida.
@@ -37,7 +37,7 @@ Guías incluidas en el ZIP:
 Verificación: `VERIFICAR.bat` o <http://127.0.0.1:8787/health> →
 `presidio` y `spacy` en `true`.
 
-Todo el procesamiento es **local** (127.0.0.1). No requiere Internet.
+No requiere Internet.
 
 ---
 
