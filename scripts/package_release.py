@@ -20,6 +20,7 @@ SPACY_MODEL = "es_core_news_md"
 # Archivos obligatorios en el portable de entrega
 REQUIRED_FILES = (
     "LICENSE",
+    "NOTICE",
     "THIRD_PARTY_NOTICES.txt",
     "LEEME_INSTALACION.txt",
     "INICIAR.bat",

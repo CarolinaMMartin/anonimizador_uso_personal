@@ -78,4 +78,6 @@ class SessionStore:
         return SessionState.model_validate(json.loads(row[0]))
 
 
-store = SessionStore(use_sqlite=True)
+# Uso personal: sesiones solo en memoria. No se persiste el texto extraído
+# en disco (no se crea data/sessions.db). Al cerrar la app se pierde todo.
+store = SessionStore(use_sqlite=False)

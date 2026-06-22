@@ -6,7 +6,7 @@
 #   pip install -r requirements.txt -r requirements-dev.txt
 
 # Tests
-pytest>=8.0.0
+pytest==9.0.3
 
 # Empaquetado portable (.exe / .app)
-pyinstaller>=6.0.0
+pyinstaller==6.20.0

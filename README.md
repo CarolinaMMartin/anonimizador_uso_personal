@@ -1,62 +1,112 @@
 # Anonimizador Judicial
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-pytest-green.svg)](tests/)
-[![Procesamiento 100% local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad-y-seguridad)
+[![Windows 10/11 x64](https://img.shields.io/badge/Windows-10%2F11%20x64-blue.svg)](#descargar-para-windows)
+[![Procesamiento 100% local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad)
 
-Aplicación de escritorio de uso personal para anonimizar documentos judiciales argentinos
-(PDF / DOCX) con **procesamiento 100 % local**, detección por capas
-(regex + Presidio + spaCy), resolución de entidades y revisión humana
-asistida.
-
-> Pensada para juzgados, defensorías, fiscalías, estudios jurídicos y
-> equipos académicos que necesitan publicar o compartir documentos sin
-> exponer datos personales. No envía nada a servidores externos.
+Aplicación para anonimizar documentos judiciales argentinos (PDF / DOCX)
+con **procesamiento 100 % local**: detección por capas (regex + Presidio
++ spaCy), revisión humana y exportación a Word, PDF y CSV. No envía nada
+a servidores externos.
 
 ---
 
-## Para quien recibe el ZIP (usuarios / Poder Judicial)
+## Descargar para Windows
 
-**No hay que instalar Python, pip, spaCy ni nada más.**
+Versión portable para **Windows 10 y 11 de 64 bits**.
 
-1. Descomprimí el ZIP completo (ej. `AnonimizadorJudicial-NLP-PJ-v3.3.10.zip`).
-2. Doble clic en **`INICIAR.bat`**.
-3. Se abre <http://127.0.0.1:8787> en el navegador.
+No requiere instalar Python ni usar una terminal.
 
-Guías incluidas en el ZIP:
+1. Descargá el ZIP portable desde **[GitHub Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)**.
+2. Clic derecho en el ZIP → **Extraer todo**.
+3. Abrí la carpeta extraída.
+4. Doble clic en **`INICIAR.bat`**.
 
-| Archivo | Contenido |
-|---------|-----------|
-| `LEEME_INSTALACION.txt` | Inicio rápido (3 pasos) |
-| `MANUAL_INSTALACION.md` | Instalación y problemas frecuentes |
-| `MANUAL_USUARIO.md` | Cómo usar la herramienta |
-| `THIRD_PARTY_NOTICES.txt` | Licencias de software incluido |
-| `COMPLIANCE.md` | Informe para IT / sistemas |
+Se abre solo en el navegador, en <http://127.0.0.1:8787>.
 
-Verificación: `VERIFICAR.bat` o <http://127.0.0.1:8787/health> →
-`presidio` y `spacy` en `true`.
+> **No uses "Code → Download ZIP" para instalar la aplicación.** Esa
+> opción descarga el código fuente. Para usar el anonimizador, descargá
+> el ZIP portable desde **Releases**.
 
-No requiere Internet.
+Guía detallada: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
+Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
 
 ---
 
-## Para desarrolladores
+## Uso en tres pasos
 
-Requisitos: **Python 3.10+**. Windows recomendado si vas a generar el
-`.exe` portable; macOS / Linux funcionan para desarrollo y tests.
+1. **Cargá** un documento Word (`.docx`) o PDF con texto seleccionable.
+2. **Analizá y revisá** las detecciones: podés activarlas, editarlas,
+   agrupar variantes o agregar datos a mano.
+3. **Exportá** el documento anonimizado a Word, PDF o la tabla CSV.
+
+---
+
+## Requisitos
+
+- Windows 10 u 11, 64 bits.
+- Un navegador actual (Edge, Chrome o Firefox).
+- No requiere Python, Internet ni permisos de administrador.
+
+---
+
+## Funcionalidades
+
+- Carga de `.docx` o PDF digital (texto seleccionable).
+- Detección automática de personas, DNI, CUIT/CUIL, empresas, emails,
+  teléfonos, domicilios, patentes, expedientes y organismos.
+- Tres modos de etiquetado: categorizado (`[PERSONA_1]`), genérico
+  (`[NOMBRE]`) o iniciales (`J.P.G.`).
+- Revisión humana: cambiar tipo, editar la sustitución, unir variantes
+  similares y agregar detecciones manualmente.
+- Editor final para retocar texto y formato antes de exportar.
+- Exportación a Word, PDF, CSV de equivalencias y Markdown.
+
+---
+
+## Privacidad
+
+- El procesamiento ocurre **íntegramente en tu PC** (`127.0.0.1`).
+- No hay llamadas a servicios en la nube, ni seguimiento de uso.
+- Las sesiones viven **solo en memoria**: el texto del documento no se
+  guarda en disco y se pierde al cerrar la aplicación.
+
+---
+
+## Limitaciones
+
+- Solo procesa PDF **digital** (con texto seleccionable) o Word; no lee
+  PDF escaneados (imágenes).
+- La detección automática **no es perfecta**: revisá siempre antes de
+  exportar y no compartas un documento sin verificar que no queden datos
+  sensibles.
+- La versión publicada para usuarios es **Windows 10/11 de 64 bits**.
+
+---
+
+## Documentación para desarrolladores
+
+Requisitos: **Python 3.11+** (las dependencias fijadas del build
+verificado requieren 3.11 o superior). Windows recomendado si vas a
+generar el paquete portable; macOS / Linux sirven para desarrollo y tests.
 
 ```powershell
-git clone https://github.com/IALAB-UBA/anonimizador-judicial.git
-cd anonimizador-judicial
+git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
+cd anonimizador_uso_personal
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
 .venv\Scripts\python scripts\run_dev.py
 ```
 
-Abrí <http://127.0.0.1:8787>. Verificá NLP: <http://127.0.0.1:8787/health>.
+Abrí <http://127.0.0.1:8787>. Verificá las capas NLP en
+<http://127.0.0.1:8787/health>: `presidio` y `spacy` deben aparecer en
+`true`.
+
+En Windows podés usar el lanzador de desarrollo `INICIAR_DESARROLLO.bat`
+(macOS / Linux: `INICIAR_DESARROLLO.sh`). El nombre `INICIAR.bat` queda
+reservado para el paquete portable.
 
 Para correr los tests:
 
@@ -64,83 +114,44 @@ Para correr los tests:
 .venv\Scripts\python -m pytest tests/ -v
 ```
 
-### Generar el ZIP portable (entrega)
+Generar y publicar el paquete portable: ver
+[docs/DEPLOY.md](docs/DEPLOY.md) y
+[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
 
-```powershell
-.venv\Scripts\python scripts\build_portable_full.py
-.venv\Scripts\python scripts\package_release.py --suffix PJ-v3.3.10
-```
+### Arquitectura
 
-Salida: `dist/AnonimizadorJudicial-NLP-PJ-v3.3.10.zip` — listo para
-compartir.
-
-Guía completa de empaquetado y entrega: [`docs/DEPLOY.md`](docs/DEPLOY.md).
-
----
-
-## Arquitectura
-
-- **FastAPI** en `127.0.0.1:8787` (sólo localhost)
-- **Frontend** HTML / CSS / JS sin CDN (fuentes del sistema)
-- **Detección por capas:**
-  - Regex argentinos (DNI, CUIT, expedientes, patentes, domicilios…)
-  - [Microsoft Presidio](https://microsoft.github.io/presidio/) + spaCy
-    (`es_core_news_md`) para entidades nombradas
-  - Catálogo externo `regex_limpio_v2.json` (extensible sin tocar código)
-- **PDF:** pdfplumber (lectura) + ReportLab (export)
-- **Resolución:** RapidFuzz + grafo (NetworkX) + panel de revisión humana
-- **Exportación:** Word, PDF, CSV de equivalencias y **Markdown**
-  (copiar al portapapeles para llevarlo a la IA de tu preferencia)
-
-## Funcionalidades
-
-- Carga drag-and-drop de `.docx` o PDF digital (texto seleccionable).
-- Detección automática de personas, DNI, CUIT/CUIL, empresas, emails,
-  teléfonos, domicilios, patentes, expedientes y organismos.
-- Tres modos de etiquetado: **categorizado** (`[PERSONA_1]`),
-  **genérico** (`[NOMBRE]`) o **iniciales** (`J.P.G.`).
-- Tabla de revisión: cambiar tipo, editar sustitución, unir variantes
-  similares en un mismo grupo.
-- Vista previa con resaltado de detecciones; selección manual para
-  agregar lo que no se detectó.
-- Editor final para retocar texto y formato antes de exportar.
-- Exportación a Word, PDF, CSV de equivalencias y Markdown.
-
-## Privacidad y seguridad
-
-- El procesamiento ocurre **íntegramente en localhost** (`127.0.0.1:8787`).
-- No hay llamadas a APIs en la nube, ni telemetría, ni CDNs en runtime.
-- Presidio se configura **offline** (sin descargar la Public Suffix List).
-- Los documentos cargados se guardan en una SQLite local
-  (`data/sessions.db`) **que no se distribuye**.
-
-Política de divulgación responsable: [SECURITY.md](SECURITY.md).
+- **FastAPI** en `127.0.0.1:8787` (solo localhost).
+- **Frontend** HTML / CSS / JS sin CDN (fuentes del sistema).
+- **Detección por capas:** regex argentinos, Microsoft Presidio + spaCy
+  (`es_core_news_md`) y un catálogo externo `regex_limpio_v2.json`.
+- **PDF:** pdfplumber (lectura) + ReportLab (export).
+- **Resolución:** RapidFuzz + grafo (NetworkX) + panel de revisión.
 
 ---
 
-## Contribuir
+## Contribuciones
 
-Toda contribución es bienvenida. Antes de mandar un PR leé:
+Antes de mandar un PR leé:
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, tests, estilo, áreas
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, tests, estilo y áreas
   donde necesitamos ayuda.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — Contributor Covenant.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-Para reportar un bug usá la plantilla en `Issues → New issue → Reporte
-de bug`. **No incluyas datos personales reales** ni en issues ni en
-tests.
+Para reportar un bug usá la plantilla en *Issues → New issue*. **No
+incluyas datos personales reales** ni en issues ni en tests. Para temas
+de seguridad, ver [SECURITY.md](SECURITY.md).
 
-## Licencia y marcas
+---
+
+## Licencia
 
 - **Código de la aplicación:** Apache 2.0 (ver [LICENSE](LICENSE)).
 - **Componentes de terceros:** [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt)
   y [LICENSES/](LICENSES/).
-- **Modelo spaCy `es_core_news_md`:** GPL-3.0; se incluye sólo en el
+- **Modelo spaCy `es_core_news_md`:** GPL-3.0; se incluye solo en el
   paquete portable, no en el código fuente.
 - **Logo y nombre IALAB:** marcas institucionales, **no cubiertas** por
-  la licencia Apache 2.0. Forks deben reemplazarlos antes de
-  redistribuir. Ver [NOTICE](NOTICE).
-- **Informe ejecutivo de cumplimiento:** [docs/COMPLIANCE.md](docs/COMPLIANCE.md).
+  la licencia Apache 2.0 (ver [NOTICE](NOTICE)).
 
 ---
 

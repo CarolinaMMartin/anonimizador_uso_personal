@@ -4,11 +4,13 @@ Esta guía describe cómo construir y entregar el Anonimizador Judicial
 como un **ZIP portable**, listo para usuarios que no pueden (o no
 quieren) instalar Python, pip, spaCy ni dependencias en su PC.
 
-Es el flujo recomendado para entregas institucionales (juzgados,
-defensorías, fiscalías, estudios jurídicos, áreas legales de empresas u
-organismos públicos).
+El paquete publicado y probado es **Windows 10/11 de 64 bits**. El build
+de macOS existe para desarrollo, pero no se publica como descarga para
+usuarios finales mientras no haya un paquete probado.
 
 **Versión vigente:** ver `app_version` en <http://127.0.0.1:8787/health>.
+Para el flujo completo de publicación, ver
+[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ---
 
@@ -20,7 +22,7 @@ Contenido principal del paquete descomprimido:
 
 | Elemento | Función |
 |----------|---------|
-| `INICIAR.bat` / `INICIAR.sh` | Inicia la aplicación |
+| `INICIAR.bat` (Windows) / `INICIAR.command` (macOS dev) | Inicia la aplicación |
 | `AnonimizadorJudicial-NLP.exe` | Motor empaquetado (PyInstaller) |
 | `_internal/` | Librerías embebidas |
 | `models/es_core_news_md/` | Modelo spaCy + `LICENSE` (GPL-3.0) |
@@ -37,7 +39,7 @@ Contenido principal del paquete descomprimido:
 ## 2. Instalación en la PC del usuario (3 pasos)
 
 1. Descomprimir el ZIP en una carpeta fija (por ejemplo, `Documentos\Anonimizador`). **No** ejecutar desde dentro del ZIP.
-2. Doble clic en **`INICIAR.bat`** (Windows) o **`INICIAR.sh`** (macOS / Linux).
+2. Doble clic en **`INICIAR.bat`** (Windows). En el build de desarrollo para macOS, **`INICIAR.command`**.
 3. Abrir el navegador en <http://127.0.0.1:8787>.
 
 **No hay pasos de consola, ni pip, ni permisos de administrador**, salvo
@@ -72,7 +74,7 @@ construye el paquete.
 # 0) Entorno limpio (recomendado para builds reproducibles).
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 
 # 1) Bajar el modelo spaCy local.
 .venv\Scripts\python scripts\install_nlp.py
@@ -80,14 +82,14 @@ pip install -r requirements.txt
 # 2) Compilar el .exe portable con PyInstaller + recursos embebidos.
 .venv\Scripts\python scripts\build_portable_full.py
 
-# 3) Empaquetar el ZIP final con sufijo de versión / cliente.
-.venv\Scripts\python scripts\package_release.py --suffix v3.3.10
+# 3) Empaquetar el ZIP final con sufijo de versión / plataforma.
+.venv\Scripts\python scripts\package_release.py --suffix v3.3.10-Windows-x64
 ```
 
 El sufijo `--suffix` se usa para identificar la entrega (por versión, por
 cliente o por entorno). Ejemplos:
 
-- `--suffix v3.3.10` → `AnonimizadorJudicial-NLP-v3.3.10.zip`
+- `--suffix v3.3.10-Windows-x64` → `AnonimizadorJudicial-NLP-v3.3.10-Windows-x64.zip`
 - `--suffix interno-2026Q2` → para releases internas
 - `--suffix demo` → versión de prueba
 
@@ -120,13 +122,13 @@ organización específica:
 
 ## 6. Distribución y soporte
 
-- **Tamaño del ZIP.** Aproximadamente 400-600 MB (incluye Python embebido,
-  modelo spaCy y todas las dependencias).
+- **Tamaño del ZIP.** Medir el tamaño real de descarga y descomprimido
+  del build verificado e indicarlo en cada Release (no fijar un número
+  en la documentación para evitar datos contradictorios).
 - **Hash de verificación.** Calcular y publicar el SHA-256 del ZIP junto
   al binario para que IT pueda verificar integridad.
 - **Updates.** Para actualizar, el usuario descomprime el ZIP nuevo en
-  otra carpeta y reemplaza la anterior. Los datos locales (`data/`) se
-  mantienen si se copian a mano (ver `MANUAL_INSTALACION.md`).
+  otra carpeta y usa esa carpeta (ver `MANUAL_INSTALACION.md`).
 - **Soporte de incidentes.** Ver [SECURITY.md](../SECURITY.md) para
   reporte de vulnerabilidades y `MANUAL_INSTALACION.md` para
   troubleshooting de usuario.

@@ -1,6 +1,6 @@
 # Contribuir al Anonimizador Judicial
 
-Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
+¡Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
 preparar el entorno, abrir issues, mandar pull requests y mantener la
 calidad del detector.
 
@@ -11,22 +11,30 @@ público.
 ## Filosofía del proyecto
 
 - **100 % local.** Todo el procesamiento corre en `127.0.0.1`. No
-  agregamos llamadas a APIs externas ni dependencias de red en runtime. Esto puede parecer una obviedad, pero vale la pena aclarar. 
-- **Sin LLMs ni OCR.** La detección se basa en regex + Presidio + spaCy
-  (modelo local). Si una mejora requiere modelos pesados o GPU, primero
-  abrí un issue para discutir si encaja. Nuestro objetivo era mantenerlo liviano para poder llegar a todo tipo de usuarios. Hemos realizado pruebas con LLM (Qween 2.5 y 3.0, obteniendo muy buenos resultados. La incorporación del LLM mejoro la detección de entidades y relaciones iniciales. 
+  agregamos llamadas a APIs externas ni dependencias de red en runtime.
+- **Sin LLMs ni OCR en la configuración base.** La detección se basa en
+  regex + Presidio + spaCy (modelo local) para mantener una instalación
+  liviana que llegue a todo tipo de usuarios. Hicimos pruebas
+  experimentales con modelos de lenguaje (Qwen 2.5 y 3.0) que mejoraron
+  la detección y la vinculación de entidades. Su incorporación futura
+  debería evaluarse como una extensión opcional, no como dependencia
+  obligatoria: si una mejora requiere modelos pesados o GPU, primero abrí
+  un issue para discutir si encaja.
 - **Pensado para juzgados, defensorías y estudios jurídicos.** La UI
   prioriza claridad sobre features, y el flujo respeta el control humano
-  (revisión, edición, exportación). Este fue el objetivo inicial, puede ser (relativamente facil) adaptado a otros entornos. Se deberia tener en cuenta: modificación de etiquetas predeterminadas y la incorporacción de regex especificas al campo. 
+  (revisión, edición, exportación). Este fue el objetivo inicial, pero
+  puede adaptarse con relativa facilidad a otros entornos; habría que
+  tener en cuenta la modificación de etiquetas predeterminadas y la
+  incorporación de regex específicas al campo.
 
 ## Setup de desarrollo
 
-Requisitos: **Python 3.10 o superior** y, opcionalmente, Windows si vas
+Requisitos: **Python 3.11 o superior** y, opcionalmente, Windows si vas
 a generar el `.exe` portable.
 
 ```powershell
 git clone <url-del-fork>
-cd anonimizador-judicial
+cd anonimizador_uso_personal
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # macOS / Linux

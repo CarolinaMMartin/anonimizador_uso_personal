@@ -1,94 +1,111 @@
-# Manual de instalación — Anonimizador académico de uso personal (IALAB)
+# Manual de instalación — Anonimizador Judicial
 
-**Versión:** 3.3.10 · **Plataforma:** Windows 10/11 (64 bits) · **Uso:** personal / académico / institucional
+**Plataforma:** Windows 10/11 (64 bits) · **Uso:** personal / académico
+
+Esta es una **aplicación portable**: no es un instalador tradicional. No
+modifica tu sistema y, en general, **no requiere permisos de
+administrador** (salvo restricciones particulares de tu equipo o de tu
+organización).
 
 ---
 
 ## 1. Qué recibís
 
-Un archivo ZIP, por ejemplo:
+Un archivo ZIP que descargás desde **Releases**. El tamaño exacto de la
+descarga y el espacio que ocupa una vez extraído se informan en cada
+Release.
 
-`AnonimizadorJudicial-NLP-PJ-v3.3.10.zip` (~130–200 MB)
-
-Al descomprimirlo obtenés una carpeta con:
+Al extraerlo obtenés una carpeta con, entre otros:
 
 | Elemento | Función |
 |----------|---------|
 | `INICIAR.bat` | **Usá este** para abrir la aplicación |
-| `AnonimizadorJudicial-NLP.exe` | Motor de la app (no hace falta abrirlo directo) |
-| `VERIFICAR.bat` | Abre la página de comprobación técnica |
+| `AnonimizadorJudicial-NLP.exe` | Programa principal (no hace falta abrirlo directo) |
+| `VERIFICAR.bat` | Abre la página de comprobación |
 | `MANUAL_USUARIO.md` / `.txt` | Guía de uso |
 | `LEEME_INSTALACION.txt` | Inicio rápido |
-| `THIRD_PARTY_NOTICES.txt` | Licencias de software incluido |
-| `LICENSES/` | Textos de licencia (GPL spaCy, MIT, BSD, etc.) |
-| `COMPLIANCE.md` / `.txt` | Informe de cumplimiento para IT |
-| `_internal/` | Librerías (no modificar) |
+| `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt`, `LICENSES/` | Licencias |
 | `models/` | Modelo de lenguaje (no borrar) |
+| `_internal/` | Archivos del programa (no modificar) |
 
 ---
 
 ## 2. Requisitos del equipo
 
-- Windows 10 u 11, 64 bits
-- ~250–400 MB de espacio libre
-- **No** requiere Python ni Internet para funcionar
-- Navegador web (Chrome, Edge o Firefox)
-- Permiso para ejecutar aplicaciones locales
+- Windows 10 u 11, 64 bits.
+- Espacio libre en disco (ver el dato indicado en la Release).
+- Navegador web (Edge, Chrome o Firefox).
+- **No** requiere Python ni Internet para funcionar.
 
 ---
 
 ## 3. Instalación paso a paso
 
-### 3.1 Descomprimir
+### 3.1 Extraer el ZIP
 
-1. Descargá el ZIP completo.
-2. Clic derecho → **Extraer todo…**
+1. Descargá el ZIP completo desde Releases.
+2. Clic derecho sobre el ZIP → **Extraer todo…**
 3. Elegí una carpeta fija, por ejemplo:
-   - `C:\Programas\Anonimizador-IALAB\`
-   - o `Documentos\Anonimizador-IALAB\`
-4. **No** ejecutes el programa desde dentro del ZIP sin descomprimir.
+   - `C:\Programas\Anonimizador\`
+   - o `Documentos\Anonimizador\`
+4. **No ejecutes el programa desde dentro del ZIP.** Primero hay que
+   extraerlo.
 
-### 3.2 Primera ejecución
+### 3.2 Abrir la aplicación
 
-1. Entrá a la carpeta descomprimida.
-2. Doble clic en **`INICIAR.bat`**
-3. Se abrirá el navegador en: http://127.0.0.1:8787
-4. **No cierres** la ventana negra mientras uses la app (es el servidor local).
+1. Entrá a la carpeta extraída.
+2. Doble clic en **`INICIAR.bat`**.
+3. Se abre el navegador en <http://127.0.0.1:8787>.
 
-### 3.3 SmartScreen (Windows)
+Durante el inicio puede aparecer brevemente una ventana; es normal y se
+cierra sola. No necesitás dejar ninguna ventana abierta para usar la
+aplicación.
 
-Si aparece “Windows protegió tu PC”:
+### 3.3 Si aparece SmartScreen
 
-1. Clic en **Más información**
-2. **Ejecutar de todas formas**
+Windows puede mostrar un aviso ("Windows protegió tu PC") porque la
+aplicación no tiene una firma comercial:
 
-Es normal en software académico sin certificado comercial.
+1. Clic en **Más información**.
+2. Clic en **Ejecutar de todas formas**.
+
+Es habitual en aplicaciones académicas sin certificado de pago.
 
 ### 3.4 Verificación
 
-1. Ejecutá **`VERIFICAR.bat`** o abrí http://127.0.0.1:8787/health
-2. Comprobá:
-   - `"app_version": "3.3.10"`
-   - `presidio.available`: true
-   - `spacy.available`: true
+1. Ejecutá **`VERIFICAR.bat`** o abrí <http://127.0.0.1:8787/health>.
+2. Comprobá que aparezcan `presidio` y `spacy` en `true`.
 
 ---
 
-## 4. Acceso directo (opcional)
+## 4. Cómo cerrar completamente la aplicación
 
-1. Clic derecho en `INICIAR.bat` → **Enviar a** → **Escritorio (crear acceso directo)**
-2. Renombrá el acceso directo: *Anonimizador IALAB*
+La aplicación tiene dos partes: la **pestaña del navegador** y el
+**programa** que corre por detrás.
+
+**Cerrar solo la pestaña del navegador puede no detener el programa.**
+
+Para cerrarlo del todo:
+
+1. Cerrá la pestaña del navegador.
+2. Abrí el **Administrador de tareas** (`Ctrl + Shift + Esc`).
+3. Buscá **`AnonimizadorJudicial-NLP.exe`** en la lista.
+4. Seleccionalo y elegí **Finalizar tarea**.
+
+Volver a hacer doble clic en `INICIAR.bat` también cierra la copia
+anterior antes de abrir una nueva.
 
 ---
 
 ## 5. Actualizar a una versión nueva
 
-1. **Cerrá** la aplicación (ventana negra y navegador).
-2. Descomprimí la **nueva** carpeta ZIP en otra ruta (ej. `Anonimizador-v3.3.10`).
-3. Usá el `INICIAR.bat` **de la carpeta nueva**.
-4. Podés borrar o renombrar la carpeta vieja (`_VIEJO`) para no confundirte.
+1. Cerrá la aplicación (ver punto 4).
+2. Descargá el ZIP nuevo desde Releases.
+3. Extraelo en **otra carpeta** (por ejemplo, una carpeta con el número
+   de versión).
+4. Usá el `INICIAR.bat` **de la carpeta nueva**.
 
-> No es obligatorio borrar la versión anterior, pero **no abras las dos a la vez** (comparten el puerto 8787).
+No abras dos versiones a la vez: ambas usan el mismo puerto (8787).
 
 ---
 
@@ -96,12 +113,12 @@ Es normal en software académico sin certificado comercial.
 
 | Problema | Solución |
 |----------|----------|
-| No abre el navegador | Abrí manualmente http://127.0.0.1:8787 |
-| “Puerto en uso” / no carga | Cerrá otras copias del anonimizador; reiniciá `INICIAR.bat` |
-| Pantalla vieja / sin cambios | Estás en carpeta vieja; Ctrl+F5 o usá la carpeta nueva |
-| Antivirus bloquea el .exe | Agregá excepción para la carpeta de instalación |
-| Presidio/spaCy en false | Reinstalá descomprimiendo de nuevo el ZIP completo |
-| PDF no carga | Solo PDF **digital** (texto seleccionable); no escaneos |
+| No abre el navegador | Abrí manualmente <http://127.0.0.1:8787> |
+| "Puerto en uso" | Cerrá otras copias del anonimizador (ver punto 4) y volvé a abrir |
+| Pantalla vieja / sin cambios | Estás en una carpeta vieja; usá la carpeta nueva |
+| Antivirus bloquea el programa | Agregá una excepción para la carpeta |
+| `presidio`/`spacy` en false | Volvé a extraer el ZIP completo |
+| El PDF no carga | Solo PDF **digital** (con texto seleccionable); no escaneos |
 
 ---
 
@@ -109,23 +126,17 @@ Es normal en software académico sin certificado comercial.
 
 - Todo el procesamiento es **local** (127.0.0.1).
 - **No** se envían documentos ni datos a servidores externos.
-- **No** se requiere conexión a Internet (la interfaz usa fuentes del sistema).
-- Los archivos de sesión quedan en la subcarpeta `data\` junto al programa (no vienen en el ZIP de instalación).
+- **No** se requiere conexión a Internet.
+- Las sesiones viven **solo en memoria**: el texto del documento no se
+  guarda en disco y se pierde al cerrar la aplicación.
 
 ---
 
-## 8. Licencias de software
+## 8. Licencias
 
-El paquete incluye componentes de terceros (Presidio, spaCy, pdfplumber, ReportLab, etc.).
+El paquete incluye componentes de terceros (Presidio, spaCy, pdfplumber,
+ReportLab, etc.).
 
 - Resumen: **`THIRD_PARTY_NOTICES.txt`**
 - Textos legales: carpeta **`LICENSES/`**
-- Informe para sistemas: **`COMPLIANCE.md`**
-
----
-
-## 9. Soporte
-
-Laboratorio de Innovación e Inteligencia Artificial (IALAB) — Facultad de Derecho, UBA.
-
-Al reportar un error, indicá: versión (`/health`), Windows, tipo de archivo (Word/PDF) y captura de pantalla si es posible.
+- Informe de cumplimiento: **`COMPLIANCE.md`**

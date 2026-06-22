@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # Archivos/carpetas de cumplimiento en la raíz del repo
 COMPLIANCE_FILES = (
     "LICENSE",
+    "NOTICE",
     "THIRD_PARTY_NOTICES.txt",
 )
 

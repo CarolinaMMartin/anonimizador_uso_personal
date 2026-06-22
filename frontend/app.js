@@ -1,4 +1,4 @@
-/* Anonizador Uso Personal - Frontend */
+/* Anonimizador Judicial - Frontend */
 const API = '';
 
 let activeAbort = null;
@@ -62,7 +62,7 @@ fetch(API + '/health')
         badge.title =
           (nlp.spacy?.error || '') +
           (nlp.presidio?.error ? '\n' + nlp.presidio.error : '') +
-          '\n\nCerrá el .exe portable y usá INICIAR.bat del proyecto para desarrollo.';
+          '\n\nReiniciá la aplicación con INICIAR.bat. Si el problema sigue, volvé a extraer el ZIP completo.';
       } else {
         badge.classList.add('badge-ok');
         badge.title = 'Procesamiento local. PDF digital nativo (sin OCR). Formatos: Word y PDF.';

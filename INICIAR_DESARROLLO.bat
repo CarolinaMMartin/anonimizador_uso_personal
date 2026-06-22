@@ -21,9 +21,9 @@ echo.
 echo === Anonimizador IALAB - MODO DESARROLLO ===
 echo Version mas reciente de interfaz y reglas.
 echo URL: http://127.0.0.1:8787
-echo Comprobar version: http://127.0.0.1:8787/health  (app_version debe ser 3.3.7)
+echo Comprobar version: http://127.0.0.1:8787/health  (app_version debe ser 3.3.10)
 echo.
-echo NO uses la carpeta dist\ para probar cambios: usa ESTE INICIAR.bat.
+echo NO uses la carpeta dist\ para probar cambios: usa ESTE INICIAR_DESARROLLO.bat.
 echo No cierres esta ventana mientras uses la aplicacion.
 echo.
 .venv\Scripts\python scripts\run_dev.py
