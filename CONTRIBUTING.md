@@ -1,7 +1,7 @@
 # Contribuir al Anonimizador Judicial
 
 ¡Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
-preparar el entorno, abrir issues, mandar pull requests y mantener la
+preparar el entorno, abrir issues, enviar pull requests y mantener la
 calidad del detector.
 
 Antes de empezar, leé el [Código de Conducta](CODE_OF_CONDUCT.md). Para
@@ -10,14 +10,35 @@ público.
 
 ## Filosofía del proyecto
 
-- **100 % local.** Todo el procesamiento corre en `127.0.0.1`. No
-  agregamos llamadas a APIs externas ni dependencias de red en runtime.
-- **Sin LLMs ni OCR.** La detección se basa en regex + Presidio + spaCy
-  (modelo local). Si una mejora requiere modelos pesados o GPU, primero
-  abrí un issue para discutir si encaja.
-- **Pensado para juzgados, defensorías y estudios jurídicos.** La UI
-  prioriza claridad sobre features, y el flujo respeta el control humano
-  (revisión, edición, exportación).
+- **Procesamiento local por defecto.** Todo el procesamiento del núcleo
+  corre en `127.0.0.1`. Aunque pueda parecer una característica obvia,
+  es una decisión central del proyecto: los documentos no deben enviarse
+  a APIs externas ni depender de una conexión a Internet para ser
+  anonimizados.
+
+- **Núcleo liviano y accesible.** La detección actual se basa en regex,
+  Presidio y spaCy con un modelo local. El objetivo es que la herramienta
+  pueda ejecutarse en equipos de uso cotidiano, sin exigir GPU ni una
+  infraestructura especializada.
+
+- **Arquitectura extensible.** El núcleo no requiere LLMs ni OCR, pero
+  pueden proponerse módulos opcionales que incorporen estas tecnologías.
+  Un modelo adicional puede mejorar la detección, desambiguación y
+  vinculación de entidades. Estas extensiones deben funcionar de manera
+  local, poder desactivarse, estar documentadas y no volver obligatorio
+  un entorno pesado para utilizar las funciones principales.
+
+- **Especialización judicial con posibilidad de adaptación.** La
+  herramienta fue diseñada inicialmente para juzgados, defensorías,
+  fiscalías y estudios jurídicos. Parte de esa especialización se
+  encuentra en los catálogos de regex y diccionarios del proyecto. Para
+  adaptarla a otros ámbitos se recomienda revisar y ajustar esos recursos
+  al vocabulario, documentos y entidades del nuevo dominio.
+
+- **Control humano.** La interfaz prioriza la claridad y mantiene puntos
+  explícitos de revisión, edición y verificación antes de exportar el
+  documento. La detección automatizada asiste el proceso, pero no
+  reemplaza la revisión de la persona usuaria.
 
 ## Setup de desarrollo
 
@@ -35,9 +56,9 @@ python scripts/install_nlp.py   # descarga es_core_news_md (~40 MB)
 python scripts/run_dev.py       # levanta http://127.0.0.1:8787
 ```
 
-`requirements.txt` tiene las dependencias de runtime; `requirements-dev.txt`
-suma `pytest` y `pyinstaller` (sólo necesarias para correr la suite y
-generar el ZIP portable).
+`requirements.txt` contiene las dependencias de runtime;
+`requirements-dev.txt` agrega `pytest` y `pyinstaller`, necesarias para
+correr la suite y generar el ZIP portable.
 
 Verificá las capas NLP en <http://127.0.0.1:8787/health>: `presidio` y
 `spacy` deben aparecer en `true`.
@@ -53,70 +74,84 @@ tests. La suite usa **pytest**:
 
 Casos típicos:
 
-- Falsos positivos en producción → agregá una fila al CSV mental y un
-  test parametrizado en `tests/test_detection_filters.py`.
-- Bug en un exportador (DOCX / PDF / Markdown) → agregá fixture en
-  `tests/test_pdf_export.py` o similar.
-- Cambios en regex argentinos → reutilizá ejemplos reales **anonimizados**
-  (nunca pegues datos personales en tests).
+- Falso positivo encontrado durante una prueba → convertí el caso en un
+  ejemplo sintético y agregá un test parametrizado en
+  `tests/test_detection_filters.py`.
+- Bug en un exportador (DOCX / PDF / Markdown) → agregá un test en
+  `tests/test_pdf_export.py` o en el archivo correspondiente.
+- Cambios en regex argentinos → usá ejemplos ficticios o previamente
+  anonimizados. Nunca incluyas datos personales reales en los tests.
 
 ## Estilo de código
 
-- Python: **PEP 8**, anotaciones de tipo cuando aportan, docstrings en
-  funciones públicas.
-- Frontend: HTML/CSS/JS plano, sin frameworks ni CDN. Mantener
-  compatibilidad con navegadores actuales (Edge / Chrome / Firefox).
-- Mensajes de commit en español o inglés; preferimos descripciones
-  cortas en imperativo (ej.: `fix(detector): rechazar Ley XXX como
-  patente`).
-- Evitá agregar dependencias nuevas. Si es imprescindible, justifícalo
-  en el PR y actualizá `requirements.txt`, `THIRD_PARTY_NOTICES.txt` y
-  `NOTICE` (si la licencia lo requiere).
+- Python: **PEP 8**, anotaciones de tipo cuando aportan claridad y
+  docstrings en funciones públicas.
+- Frontend: HTML, CSS y JavaScript plano, sin frameworks ni CDN en el
+  núcleo. Mantener compatibilidad con versiones actuales de Edge,
+  Chrome y Firefox.
+- Mensajes de commit en español o inglés, con descripciones breves en
+  imperativo. Ejemplo: `fix(detector): rechazar Ley XXX como patente`.
+- Evitá agregar dependencias nuevas sin necesidad. Cuando sean
+  imprescindibles, justificá su incorporación en el PR y actualizá
+  `requirements.txt`, `THIRD_PARTY_NOTICES.txt` y `NOTICE` cuando la
+  licencia lo requiera.
 
 ## Cómo contribuir un cambio
 
-1. Abrí un **issue** describiendo el bug o la mejora antes de codear
-   cambios grandes. Para typos / docs pequeños podés ir directo al PR.
-2. Hacé fork y branch desde `main`. Nombre sugerido:
-   `fix/organismo-narrativa`, `feat/markdown-export`,
+1. Abrí un **issue** describiendo el bug o la mejora antes de desarrollar
+   cambios grandes. Para correcciones menores de texto o documentación
+   podés ir directamente al pull request.
+2. Hacé un fork y creá una rama desde `main`. Nombres sugeridos:
+   `fix/organismo-narrativa`, `feat/markdown-export` o
    `docs/contributing`.
-3. Codeá, agregá tests y verificá que `pytest` pase en local.
+3. Implementá el cambio, agregá tests y verificá que `pytest` pase en
+   local.
 4. Abrí un **pull request** completando la plantilla. Incluí:
-   - Qué problema resuelve.
-   - Cómo lo verificaste (tests + pasos manuales si aplica).
-   - Si modificás detectores, ejemplos de entrada / salida.
-5. Una persona del equipo de IALAB revisará. Puede haber rondas de
-   feedback. Los cambios se mergean por *squash* para mantener el log
-   limpio.
+   - qué problema resuelve;
+   - cómo lo verificaste;
+   - ejemplos sintéticos de entrada y salida si modificaste detectores;
+   - impacto sobre rendimiento, privacidad o dependencias, si aplica.
+5. Una persona mantenedora del proyecto revisará la propuesta. Puede
+   haber rondas de feedback antes de incorporarla. Los cambios pueden
+   integrarse mediante *squash* para mantener un historial claro.
 
 ## Áreas donde necesitamos ayuda
 
 - **Diccionarios.** Sumar variantes regionales de nombres, apellidos y
-  fórmulas judiciales (`data/dictionaries/`). Nada de datos reales,
-  sólo listas genéricas.
-- **Regex argentinos.** El catálogo `regex_limpio_v2.json` se puede
-  ampliar con patrones nuevos (documentos, dominios, etc.).
-- **Tests de regresión.** Más cobertura sobre PDF complicados (mixtos,
-  con encabezados, multicolumna).
-- **Performance.** El pipeline procesa documentos en chunks; mejoras a
-  `app/detection/pipeline.py` o `app/extraction/` son bienvenidas.
-- **Accesibilidad de la UI.** Etiquetas ARIA, navegación por teclado y
-  contraste.
+  fórmulas judiciales en `data/dictionaries/`. Usar únicamente listas
+  genéricas o datos sintéticos.
+- **Regex argentinos.** Ampliar `regex_limpio_v2.json` con patrones
+  adicionales para documentos, dominios y otras entidades.
+- **Adaptación a otros dominios.** Crear catálogos y pruebas para áreas
+  no judiciales sin alterar innecesariamente la configuración base.
+- **Tests de regresión.** Aumentar la cobertura sobre PDF complejos:
+  documentos mixtos, encabezados repetidos o diseños multicolumna.
+- **Rendimiento.** Mejorar el procesamiento por fragmentos en
+  `app/detection/pipeline.py` o los extractores de `app/extraction/`.
+- **Extensiones opcionales.** Explorar OCR o modelos locales adicionales
+  que mejoren la detección y relación entre entidades sin reemplazar el
+  funcionamiento liviano del núcleo.
+- **Accesibilidad de la interfaz.** Mejorar etiquetas ARIA, navegación por
+  teclado, contraste y mensajes de estado.
 
 ## No aceptamos
 
-- Funcionalidades que requieran enviar texto del documento a servidores
-  remotos / APIs en la nube.
-- Modelos generativos (LLMs) corriendo dentro del proceso por defecto.
-- Telemetría, analytics o tracking de uso.
-- Datos personales reales en tests, fixtures, documentación o commits.
+- Cambios que hagan depender el flujo principal del envío de documentos
+  o fragmentos de texto a servidores remotos o APIs en la nube.
+- Modelos generativos, OCR u otros componentes pesados activados de forma
+  obligatoria en la instalación base.
+- Telemetría, analytics o seguimiento de uso.
+- Datos personales reales en tests, fixtures, documentación, issues o
+  commits.
+- Cambios que eliminen o reduzcan la instancia de revisión humana antes
+  de exportar el resultado.
 
 ## Licencia de las contribuciones
 
 Al enviar un pull request aceptás que tu aporte se distribuya bajo la
 **licencia Apache 2.0** del proyecto. No se requiere CLA. Conservás el
-copyright de tu contribución; la licencia es perpetua e irrevocable
-(ver sección 5 de Apache 2.0).
+copyright de tu contribución y otorgás los permisos establecidos por la
+licencia para su incorporación y distribución dentro del proyecto.
 
-Las marcas registradas y logo de IALAB **no** se ceden con la licencia
-del código (ver [NOTICE](NOTICE)).
+Las marcas y el logo de IALAB **no** se ceden con la licencia del código.
+Consultá el archivo [NOTICE](NOTICE).
