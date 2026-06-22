@@ -29,7 +29,7 @@ público.
 
 ## Setup de desarrollo
 
-Requisitos: **Python 3.10 o superior** y, opcionalmente, Windows si vas
+Requisitos: **Python 3.11 o superior** y, opcionalmente, Windows si vas
 a generar el `.exe` portable.
 
 ```powershell

@@ -86,8 +86,9 @@ Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
 
 ## Documentación para desarrolladores
 
-Requisitos: **Python 3.10+**. Windows recomendado si vas a generar el
-paquete portable; macOS / Linux sirven para desarrollo y tests.
+Requisitos: **Python 3.11+** (las dependencias fijadas del build
+verificado requieren 3.11 o superior). Windows recomendado si vas a
+generar el paquete portable; macOS / Linux sirven para desarrollo y tests.
 
 ```powershell
 git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
