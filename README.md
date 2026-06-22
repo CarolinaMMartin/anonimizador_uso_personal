@@ -90,7 +90,7 @@ Guía completa de empaquetado y entrega: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 - **PDF:** pdfplumber (lectura) + ReportLab (export)
 - **Resolución:** RapidFuzz + grafo (NetworkX) + panel de revisión humana
 - **Exportación:** Word, PDF, CSV de equivalencias y **Markdown**
-  (copiar al portapapeles para llevarlo a un asistente de IA)
+  (copiar al portapapeles para llevarlo a la IA de tu preferencia)
 
 ## Funcionalidades
 
