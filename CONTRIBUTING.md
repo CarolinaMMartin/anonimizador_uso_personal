@@ -30,10 +30,14 @@ cd anonimizador-judicial
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # macOS / Linux
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 python scripts/install_nlp.py   # descarga es_core_news_md (~40 MB)
 python scripts/run_dev.py       # levanta http://127.0.0.1:8787
 ```
+
+`requirements.txt` tiene las dependencias de runtime; `requirements-dev.txt`
+suma `pytest` y `pyinstaller` (sólo necesarias para correr la suite y
+generar el ZIP portable).
 
 Verificá las capas NLP en <http://127.0.0.1:8787/health>: `presidio` y
 `spacy` deben aparecer en `true`.

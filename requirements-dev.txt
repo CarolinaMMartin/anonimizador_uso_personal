@@ -1,0 +1,12 @@
+# Dependencias sólo necesarias para desarrollo, tests y empaquetado.
+# Los usuarios finales NO las necesitan: el ZIP portable se genera con
+# estas instaladas en la máquina del desarrollador.
+#
+# Uso:
+#   pip install -r requirements.txt -r requirements-dev.txt
+
+# Tests
+pytest>=8.0.0
+
+# Empaquetado portable (.exe / .app)
+pyinstaller>=6.0.0
