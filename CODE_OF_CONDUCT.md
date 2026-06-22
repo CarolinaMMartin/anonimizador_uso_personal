@@ -40,19 +40,6 @@ Ejemplos de comportamientos inaceptables:
 - Otra conducta que razonablemente pueda considerarse inapropiada en un
   entorno profesional.
 
-## Responsabilidades de aplicación
-
-Las personas responsables del proyecto son responsables de aclarar y
-hacer cumplir nuestros estándares de comportamiento aceptable y tomarán
-acciones correctivas apropiadas y justas en respuesta a cualquier
-comportamiento que consideren inadecuado, amenazante, ofensivo o
-dañino.
-
-Las personas responsables del proyecto tienen el derecho y la
-responsabilidad de eliminar, editar o rechazar comentarios, *commits*,
-código, ediciones de documentación, *issues* y otras contribuciones que
-no estén alineadas con este Código de Conducta, y comunicarán las
-razones de las decisiones de moderación cuando sea apropiado.
 
 ## Alcance
 
@@ -62,16 +49,6 @@ Ejemplos de representación incluyen el uso de una cuenta oficial de
 correo electrónico, publicaciones en redes sociales con una cuenta
 oficial o participar en un evento online u offline como representante.
 
-## Aplicación
-
-Los casos de comportamiento abusivo, acosador o de otro modo
-inaceptable pueden ser reportados a las personas responsables del
-proyecto enviando un correo electrónico a la dirección institucional
-indicada en [SECURITY.md](SECURITY.md). Todas las quejas serán
-revisadas e investigadas de manera oportuna y justa.
-
-Las personas responsables del proyecto están obligadas a respetar la
-privacidad y la seguridad de quien reporte cualquier incidente.
 
 ## Directrices de aplicación
 
@@ -79,15 +56,6 @@ Las personas responsables seguirán estas Directrices de Impacto en la
 Comunidad para determinar las consecuencias de cualquier acción que
 consideren violatoria de este Código de Conducta:
 
-### 1. Corrección
-
-**Impacto en la comunidad**: Uso de lenguaje inapropiado u otro
-comportamiento considerado poco profesional o no bienvenido.
-
-**Consecuencia**: Advertencia privada y por escrito de las personas
-responsables, aclarando la naturaleza de la violación y explicando por
-qué el comportamiento fue inapropiado. Se puede solicitar una disculpa
-pública.
 
 ### 2. Advertencia
 
