@@ -1,6 +1,6 @@
 # Contribuir al Anonimizador Judicial
 
-¡Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
+Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
 preparar el entorno, abrir issues, mandar pull requests y mantener la
 calidad del detector.
 
@@ -11,13 +11,13 @@ público.
 ## Filosofía del proyecto
 
 - **100 % local.** Todo el procesamiento corre en `127.0.0.1`. No
-  agregamos llamadas a APIs externas ni dependencias de red en runtime.
+  agregamos llamadas a APIs externas ni dependencias de red en runtime. Esto puede parecer una obviedad, pero vale la pena aclarar. 
 - **Sin LLMs ni OCR.** La detección se basa en regex + Presidio + spaCy
   (modelo local). Si una mejora requiere modelos pesados o GPU, primero
-  abrí un issue para discutir si encaja.
+  abrí un issue para discutir si encaja. Nuestro objetivo era mantenerlo liviano para poder llegar a todo tipo de usuarios. Hemos realizado pruebas con LLM (Qween 2.5 y 3.0, obteniendo muy buenos resultados. La incorporación del LLM mejoro la detección de entidades y relaciones iniciales. 
 - **Pensado para juzgados, defensorías y estudios jurídicos.** La UI
   prioriza claridad sobre features, y el flujo respeta el control humano
-  (revisión, edición, exportación).
+  (revisión, edición, exportación). Este fue el objetivo inicial, puede ser (relativamente facil) adaptado a otros entornos. Se deberia tener en cuenta: modificación de etiquetas predeterminadas y la incorporacción de regex especificas al campo. 
 
 ## Setup de desarrollo
 
@@ -89,7 +89,7 @@ Casos típicos:
    feedback. Los cambios se mergean por *squash* para mantener el log
    limpio.
 
-## Áreas donde necesitamos ayuda
+## Áreas en las que estamos trabajando:
 
 - **Diccionarios.** Sumar variantes regionales de nombres, apellidos y
   fórmulas judiciales (`data/dictionaries/`). Nada de datos reales,
