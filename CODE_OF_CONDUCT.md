@@ -50,47 +50,11 @@ correo electrónico, publicaciones en redes sociales con una cuenta
 oficial o participar en un evento online u offline como representante.
 
 
-## Directrices de aplicación
+## Reporte
 
-Las personas responsables seguirán estas Directrices de Impacto en la
-Comunidad para determinar las consecuencias de cualquier acción que
-consideren violatoria de este Código de Conducta:
-
-
-### 2. Advertencia
-
-**Impacto en la comunidad**: Violación a través de un incidente único o
-una serie de acciones.
-
-**Consecuencia**: Advertencia con consecuencias por el comportamiento
-continuado. Sin interacción con las personas involucradas, incluida la
-interacción no solicitada con quienes hacen cumplir el Código de
-Conducta, durante un período de tiempo especificado. Esto incluye
-evitar interacciones en espacios de la comunidad y canales externos
-como redes sociales. La violación de estos términos puede llevar a una
-suspensión temporal o permanente.
-
-### 3. Suspensión temporal
-
-**Impacto en la comunidad**: Violación grave de los estándares de la
-comunidad, incluido el comportamiento inapropiado sostenido.
-
-**Consecuencia**: Suspensión temporal de cualquier tipo de interacción
-o comunicación pública con la comunidad durante un período de tiempo
-especificado. No se permite ninguna interacción pública o privada con
-las personas involucradas, incluida la interacción no solicitada con
-quienes hacen cumplir el Código de Conducta, durante este período. La
-violación de estos términos puede llevar a una prohibición permanente.
-
-### 4. Suspensión permanente
-
-**Impacto en la comunidad**: Patrón de violación de los estándares de la
-comunidad, incluido el comportamiento inapropiado sostenido, el acoso
-hacia un individuo, o la agresión o el menosprecio a clases de
-individuos.
-
-**Consecuencia**: Prohibición permanente de cualquier tipo de
-interacción pública dentro de la comunidad.
+Si presenciás o sufrís una conducta inaceptable, contactá de forma
+privada a la persona mantenedora del repositorio. Los reportes se
+tratan con discreción y se evalúa cada caso de buena fe.
 
 ## Atribución
 

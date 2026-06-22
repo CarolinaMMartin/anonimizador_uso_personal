@@ -1,6 +1,6 @@
-# Manual de usuario — Anonimizador académico de uso personal (IALAB)
+# Manual de usuario — Anonimizador Judicial
 
-**Versión:** 3.3.10
+Herramienta académica de uso personal (IALAB).
 
 ---
 
@@ -96,6 +96,8 @@ Dos pestañas:
 
 - Uso **personal y académico** (prototipo IALAB).
 - Procesamiento 100 % local.
+- Las sesiones viven **solo en memoria**: el texto del documento no se
+  guarda en disco y se pierde al cerrar la aplicación.
 - Revisá siempre antes de exportar: la detección automática **no es perfecta**.
 - No compartas el documento anonimizado sin revisar que no queden datos sensibles.
 
@@ -103,10 +105,18 @@ Dos pestañas:
 
 ## 7. Cerrar la aplicación
 
-1. Cerrá la pestaña del navegador
-2. Cerrá la ventana negra del servidor (o dejala abierta si seguís trabajando)
+La aplicación tiene dos partes: la pestaña del navegador y el programa
+que corre por detrás. **Cerrar solo la pestaña puede no detener el
+programa.**
 
-Para volver a usar: ejecutá de nuevo **`INICIAR.bat`**.
+Para cerrarlo del todo:
+
+1. Cerrá la pestaña del navegador.
+2. Abrí el Administrador de tareas (`Ctrl + Shift + Esc`).
+3. Buscá **`AnonimizadorJudicial-NLP.exe`** y elegí **Finalizar tarea**.
+
+Para volver a usar: ejecutá de nuevo **`INICIAR.bat`** (también cierra la
+copia anterior antes de abrir una nueva).
 
 ---
 

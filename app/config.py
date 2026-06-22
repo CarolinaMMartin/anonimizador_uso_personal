@@ -35,6 +35,9 @@ RESOURCE_DATA_DIR = BUNDLE_DIR / "data"
 DATA_DIR = app_dir() / "data"
 DB_PATH = DATA_DIR / "sessions.db"
 
+# Límite de tamaño para documentos cargados (protege la memoria del proceso)
+MAX_UPLOAD_BYTES = 40 * 1024 * 1024  # 40 MB
+
 # Umbrales de similitud (RapidFuzz)
 FUZZY_HIGH = 92
 FUZZY_MEDIUM = 85

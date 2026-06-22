@@ -1,0 +1,76 @@
+name: Build portable (Windows)
+
+# Construye el paquete portable de Windows y lo sube como artifact.
+# NO publica una GitHub Release automaticamente: la publicacion es manual
+# tras revisar el artifact (ver docs/RELEASE_CHECKLIST.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_suffix:
+        description: "Sufijo del ZIP (ej. v3.3.10-Windows-x64)"
+        required: true
+        default: "dev-Windows-x64"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build portable Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Download spaCy model (es_core_news_md)
+        run: python -m spacy download es_core_news_md
+
+      - name: Run tests
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Build portable package
+        run: python scripts/build_portable_full.py
+
+      - name: Portable smoke test
+        run: python scripts/test_portable_smoke.py
+
+      - name: Package release ZIP
+        shell: pwsh
+        run: |
+          $suffix = "${{ github.event.inputs.version_suffix }}"
+          if ([string]::IsNullOrWhiteSpace($suffix)) { $suffix = "${{ github.ref_name }}-Windows-x64" }
+          python scripts/package_release.py --suffix $suffix
+
+      - name: Compute SHA-256
+        shell: pwsh
+        run: |
+          Get-ChildItem dist/*.zip | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File "$($_.FullName).sha256" -Encoding ascii
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anonimizador-portable-windows
+          path: |
+            dist/*.zip
+            dist/*.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -1,6 +1,7 @@
 """Upload de documentos."""
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from app.config import MAX_UPLOAD_BYTES
 from app.extraction import extract_docx, extract_pdf
 from app.models.schemas import UploadResponse
 from app.models.store import store
@@ -17,6 +18,13 @@ async def upload_document(file: UploadFile = File(...)):
     data = await file.read()
     if not data:
         raise HTTPException(400, "Archivo vacío")
+    if len(data) > MAX_UPLOAD_BYTES:
+        limit_mb = MAX_UPLOAD_BYTES // (1024 * 1024)
+        raise HTTPException(
+            413,
+            f"El archivo supera el límite de {limit_mb} MB. "
+            "Dividilo o reducí su tamaño antes de cargarlo.",
+        )
 
     try:
         if name_lower.endswith(".docx"):

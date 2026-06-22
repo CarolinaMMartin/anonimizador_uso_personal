@@ -1,1 +1,1 @@
-"""Anonizador Uso Personal - aplicación local."""
+"""Anonimizador Judicial - aplicación local."""

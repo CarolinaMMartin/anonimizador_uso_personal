@@ -253,12 +253,26 @@ def write_launchers(pkg_dir: Path) -> None:
         exe_name = f"{DIST_NAME}.exe"
         (pkg_dir / "INICIAR.bat").write_text(
             f"""@echo off
-title Anonimizador IALAB
+title Anonimizador Judicial
 cd /d "%~dp0"
+
+REM Cerrar solo nuestra aplicacion si quedo abierta de antes
 taskkill /IM {exe_name} /F >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8787 ^| findstr LISTENING') do taskkill /F /PID %%a >nul 2>&1
-echo Iniciando Anonimizador IALAB...
-echo Abrira http://127.0.0.1:8787
+timeout /t 2 /nobreak >nul 2>&1
+
+REM Si el puerto 8787 sigue ocupado, lo usa OTRO programa: avisar y salir
+netstat -ano | findstr :8787 | findstr LISTENING >nul 2>&1
+if %errorlevel%==0 (
+  echo.
+  echo No se puede iniciar: el puerto 8787 esta siendo usado por otro programa.
+  echo Cerra ese programa y volve a ejecutar INICIAR.bat.
+  echo.
+  pause
+  exit /b 1
+)
+
+echo Iniciando Anonimizador Judicial...
+echo Se abrira http://127.0.0.1:8787 en el navegador.
 start "" "{exe_name}"
 """,
             encoding="ascii",
@@ -316,13 +330,16 @@ Requisitos
 ----------
 - Windows 10/11 (64 bits)
 - NO requiere Python ni Internet para funcionar
-- ~250–400 MB en disco
+- Espacio en disco: ver el dato indicado en la Release
 
 Instalación (3 pasos)
 ---------------------
-1. Descomprimir el ZIP completo en una carpeta fija.
+1. Clic derecho en el ZIP -> Extraer todo, en una carpeta fija.
 2. Doble clic en INICIAR.bat
 3. Se abre el navegador en http://127.0.0.1:8787
+
+Para cerrar del todo: finalizá AnonimizadorJudicial-NLP.exe desde el
+Administrador de tareas (cerrar solo el navegador puede no detenerlo).
 
 Verificación: VERIFICAR.bat o /health (presidio y spacy en true).
 
