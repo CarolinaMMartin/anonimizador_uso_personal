@@ -1,6 +1,7 @@
 # Anonimizador Judicial
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Última versión](https://img.shields.io/github/v/release/CarolinaMMartin/anonimizador_uso_personal?label=%C3%BAltima%20versi%C3%B3n)](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)
 [![Windows y macOS](https://img.shields.io/badge/Windows%20%7C%20macOS-disponible-blue.svg)](#descargar-la-aplicación)
 [![Procesamiento 100% local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad)
 
@@ -17,7 +18,7 @@ Elegí la versión correspondiente a tu equipo.
 
 ### Windows 10/11 — 64 bits
 
-[➜ Descargar ZIP para Windows — 129 MB](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
+[➜ Descargar ZIP para Windows](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
 
 Después de descargar:
 
@@ -38,12 +39,20 @@ Después de descargar:
 La aplicación se abre en el navegador, en <http://127.0.0.1:8787>.
 No requiere instalar Python ni usar una terminal.
 
+### Cómo saber si tenés la última versión
+
+La versión instalada aparece en la parte superior de la aplicación, junto
+al indicador **“100% local”**. Comparala con la insignia **“última
+versión”** que aparece al comienzo de este README o con la versión indicada
+en [Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest).
+Si coinciden, ya tenés la versión más reciente.
+
 > **No uses "Code → Download ZIP" (el botón verde de arriba).** Eso
 > descarga el código fuente, no la aplicación. Usá únicamente los enlaces
 > de descarga de esta sección.
 
 - Notas de versión y verificación SHA-256: <https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest>
-- Guía detallada para Windows: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
+- Guía de instalación: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
 - Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
 
 ---
