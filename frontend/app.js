@@ -1072,6 +1072,8 @@ async function handleClusterAction(btn) {
   }
 }
 
+let lastPreviewHighlights = [];
+
 async function loadPreview() {
   const res = await fetch(
     API + `/api/preview?session_id=${sessionId}&mode=${viewMode === 'anon' ? 'anon' : 'orig'}`
@@ -1079,27 +1081,73 @@ async function loadPreview() {
   if (!res.ok) return;
   const data = await res.json();
   docText = data.text;
-  if (viewMode === 'orig' && data.highlights) {
-    renderHighlighted(data.text, data.highlights);
+  if (viewMode === 'orig') {
+    lastPreviewHighlights = Array.isArray(data.highlights) ? data.highlights : [];
+    renderHighlighted(data.text, lastPreviewHighlights);
+    if (window.searchTool) window.searchTool.refresh();
   } else {
     $('docPreview').textContent = data.text;
   }
 }
 
-function renderHighlighted(text, highlights) {
-  let html = '';
-  let cursor = 0;
-  const sorted = [...highlights].sort((a, b) => a.start - b.start);
+function renderHighlighted(text, highlights, searchMatches, currentSearchIdx) {
+  const detHls = Array.isArray(highlights) ? [...highlights] : [];
+  detHls.sort((a, b) => a.start - b.start);
+  // Dedup solapamientos entre detecciones (mantiene el primero que aparece).
+  const cleanDet = [];
   let lastEnd = -1;
-  for (const h of sorted) {
+  for (const h of detHls) {
     if (h.start < lastEnd) continue;
-    html += escapeHTML(text.substring(cursor, h.start));
-    html += `<span class="hl hl-${h.cat}" title="${escapeHTML(h.placeholder)}">${escapeHTML(text.substring(h.start, h.end))}</span>`;
-    cursor = h.end;
+    cleanDet.push(h);
     lastEnd = h.end;
   }
-  html += escapeHTML(text.substring(cursor));
+  const matches = Array.isArray(searchMatches) ? searchMatches : [];
+
+  let html = '';
+  let cursor = 0;
+  for (const h of cleanDet) {
+    if (cursor < h.start) {
+      html += renderRangeWithSearch(text, cursor, h.start, matches, currentSearchIdx);
+    }
+    html +=
+      `<span class="hl hl-${h.cat}" title="${escapeHTML(h.placeholder)}">` +
+      renderRangeWithSearch(text, h.start, h.end, matches, currentSearchIdx) +
+      `</span>`;
+    cursor = h.end;
+  }
+  if (cursor < text.length) {
+    html += renderRangeWithSearch(text, cursor, text.length, matches, currentSearchIdx);
+  }
   $('docPreview').innerHTML = html;
+}
+
+// Renderiza [start, end) del texto sumando <mark> por cada coincidencia del buscador
+// que caiga dentro; recorta coincidencias que se solapan parcialmente con el rango.
+function renderRangeWithSearch(text, start, end, matches, currentSearchIdx) {
+  if (!matches || !matches.length) {
+    return escapeHTML(text.substring(start, end));
+  }
+  let out = '';
+  let cur = start;
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    if (m.end <= start) continue;
+    if (m.start >= end) break;
+    const mStart = Math.max(m.start, start);
+    const mEnd = Math.min(m.end, end);
+    if (mStart > cur) {
+      out += escapeHTML(text.substring(cur, mStart));
+    }
+    const cls =
+      i === currentSearchIdx ? 'search-match search-match-current' : 'search-match';
+    const idAttr = i === currentSearchIdx ? ' id="searchMatchCurrent"' : '';
+    out += `<mark class="${cls}"${idAttr}>${escapeHTML(text.substring(mStart, mEnd))}</mark>`;
+    cur = mEnd;
+  }
+  if (cur < end) {
+    out += escapeHTML(text.substring(cur, end));
+  }
+  return out;
 }
 
 function renderPreviewLocal() {
@@ -1561,6 +1609,288 @@ if ($('selCancelBtn')) {
 }
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') clearTextSelection();
+});
+
+// ——— Buscador tipo Ctrl+F del preview ———
+const searchTool = (() => {
+  const barEl = () => $('searchBar');
+  const inputEl = () => $('searchInput');
+  const countEl = () => $('searchCount');
+  const catEl = () => $('searchCat');
+  const anonBtnEl = () => $('searchAnonBtn');
+  const toggleBtnEl = () => $('openSearch');
+
+  let matches = [];
+  let currentIdx = -1;
+  let debounceHandle = null;
+  let isOpen = false;
+
+  const CAT_KEY = 'anon.searchCat';
+
+  function normalizeForSearch(s) {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // Mapea índices del texto normalizado (NFD sin marcas) a índices del texto original.
+  // Devuelve arrays paralelos: normText, mapStart[i] = índice original del char normalizado i,
+  // mapEnd[i] = índice original justo después del char normalizado i.
+  function buildNormMap(text) {
+    let normText = '';
+    const mapStart = [];
+    const mapEnd = [];
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const normCh = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      for (let j = 0; j < normCh.length; j++) {
+        mapStart.push(i);
+        mapEnd.push(i + 1);
+      }
+      normText += normCh;
+    }
+    return { normText, mapStart, mapEnd };
+  }
+
+  function computeMatches() {
+    const q = (inputEl()?.value || '').trim();
+    if (!q || !docText || viewMode !== 'orig') {
+      matches = [];
+      currentIdx = -1;
+      return;
+    }
+    const { normText, mapStart, mapEnd } = buildNormMap(docText);
+    const normQ = normalizeForSearch(q);
+    if (!normQ) {
+      matches = [];
+      currentIdx = -1;
+      return;
+    }
+    const out = [];
+    let from = 0;
+    while (true) {
+      const idx = normText.indexOf(normQ, from);
+      if (idx === -1) break;
+      const endIdx = idx + normQ.length - 1;
+      if (endIdx >= mapStart.length) break;
+      const startOrig = mapStart[idx];
+      const endOrig = mapEnd[endIdx];
+      if (endOrig > startOrig && (out.length === 0 || out[out.length - 1].start !== startOrig)) {
+        out.push({ start: startOrig, end: endOrig });
+      }
+      from = idx + Math.max(1, normQ.length);
+    }
+    matches = out;
+    if (matches.length === 0) {
+      currentIdx = -1;
+    } else if (currentIdx < 0 || currentIdx >= matches.length) {
+      currentIdx = 0;
+    }
+  }
+
+  function updateCount() {
+    const el = countEl();
+    if (!el) return;
+    if (!matches.length) {
+      el.textContent = inputEl()?.value ? '0 / 0' : '0 / 0';
+    } else {
+      el.textContent = `${currentIdx + 1} / ${matches.length}`;
+    }
+  }
+
+  function updateAnonBtn() {
+    const btn = anonBtnEl();
+    if (!btn) return;
+    btn.disabled = matches.length === 0 || viewMode !== 'orig';
+  }
+
+  function render() {
+    if (viewMode !== 'orig') return;
+    renderHighlighted(docText, lastPreviewHighlights, matches, currentIdx);
+    scrollCurrentIntoView();
+  }
+
+  function scrollCurrentIntoView() {
+    const el = document.getElementById('searchMatchCurrent');
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  function refresh() {
+    computeMatches();
+    updateCount();
+    updateAnonBtn();
+    if (isOpen) render();
+  }
+
+  function open() {
+    if (viewMode !== 'orig') {
+      $('viewOrig')?.click();
+    }
+    isOpen = true;
+    const bar = barEl();
+    if (bar) bar.hidden = false;
+    toggleBtnEl()?.classList.add('active');
+    setTimeout(() => {
+      const input = inputEl();
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 20);
+    refresh();
+  }
+
+  function close() {
+    isOpen = false;
+    const bar = barEl();
+    if (bar) bar.hidden = true;
+    toggleBtnEl()?.classList.remove('active');
+    matches = [];
+    currentIdx = -1;
+    updateCount();
+    updateAnonBtn();
+    if (viewMode === 'orig') {
+      renderHighlighted(docText, lastPreviewHighlights, [], -1);
+    }
+  }
+
+  function toggle() {
+    if (isOpen) close();
+    else open();
+  }
+
+  function next() {
+    if (!matches.length) return;
+    currentIdx = (currentIdx + 1) % matches.length;
+    updateCount();
+    render();
+  }
+
+  function prev() {
+    if (!matches.length) return;
+    currentIdx = (currentIdx - 1 + matches.length) % matches.length;
+    updateCount();
+    render();
+  }
+
+  function scheduleRefresh() {
+    if (debounceHandle) clearTimeout(debounceHandle);
+    debounceHandle = setTimeout(() => {
+      currentIdx = 0;
+      refresh();
+    }, 120);
+  }
+
+  async function anonymizeAll() {
+    if (!requireSession()) return;
+    if (!matches.length) {
+      showToast('No hay coincidencias para anonimizar', 'error');
+      return;
+    }
+    const q = (inputEl()?.value || '').trim();
+    if (!q || q.length < 2) {
+      showToast('Ingresá al menos 2 caracteres', 'error');
+      return;
+    }
+    const cat = catEl()?.value || 'PERSONA';
+    try {
+      localStorage.setItem(CAT_KEY, cat);
+    } catch (_) {}
+    const positions = matches.map((m) => ({
+      start: m.start,
+      end: m.end,
+      raw: docText.substring(m.start, m.end),
+    }));
+    const btn = anonBtnEl();
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(API + '/api/search-and-anonymize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          cat,
+          original: q,
+          positions,
+        }),
+      });
+      if (!res.ok) throw new Error(await parseApiError(res));
+      const data = await res.json();
+      detections = data.detections;
+      renderTable();
+      renderStatsFromDetections();
+      await loadPreview();
+      showToast(`Anonimizadas ${positions.length} coincidencias de "${q}"`, 'success');
+      const input = inputEl();
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      matches = [];
+      currentIdx = -1;
+      updateCount();
+      updateAnonBtn();
+    } catch (e) {
+      showToast(e.message, 'error');
+    } finally {
+      updateAnonBtn();
+    }
+  }
+
+  function init() {
+    const input = inputEl();
+    if (input) {
+      input.addEventListener('input', scheduleRefresh);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (e.shiftKey) prev();
+          else next();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          close();
+        }
+      });
+    }
+    $('searchNext')?.addEventListener('click', next);
+    $('searchPrev')?.addEventListener('click', prev);
+    $('searchClose')?.addEventListener('click', close);
+    $('openSearch')?.addEventListener('click', toggle);
+    $('searchAnonBtn')?.addEventListener('click', anonymizeAll);
+
+    const cat = catEl();
+    if (cat) {
+      try {
+        const saved = localStorage.getItem(CAT_KEY);
+        if (saved) cat.value = saved;
+      } catch (_) {}
+      cat.addEventListener('change', () => {
+        try {
+          localStorage.setItem(CAT_KEY, cat.value);
+        } catch (_) {}
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+        const preview = $('docPreview');
+        if (preview && (preview.offsetParent !== null) && !$('workspace').hidden) {
+          e.preventDefault();
+          open();
+        }
+      }
+    });
+  }
+
+  return { init, refresh, open, close, isOpen: () => isOpen };
+})();
+
+window.searchTool = searchTool;
+searchTool.init();
+
+// Cerrar el buscador cuando el usuario cambia a modo Anonimizado (no hay texto original).
+$('viewAnon')?.addEventListener('click', () => {
+  if (searchTool.isOpen()) searchTool.close();
 });
 
 $('resetAll').addEventListener('click', () => {

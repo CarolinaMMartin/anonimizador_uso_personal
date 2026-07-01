@@ -2,7 +2,7 @@
 import re
 
 from app.anonymize.placeholders import make_placeholder
-from app.models.schemas import Detection, Mention, Position, SessionState
+from app.models.schemas import Category, Detection, Mention, Position, SessionState
 
 
 def _next_mention_id(state: SessionState) -> str:
@@ -95,6 +95,114 @@ def add_manual_detection(
         enabled=True,
         positions=positions,
         mention_ids=[mention.id],
+        user_added=True,
+    )
+    state.detections.append(det)
+    return det
+
+
+def add_bulk_detection(
+    state: SessionState,
+    cat: Category,
+    original: str,
+    positions: list[Position],
+    placeholder: str | None = None,
+) -> Detection:
+    """Crea (o extiende) una detección a partir de posiciones ya calculadas.
+
+    Uso previsto: buscador del preview. El frontend hizo el matching
+    (insensible a acentos y a mayúsculas) sobre el texto del documento y
+    envía la lista completa de posiciones. Acá validamos, deduplicamos y
+    aplicamos la misma regla de "extender si ya existe una detección con
+    misma cat+original" que `add_manual_detection`.
+
+    A diferencia de `add_manual_detection`, no aplica el filtro
+    `is_valid_manual_detection`: cuando la persona escribe explícitamente
+    en el buscador ya declaró intención; ese filtro está pensado para
+    selecciones accidentales con el mouse.
+    """
+    text = state.doc_text
+    surface = original.strip()
+    if len(surface) < 2:
+        raise ValueError("El texto a anonimizar es demasiado corto (mínimo 2 caracteres)")
+
+    if not positions:
+        raise ValueError("No se recibieron coincidencias para anonimizar")
+
+    # Validar y deduplicar posiciones
+    seen: set[tuple[int, int]] = set()
+    clean_positions: list[Position] = []
+    for p in positions:
+        if p.start < 0 or p.end > len(text) or p.end <= p.start:
+            raise ValueError(f"Rango de texto inválido: {p.start}-{p.end}")
+        key = (p.start, p.end)
+        if key in seen:
+            continue
+        seen.add(key)
+        clean_positions.append(
+            Position(start=p.start, end=p.end, raw=text[p.start : p.end])
+        )
+
+    mention = Mention(
+        id=_next_mention_id(state),
+        cat=cat,
+        surface=surface,
+        start=clean_positions[0].start,
+        end=clean_positions[0].end,
+        norm=surface.lower(),
+        source_layer="manual",
+    )
+    state.mentions.append(mention)
+
+    key = f"{cat}||{surface.lower()}"
+    existing = next(
+        (
+            d
+            for d in state.detections
+            if f"{d.cat}||{d.original.strip().lower()}" == key
+        ),
+        None,
+    )
+    if existing:
+        existing_keys = {(p.start, p.end) for p in existing.positions}
+        for p in clean_positions:
+            if (p.start, p.end) not in existing_keys:
+                existing.positions.append(p)
+                existing_keys.add((p.start, p.end))
+        existing.mention_ids.append(mention.id)
+        if placeholder is not None:
+            clean = placeholder.strip()
+            if not clean:
+                raise ValueError("La sustitución no puede estar vacía")
+            existing.placeholder = clean
+            existing.manual_placeholder = True
+        return existing
+
+    counters: dict[str, int] = {}
+    for d in state.detections:
+        counters[d.cat] = counters.get(d.cat, 0) + 1
+    counters[cat] = counters.get(cat, 0) + 1
+    new_id = max((d.id for d in state.detections), default=-1) + 1
+
+    if placeholder is not None:
+        clean = placeholder.strip()
+        if not clean:
+            raise ValueError("La sustitución no puede estar vacía")
+        final_placeholder = clean
+        manual_ph = True
+    else:
+        final_placeholder = make_placeholder(cat, surface, counters[cat], state.label_mode)
+        manual_ph = False
+
+    det = Detection(
+        id=new_id,
+        cat=cat,
+        original=surface,
+        placeholder=final_placeholder,
+        enabled=True,
+        positions=clean_positions,
+        mention_ids=[mention.id],
+        manual_placeholder=manual_ph,
         user_added=True,
     )
     state.detections.append(det)
