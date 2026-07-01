@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Anonimizador académico · IALAB</title>
-  <link rel="stylesheet" href="/static/styles.css?v=22">
+  <link rel="stylesheet" href="/static/styles.css?v=23">
 </head>
 <body>
 <div class="app">
@@ -140,12 +140,59 @@
           <div class="card card-preview">
             <div class="card-head card-head-split">
               <h2>Vista previa</h2>
-              <div class="seg-control" role="tablist">
-                <button class="seg-btn active" id="viewOrig" type="button">Original</button>
-                <button class="seg-btn" id="viewAnon" type="button">Anonimizado</button>
+              <div class="preview-head-actions">
+                <button
+                  type="button"
+                  class="btn-icon preview-search-toggle"
+                  id="openSearch"
+                  aria-label="Buscar en el documento (Ctrl+F)"
+                  title="Buscar en el documento (Ctrl+F)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                <div class="seg-control" role="tablist">
+                  <button class="seg-btn active" id="viewOrig" type="button">Original</button>
+                  <button class="seg-btn" id="viewAnon" type="button">Anonimizado</button>
+                </div>
               </div>
             </div>
-            <p class="help-text preview-help">Modo <strong>Original</strong>: seleccioná texto para anonimizarlo manualmente. Modo <strong>Anonimizado</strong>: ves el resultado con los reemplazos aplicados.</p>
+            <p class="help-text preview-help">Modo <strong>Original</strong>: seleccioná texto o usá la <strong>lupa</strong> para anonimizar manualmente. Modo <strong>Anonimizado</strong>: ves el resultado con los reemplazos aplicados.</p>
+            <div class="search-bar" id="searchBar" hidden>
+              <div class="search-bar-row">
+                <input
+                  type="search"
+                  id="searchInput"
+                  class="search-input search-input-preview"
+                  placeholder="Buscar en el documento…"
+                  autocomplete="off"
+                  aria-label="Texto a buscar">
+                <span class="search-count" id="searchCount" aria-live="polite">0 / 0</span>
+                <button type="button" class="btn-icon" id="searchPrev" aria-label="Coincidencia anterior (Shift+Enter)" title="Anterior (Shift+Enter)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button type="button" class="btn-icon" id="searchNext" aria-label="Coincidencia siguiente (Enter)" title="Siguiente (Enter)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <span class="search-sep" aria-hidden="true"></span>
+                <select id="searchCat" class="sel-cat" aria-label="Categoría para anonimizar">
+                  <option value="PERSONA">Persona</option>
+                  <option value="DNI">DNI</option>
+                  <option value="CUIT">CUIT</option>
+                  <option value="EMPRESA">Empresa</option>
+                  <option value="EMAIL">Email</option>
+                  <option value="TELEFONO">Teléfono</option>
+                  <option value="DOMICILIO">Domicilio</option>
+                  <option value="PATENTE">Patente</option>
+                  <option value="EXPEDIENTE">Expediente</option>
+                  <option value="ORGANISMO">Organismo</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-primary" id="searchAnonBtn" disabled>Anonimizar todas</button>
+                <button type="button" class="btn-icon" id="searchClose" aria-label="Cerrar buscador (Esc)" title="Cerrar (Esc)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <p class="search-hint">Insensible a mayúsculas y acentos. Solo en el <strong>documento original</strong>.</p>
+            </div>
             <div class="preview-wrap">
               <div class="preview-body selectable-preview" id="docPreview"></div>
               <div class="selection-toolbar" id="selectionToolbar" hidden>
@@ -311,6 +358,6 @@
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="/static/app.js?v=21"></script>
+<script src="/static/app.js?v=22"></script>
 </body>
 </html>
