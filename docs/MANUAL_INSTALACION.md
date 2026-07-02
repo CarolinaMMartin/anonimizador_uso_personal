@@ -88,7 +88,7 @@ La parte superior de la aplicación muestra el estado del motor local y la
 versión instalada, por ejemplo:
 
 ```text
-100% local v3.3.10 · Presidio · spaCy
+100% local v3.3.11 · Presidio · spaCy
 ```
 
 Para una verificación técnica también podés abrir

@@ -104,7 +104,7 @@ python -m venv .venv
 pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
 .venv\Scripts\python scripts\build_portable_full.py
-.venv\Scripts\python scripts\package_release.py --suffix v3.3.10-Windows-x64
+.venv\Scripts\python scripts\package_release.py --suffix v3.3.11-Windows-x64
 ```
 
 ### macOS
@@ -115,7 +115,7 @@ source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 python scripts/install_nlp.py
 python scripts/build_portable_full.py
-python scripts/package_release.py --suffix v3.3.10-macOS
+python scripts/package_release.py --suffix v3.3.11-macOS
 ```
 
 El paquete generado queda en `dist/`. PyInstaller debe ejecutarse en el

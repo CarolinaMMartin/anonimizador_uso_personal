@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version_suffix:
-        description: "Sufijo del ZIP (ej. v3.3.10-Windows-x64)"
+        description: "Sufijo del ZIP (ej. v3.3.11-Windows-x64)"
         required: true
         default: "dev-Windows-x64"
   push:

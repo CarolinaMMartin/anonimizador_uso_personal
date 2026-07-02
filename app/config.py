@@ -6,7 +6,7 @@ from app.runtime_paths import app_dir, bundle_dir
 
 HOST = "127.0.0.1"
 PORT = 8787
-APP_VERSION = "3.3.10"
+APP_VERSION = "3.3.11"
 
 # Recursos embebidos (frontend, diccionarios en el bundle)
 BUNDLE_DIR = bundle_dir()

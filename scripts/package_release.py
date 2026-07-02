@@ -2,8 +2,8 @@
 
 Uso:
   python scripts/package_release.py
-  python scripts/package_release.py --suffix v3.3.10-Windows-x64
-  python scripts/package_release.py --suffix v3.3.10-macOS
+  python scripts/package_release.py --suffix v3.3.11-Windows-x64
+  python scripts/package_release.py --suffix v3.3.11-macOS
 
 Requisito: existir dist/AnonimizadorJudicial-NLP/ (build previo).
 """
@@ -155,8 +155,8 @@ def main() -> None:
         "--suffix",
         default="",
         help=(
-            "Sufijo opcional, por ejemplo v3.3.10-Windows-x64 o "
-            "v3.3.10-macOS"
+            "Sufijo opcional, por ejemplo v3.3.11-Windows-x64 o "
+            "v3.3.11-macOS"
         ),
     )
     args = parser.parse_args()

@@ -84,7 +84,7 @@ El usuario final **no ejecuta** estos comandos. Recibe el ZIP ya empaquetado.
 ```powershell
 .venv\Scripts\python scripts\install_nlp.py
 .venv\Scripts\python scripts\build_portable_full.py
-.venv\Scripts\python scripts\package_release.py --suffix PJ-v3.3.10
+.venv\Scripts\python scripts\package_release.py --suffix PJ-v3.3.11
 ```
 
 ---
