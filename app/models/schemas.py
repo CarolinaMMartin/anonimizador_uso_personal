@@ -161,3 +161,18 @@ class AnonymizedPreviewResponse(BaseModel):
 class ConfirmResponse(BaseModel):
     cluster: Cluster
     detections: list[Detection]
+
+
+class SearchAndAnonymizeRequest(BaseModel):
+    """Anonimización a partir del buscador del preview.
+
+    El frontend ya calculó `positions` (matching client-side sobre `doc_text`,
+    típicamente insensible a mayúsculas y a acentos). El backend solo valida,
+    deduplica y crea/extiende la detección.
+    """
+
+    session_id: str
+    cat: Category
+    original: str
+    positions: list[Position]
+    placeholder: str | None = None

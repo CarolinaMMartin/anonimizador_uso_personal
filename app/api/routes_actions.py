@@ -2,10 +2,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.models.schemas import Category
+from app.models.schemas import Category, SearchAndAnonymizeRequest
 from app.models.store import store
 from app.services.clusters import add_detections_to_cluster, create_cluster_from_detections
-from app.services.detections import add_manual_detection
+from app.services.detections import add_bulk_detection, add_manual_detection
 
 router = APIRouter(prefix="/api", tags=["actions"])
 
@@ -59,6 +59,24 @@ async def manual_detection(body: ManualDetectionBody):
     try:
         det = add_manual_detection(
             state, body.cat, body.start, body.end, body.original
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    store.save(state)
+    return {"detection": det, "detections": state.detections}
+
+
+@router.post("/search-and-anonymize")
+async def search_and_anonymize(body: SearchAndAnonymizeRequest):
+    """Anonimiza todas las coincidencias que envió el buscador del preview."""
+    state = store.get(body.session_id)
+    if not state:
+        raise HTTPException(404, "Sesión no encontrada. Volvé a cargar el documento.")
+    if not state.doc_text:
+        raise HTTPException(400, "No hay documento cargado")
+    try:
+        det = add_bulk_detection(
+            state, body.cat, body.original, body.positions, body.placeholder
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
