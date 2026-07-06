@@ -1,6 +1,6 @@
 # Contribuir al Anonimizador Judicial
 
-¡Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
+Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
 preparar el entorno, abrir issues, mandar pull requests y mantener la
 calidad del detector.
 
