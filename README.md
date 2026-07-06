@@ -100,7 +100,7 @@ Si coinciden, ya tenés la versión más reciente.
 ## Limitaciones
 
 - Solo procesa PDF **digital** (con texto seleccionable) o Word; no lee
-  PDF escaneados (imágenes).
+  PDF escaneados (imágenes). Para poder incorporar esta funcionalidad, se puede aregar un OCR. Se eligió matener esta opcion liviana. 
 - La detección automática **no es perfecta**: revisá siempre antes de
   exportar y no compartas un documento sin verificar que no queden datos
   sensibles.
@@ -161,10 +161,6 @@ Antes de mandar un PR leé:
 - [CONTRIBUTING.md](CONTRIBUTING.md) — setup, tests, estilo y áreas
   donde necesitamos ayuda.
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-
-Para reportar un bug usá la plantilla en *Issues → New issue*. **No
-incluyas datos personales reales** ni en issues ni en tests. Para temas
-de seguridad, ver [SECURITY.md](SECURITY.md).
 
 ---
 
