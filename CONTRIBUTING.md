@@ -4,9 +4,6 @@ Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
 preparar el entorno, abrir issues, mandar pull requests y mantener la
 calidad del detector.
 
-Antes de empezar, leé el [Código de Conducta](CODE_OF_CONDUCT.md). Para
-reportes de seguridad usá [SECURITY.md](SECURITY.md), no un issue
-público.
 
 ## Filosofía del proyecto
 
