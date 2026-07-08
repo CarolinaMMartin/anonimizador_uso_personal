@@ -26,7 +26,6 @@ Después de descargar:
 2. Abrí la carpeta extraída.
 3. Doble clic en **`INICIAR.bat`**.
 
-Manual de usuario, para que puedas explorar las funcionalidades: https://docs.google.com/document/d/1t6b5YhVHeYPvF67g9FQiOhXRq0xYIf17I-bfhhik9no/edit?tab=t.0
 
 ### macOS
 
@@ -55,7 +54,7 @@ Si coinciden, ya tenés la versión más reciente.
 
 - Notas de versión y verificación SHA-256: <https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest>
 - Guía de instalación: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
-- Cómo usar la herramienta: [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).
+- Cómo usar la herramienta:[Manual de usuario] (https://docs.google.com/document/d/1t6b5YhVHeYPvF67g9FQiOhXRq0xYIf17I-bfhhik9no/edit?tab=t.0)
 
 ---
 
