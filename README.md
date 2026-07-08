@@ -26,6 +26,8 @@ Después de descargar:
 2. Abrí la carpeta extraída.
 3. Doble clic en **`INICIAR.bat`**.
 
+Manual de usuario, para que puedas explorar las funcionalidades: https://docs.google.com/document/d/1t6b5YhVHeYPvF67g9FQiOhXRq0xYIf17I-bfhhik9no/edit?tab=t.0
+
 ### macOS
 
 [➜ Descargar ZIP para Mac](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Mac)
