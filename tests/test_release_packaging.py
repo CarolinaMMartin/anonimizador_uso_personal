@@ -11,7 +11,10 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 package = importlib.import_module('package_release')
 builder = importlib.import_module('build_portable_full')
 
-def test_release_zip_excludes_user_data_and_keeps_runtime_resources(tmp_path):
+def test_release_zip_excludes_user_data_and_keeps_runtime_resources(tmp_path, monkeypatch):
+    # Verify a Windows delivery on every CI host; the archive's launchers
+    # depend on its destination platform, not on the platform running pytest.
+    monkeypatch.setattr(package, 'required_launchers', lambda: ('INICIAR.bat', 'VERSION_APP.txt'))
     root = tmp_path / 'portable'
     files = {
         'VERSION_APP.txt': package.app_version(),
