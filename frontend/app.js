@@ -2,6 +2,98 @@
 const API = '';
 
 let activeAbort = null;
+let sessionGeneration = 0;
+let mutationTail = Promise.resolve();
+let reviewRevision = 0;
+let editorSnapshot = null;
+let previewSequence = 0;
+
+function sessionContext() {
+  return { id: sessionId, generation: sessionGeneration };
+}
+
+function assertCurrentSession(context) {
+  if (context.id !== sessionId || context.generation !== sessionGeneration) {
+    throw new DOMException('El documento cambió durante la operación.', 'AbortError');
+  }
+}
+
+// Serialize session mutations and reject responses belonging to a previous document.
+async function sessionFetch(url, options = {}, context = sessionContext()) {
+  const mutates = options.method && options.method !== 'GET';
+  const operation = async () => {
+    assertCurrentSession(context);
+    const res = await fetch(url, options);
+    assertCurrentSession(context);
+    if ((res.headers.get('content-type') || '').includes('application/json')) {
+      const data = await res.json();
+      assertCurrentSession(context);
+      res.json = async () => {
+        assertCurrentSession(context);
+        return data;
+      };
+    }
+    const readBlob = res.blob.bind(res);
+    res.blob = async () => {
+      const blob = await readBlob();
+      assertCurrentSession(context);
+      return blob;
+    };
+    return res;
+  };
+  if (!mutates) return operation();
+  const pending = mutationTail.then(operation);
+  mutationTail = pending.catch(() => {});
+  return pending;
+}
+
+function reviewChanged() {
+  reviewRevision += 1;
+}
+
+function applyReviewData(data) {
+  if (Array.isArray(data.detections)) {
+    detections = data.detections;
+    detections.forEach((d) => Object.assign(d, localEdits.get(d.id) || {}));
+  }
+  if (Array.isArray(data.clusters)) clusters = data.clusters;
+}
+
+function resetDocumentState() {
+  sessionGeneration += 1;
+  previewSequence += 1;
+  activeAbort?.abort();
+  activeAbort = null;
+  saveTimers.forEach((timer) => clearTimeout(timer));
+  saveTimers.clear();
+  pendingPatches.clear();
+  localEdits.clear();
+  pendingSaves.clear();
+  saveErrors.clear();
+  mutationTail = Promise.resolve();
+  sessionId = null;
+  currentDocName = '';
+  docText = '';
+  detections = [];
+  clusters = [];
+  lastPreviewHighlights = [];
+  reviewRevision = 0;
+  editorSnapshot = null;
+  viewMode = 'orig';
+  $('viewOrig').classList.add('active');
+  $('viewAnon').classList.remove('active');
+  $('docPreview').textContent = '';
+  $('editorText').value = '';
+  for (const id of ['statsRow', 'workspace', 'exportPanel', 'editorPanel']) $(id).hidden = true;
+  if (window.searchTool) {
+    window.searchTool.close();
+    $('searchInput').value = '';
+    window.searchTool.refresh();
+  }
+  hideSelectionToolbar();
+  setProcessBusy(false);
+  setActiveStep(1);
+}
 
 function beginRequest() {
   activeAbort?.abort();
@@ -9,8 +101,10 @@ function beginRequest() {
   return activeAbort.signal;
 }
 
-function endRequest() {
+function endRequest(signal) {
+  if (signal && activeAbort?.signal !== signal) return false;
   activeAbort = null;
+  return true;
 }
 
 function setProcessBusy(busy, label) {
@@ -18,7 +112,10 @@ function setProcessBusy(busy, label) {
   const analyzeBtn = $('analyzeBtn');
   if (cancelBtn) cancelBtn.hidden = !busy;
   if (analyzeBtn) analyzeBtn.disabled = busy || !sessionId;
-  if (busy && label) {
+  for (const id of ['workspace', 'exportPanel', 'editorPanel']) {
+    if ($(id)) $(id).inert = busy;
+  }
+  if (busy) {
     $('loader1')?.classList.add('show');
   } else {
     $('loader1')?.classList.remove('show');
@@ -26,15 +123,16 @@ function setProcessBusy(busy, label) {
 }
 
 async function cancelActiveProcess() {
+  const cancelledSession = sessionId;
   activeAbort?.abort();
   endRequest();
   setProcessBusy(false);
-  if (sessionId) {
+  if (cancelledSession) {
     try {
       await fetch(API + '/api/analyze/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ session_id: cancelledSession }),
       });
     } catch (_) {
       /* servidor puede estar ocupado; igual liberamos la UI */
@@ -126,6 +224,7 @@ function initReviewTabs() {
 }
 
 function showToast(msg, type = '') {
+  if (msg === 'El documento cambió durante la operación.') return;
   const t = $('toast');
   t.textContent = msg;
   t.className = 'toast show ' + type;
@@ -285,7 +384,7 @@ function mountGroupPicker(
 function selectionGroupItems() {
   const cat = $('selCat')?.value || 'PERSONA';
   const list = clusters
-    .filter((c) => c.cat === cat || c.cat === 'PERSONA' || cat === 'PERSONA')
+    .filter((c) => c.cat === cat)
     .map((c) => ({
       value: c.cluster_id,
       label: clusterOption(c).label,
@@ -310,7 +409,7 @@ function initSelectionGroupPicker() {
 }
 
 function clustersForDetection(det) {
-  return clusters.filter((c) => c.cat === det.cat || c.cat === 'PERSONA');
+  return clusters.filter((c) => c.cat === det.cat);
 }
 
 function isPlaceholderLike(s) {
@@ -349,7 +448,9 @@ function escapeHTML(s) {
   return String(s)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function getEnabledCategories() {
@@ -382,6 +483,8 @@ fileInput.addEventListener('change', (e) => {
 });
 
 async function handleFile(file) {
+  resetDocumentState();
+  const generation = sessionGeneration;
   const form = new FormData();
   form.append('file', file);
   $('fileInfo').classList.add('show');
@@ -395,6 +498,7 @@ async function handleFile(file) {
       throw new Error(err.detail || 'Error al cargar');
     }
     const data = await res.json();
+    if (generation !== sessionGeneration || signal.aborted) return;
     sessionId = data.session_id;
     currentDocName = file.name || 'documento';
     $('fileInfo').innerHTML =
@@ -407,8 +511,7 @@ async function handleFile(file) {
     $('fileInfo').innerHTML = 'Error: ' + escapeHTML(e.message);
     showToast(e.message, 'error');
   } finally {
-    endRequest();
-    setProcessBusy(false);
+    if (endRequest(signal)) setProcessBusy(false);
   }
 }
 
@@ -423,26 +526,40 @@ document.querySelectorAll('input[name="mode"]').forEach((r) => {
 // Analyze
 $('analyzeBtn').addEventListener('click', async () => {
   if (!sessionId) return;
+  const enabledCategories = getEnabledCategories();
+  if (!enabledCategories.length) {
+    showToast('Seleccioná al menos una categoría para analizar.', 'error');
+    return;
+  }
+  const context = sessionContext();
   const signal = beginRequest();
   setProcessBusy(true);
+  for (const id of ['workspace', 'exportPanel', 'editorPanel']) $(id).hidden = true;
   try {
-    const res = await fetch(API + '/api/analyze', {
+    await flushPendingSaves();
+    assertCurrentSession(context);
+    if (signal.aborted) return;
+    const res = await sessionFetch(API + '/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal,
       body: JSON.stringify({
         session_id: sessionId,
         label_mode: getLabelMode(),
-        enabled_categories: getEnabledCategories(),
+        enabled_categories: enabledCategories,
       }),
-    });
+    }, context);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || 'Error en análisis');
     }
     const data = await res.json();
-    detections = data.detections;
-    clusters = data.clusters;
+    if (signal.aborted) return;
+    applyReviewData(data);
+    reviewChanged();
+    editorSnapshot = null;
+    $('editorText').value = '';
+    $('editorPanel').hidden = true;
     renderStats(data.stats);
     renderTable();
     renderClusters();
@@ -461,8 +578,7 @@ $('analyzeBtn').addEventListener('click', async () => {
     if (e.name === 'AbortError') return;
     showToast(e.message, 'error');
   } finally {
-    endRequest();
-    setProcessBusy(false);
+    if (endRequest(signal)) setProcessBusy(false);
   }
 });
 
@@ -497,6 +613,10 @@ const CATEGORIES = [
 ];
 
 const saveTimers = new Map();
+const pendingPatches = new Map();
+const pendingSaves = new Set();
+const localEdits = new Map();
+const saveErrors = new Map();
 
 function normalizeForMatch(value) {
   return String(value || '')
@@ -509,27 +629,12 @@ function normalizeForMatch(value) {
     .toLowerCase();
 }
 
-function tokensForMatch(value) {
-  return normalizeForMatch(value)
-    .split(' ')
-    .filter((t) => t.length > 2 && !['de', 'del', 'la', 'las', 'los', 'y'].includes(t));
-}
-
 function looksSimilarDetection(a, b) {
   if (!a || !b || a.id === b.id || a.cat !== b.cat) return false;
-  const na = normalizeForMatch(a.original);
-  const nb = normalizeForMatch(b.original);
-  if (!na || !nb) return false;
-  if (na === nb || na.includes(nb) || nb.includes(na)) return true;
-  if (a.cat !== 'PERSONA') {
-    const da = na.replace(/\D/g, '');
-    const db = nb.replace(/\D/g, '');
-    return da && da === db;
-  }
-  const ta = tokensForMatch(a.original);
-  const tb = tokensForMatch(b.original);
-  const shared = ta.filter((t) => tb.includes(t));
-  return shared.length >= 2 || (shared.length === 1 && Math.min(ta.length, tb.length) <= 2);
+  // Use the reviewed/backend membership. A second name matcher here would
+  // bypass document-wide ambiguity checks and recreate surname bridges.
+  return Boolean(a.cluster_id && a.cluster_id === b.cluster_id &&
+    clusters.some((c) => c.cluster_id === a.cluster_id && c.cat === a.cat && c.status !== 'rejected'));
 }
 
 function categoryOptions(selected) {
@@ -540,16 +645,23 @@ function categoryOptions(selected) {
 
 async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true } = {}) {
   if (!requireSession()) return false;
+  const context = sessionContext();
   try {
-    const res = await fetch(API + `/api/detections/${detId}`, {
+    const res = await sessionFetch(API + `/api/detections/${detId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, ...patch }),
-    });
+    }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
-    detections = data.detections;
-    clusters = data.clusters;
+    const edits = localEdits.get(detId) || {};
+    for (const [key, value] of Object.entries(patch)) {
+      if (edits[key] === value) delete edits[key];
+    }
+    if (Object.keys(edits).length) localEdits.set(detId, edits);
+    else localEdits.delete(detId);
+    saveErrors.delete(detId);
+    applyReviewData(data);
     renderStatsFromDetections();
     if (refresh) {
       renderTable();
@@ -559,25 +671,48 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
     if (!quiet) showToast('Cambio guardado', 'success');
     return true;
   } catch (e) {
+    if (e.name === 'AbortError') return false;
+    if (context.id === sessionId && context.generation === sessionGeneration) {
+      saveErrors.set(detId, e.message);
+    }
     showToast(e.message, 'error');
     return false;
   }
 }
 
 function scheduleDetectionPatch(detId, patch) {
+  reviewChanged();
+  localEdits.set(detId, { ...(localEdits.get(detId) || {}), ...patch });
+  pendingPatches.set(detId, { ...localEdits.get(detId) });
   clearTimeout(saveTimers.get(detId));
   saveTimers.set(
     detId,
-    setTimeout(() => {
-      saveDetectionPatch(detId, patch);
-      saveTimers.delete(detId);
-    }, 450)
+    setTimeout(() => startPendingSave(detId), 450)
   );
 }
 
+function startPendingSave(detId) {
+  clearTimeout(saveTimers.get(detId));
+  saveTimers.delete(detId);
+  const patch = pendingPatches.get(detId);
+  if (!patch) return;
+  pendingPatches.delete(detId);
+  const pending = saveDetectionPatch(detId, patch);
+  pendingSaves.add(pending);
+  pending.finally(() => pendingSaves.delete(pending));
+}
+
 async function flushPendingSaves() {
-  if (!saveTimers.size) return;
-  await new Promise((resolve) => setTimeout(resolve, 520));
+  const context = sessionContext();
+  do {
+    for (const detId of [...pendingPatches.keys()]) startPendingSave(detId);
+    await Promise.all([...pendingSaves]);
+    await mutationTail;
+    assertCurrentSession(context);
+  } while (pendingPatches.size || pendingSaves.size);
+  if (saveErrors.size) {
+    throw new Error('Hay cambios sin guardar. Corregí o volvé a guardar las detecciones antes de exportar.');
+  }
 }
 
 function renderStats(stats) {
@@ -599,39 +734,11 @@ function renderStats(stats) {
     </div>`;
 }
 
-function applyLocalClusterAssign(detId, clusterValue) {
-  const d = detections.find((x) => x.id === detId);
-  if (!d) return false;
-
-  if (clusterValue === '__new__') {
-    const newId = `local_${Date.now()}`;
-    clusters.push({
-      cluster_id: newId,
-      cat: d.cat,
-      canonical_label: null,
-      placeholder: d.placeholder,
-      surfaces: [d.original],
-      mention_ids: [],
-      confidence: 'media',
-      status: 'suggested',
-      reasons: ['manual'],
-    });
-    d.cluster_id = newId;
-    return true;
-  }
-
-  const c = clusters.find((x) => x.cluster_id === clusterValue);
-  if (!c) return false;
-  if (!c.surfaces.includes(d.original)) c.surfaces.push(d.original);
-  d.cluster_id = clusterValue;
-  if (c.placeholder) d.placeholder = c.placeholder;
-  return true;
-}
-
 async function assignDetectionToCluster(detId, clusterValue) {
   if (!clusterValue || !requireSession()) return;
   try {
-    const res = await fetch(API + '/api/assign-cluster', {
+    await flushPendingSaves();
+    const res = await sessionFetch(API + '/api/assign-cluster', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -640,26 +747,19 @@ async function assignDetectionToCluster(detId, clusterValue) {
         cluster_id: clusterValue,
       }),
     });
-    if (!res.ok) {
-      if (applyLocalClusterAssign(detId, clusterValue)) {
-        renderClusters();
-        renderTable();
-        renderPreviewLocal();
-        showToast('Asignado localmente (reiniciá el servidor para guardar en sesión)', 'success');
-        return;
-      }
-      throw new Error(await parseApiError(res));
-    }
+    if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
-    clusters = data.clusters;
-    detections = data.detections;
+    applyReviewData(data);
+    reviewChanged();
     renderClusters();
     renderTable();
     await loadPreview();
     clearTextSelection();
     showToast('Agregado al grupo', 'success');
+    return true;
   } catch (e) {
     showToast(e.message, 'error');
+    return false;
   }
 }
 
@@ -706,22 +806,31 @@ function renderTable() {
     const id = parseInt(tr.dataset.id, 10);
     const d = detections.find((x) => x.id === id);
     tr.querySelector('.toggle-det').addEventListener('change', (e) => {
-      d.enabled = e.target.checked;
+      const current = detections.find((item) => item.id === id);
+      if (!current) return;
+      current.enabled = e.target.checked;
+      scheduleDetectionPatch(id, { enabled: current.enabled });
       renderPreviewLocal();
-      scheduleDetectionPatch(id, { enabled: d.enabled });
       renderStatsFromDetections();
     });
     tr.querySelector('.placeholder-input').addEventListener('input', (e) => {
-      d.placeholder = e.target.value;
-      d.manual_placeholder = true;
+      const current = detections.find((item) => item.id === id);
+      if (!current) return;
+      current.placeholder = e.target.value;
+      current.manual_placeholder = true;
+      scheduleDetectionPatch(id, { placeholder: current.placeholder });
       renderPreviewLocal();
-      scheduleDetectionPatch(id, { placeholder: d.placeholder });
     });
     tr.querySelector('.cat-select').addEventListener('change', async (e) => {
-      d.cat = e.target.value;
-      d.cluster_id = null;
-      const ok = await saveDetectionPatch(id, { cat: d.cat }, { refresh: true, quiet: false });
-      if (!ok) renderTable();
+      try {
+        await flushPendingSaves();
+        reviewChanged();
+        const ok = await saveDetectionPatch(id, { cat: e.target.value }, { refresh: true, quiet: false });
+        if (!ok) renderTable();
+      } catch (err) {
+        renderTable();
+        showToast(err.message, 'error');
+      }
     });
     tr.querySelector('.join-similar').addEventListener('click', async () => {
       await joinSimilarDetections(id);
@@ -744,28 +853,22 @@ function renderTable() {
       });
     }
     tr.querySelector('.delete-btn').addEventListener('click', async () => {
-      if (sessionId) {
-        try {
-          const res = await fetch(
-            API + `/api/detections/${id}?session_id=${sessionId}`,
-            { method: 'DELETE' }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            detections = data.detections;
-            clusters = data.clusters;
-          } else {
-            detections = detections.filter((x) => x.id !== id);
-          }
-        } catch {
-          detections = detections.filter((x) => x.id !== id);
-        }
-      } else {
-        detections = detections.filter((x) => x.id !== id);
+      if (!requireSession()) return;
+      try {
+        await flushPendingSaves();
+        const res = await sessionFetch(
+          API + `/api/detections/${id}?session_id=${sessionId}`,
+          { method: 'DELETE' }
+        );
+        if (!res.ok) throw new Error(await parseApiError(res));
+        applyReviewData(await res.json());
+        reviewChanged();
+        renderTable();
+        renderClusters();
+        await loadPreview();
+      } catch (err) {
+        showToast(err.message, 'error');
       }
-      renderTable();
-      renderClusters();
-      renderPreviewLocal();
     });
   });
 }
@@ -780,7 +883,7 @@ async function ensureDetectionCluster(detId) {
 }
 
 async function confirmClusterById(clusterId) {
-  const res = await fetch(
+  const res = await sessionFetch(
     API + `/api/clusters/${encodeURIComponent(clusterId)}/confirm?session_id=${encodeURIComponent(sessionId)}`,
     { method: 'POST' }
   );
@@ -788,7 +891,8 @@ async function confirmClusterById(clusterId) {
   const data = await res.json();
   const idx = clusters.findIndex((c) => c.cluster_id === clusterId);
   if (idx >= 0) clusters[idx] = data.cluster;
-  detections = data.detections;
+  applyReviewData(data);
+  reviewChanged();
 }
 
 async function joinSimilarDetections(detId) {
@@ -804,7 +908,7 @@ async function joinSimilarDetections(detId) {
   if (!targetCluster) return;
   try {
     for (const item of similar) {
-      await assignDetectionToCluster(item.id, targetCluster);
+      if (item.cluster_id !== targetCluster && !(await assignDetectionToCluster(item.id, targetCluster))) return;
     }
     await confirmClusterById(targetCluster);
   } catch (e) {
@@ -822,9 +926,11 @@ async function ignoreSimilarDetections(detId) {
   const det = detections.find((d) => d.id === detId);
   if (!det) return;
   const targets = [det, ...detections.filter((other) => looksSimilarDetection(det, other))];
+  reviewChanged();
   for (const item of targets) {
     item.enabled = false;
-    await saveDetectionPatch(item.id, { enabled: false });
+    const saved = await saveDetectionPatch(item.id, { enabled: false });
+    if (!saved) return;
   }
   renderTable();
   renderStatsFromDetections();
@@ -906,7 +1012,7 @@ function renderClusters() {
           .filter(
             (t) =>
               t.cluster_id !== sourceId &&
-              (t.cat === source.cat || t.cat === 'PERSONA' || source.cat === 'PERSONA')
+              t.cat === source.cat
           )
           .map((t) => clusterOption(t)),
       onPick: async (it) => {
@@ -919,7 +1025,8 @@ function renderClusters() {
 async function absorbClusterInto(targetId, sourceId) {
   if (!requireSession() || targetId === sourceId) return;
   try {
-    const res = await fetch(
+    await flushPendingSaves();
+    const res = await sessionFetch(
       API +
         `/api/clusters/${encodeURIComponent(targetId)}/absorb?session_id=${encodeURIComponent(sessionId)}`,
       {
@@ -930,8 +1037,8 @@ async function absorbClusterInto(targetId, sourceId) {
     );
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
-    clusters = data.clusters;
-    detections = data.detections;
+    applyReviewData(data);
+    reviewChanged();
     renderClusters();
     renderTable();
     await loadPreview();
@@ -945,7 +1052,7 @@ function detectionsNotInCluster(c) {
   const inCluster = new Set(c.surfaces.map((s) => s.trim().toLowerCase()));
   return detections.filter(
     (d) =>
-      (d.cat === c.cat || c.cat === 'PERSONA') &&
+      d.cat === c.cat &&
       !inCluster.has(d.original.trim().toLowerCase()) &&
       !d.cluster_id
   );
@@ -999,7 +1106,8 @@ async function handleClusterAction(btn) {
   const clusterId = btn.dataset.id;
   if (action === 'confirm') {
     try {
-      const res = await fetch(
+      await flushPendingSaves();
+      const res = await sessionFetch(
         API + `/api/clusters/${clusterId}/confirm?session_id=${sessionId}`,
         { method: 'POST' }
       );
@@ -1007,7 +1115,8 @@ async function handleClusterAction(btn) {
       const data = await res.json();
       const idx = clusters.findIndex((c) => c.cluster_id === clusterId);
       if (idx >= 0) clusters[idx] = data.cluster;
-      detections = data.detections;
+      applyReviewData(data);
+      reviewChanged();
       renderClusters();
       renderTable();
       await loadPreview();
@@ -1016,19 +1125,29 @@ async function handleClusterAction(btn) {
       showToast(e.message, 'error');
     }
   } else if (action === 'reject') {
-    clusters = clusters.filter((c) => c.cluster_id !== clusterId);
-    detections.forEach((d) => {
-      if (d.cluster_id === clusterId) d.cluster_id = null;
-    });
-    renderClusters();
-    renderTable();
-    showToast('Grupo rechazado', 'success');
+    try {
+      await flushPendingSaves();
+      const res = await sessionFetch(
+        API + `/api/clusters/${encodeURIComponent(clusterId)}/reject?session_id=${encodeURIComponent(sessionId)}`,
+        { method: 'POST' }
+      );
+      if (!res.ok) throw new Error(await parseApiError(res));
+      applyReviewData(await res.json());
+      reviewChanged();
+      renderClusters();
+      renderTable();
+      await loadPreview();
+      showToast('Grupo rechazado', 'success');
+    } catch (e) {
+      showToast(e.message, 'error');
+    }
   } else if (action === 'edit') {
     const c = clusters.find((x) => x.cluster_id === clusterId);
     const val = prompt('Nuevo placeholder:', c?.placeholder || '');
     if (!val) return;
     try {
-      const res = await fetch(
+      await flushPendingSaves();
+      const res = await sessionFetch(
         API + `/api/clusters/${clusterId}?session_id=${sessionId}`,
         {
           method: 'PATCH',
@@ -1040,6 +1159,8 @@ async function handleClusterAction(btn) {
       const data = await res.json();
       const idx = clusters.findIndex((c) => c.cluster_id === clusterId);
       if (idx >= 0) clusters[idx] = data.cluster;
+      applyReviewData(data);
+      reviewChanged();
       renderClusters();
       renderTable();
       await loadPreview();
@@ -1050,7 +1171,8 @@ async function handleClusterAction(btn) {
     const surface = btn.dataset.surface;
     if (!surface || !requireSession()) return;
     try {
-      const res = await fetch(
+      await flushPendingSaves();
+      const res = await sessionFetch(
         API + `/api/clusters/${encodeURIComponent(clusterId)}/remove-surface?session_id=${encodeURIComponent(sessionId)}`,
         {
           method: 'POST',
@@ -1060,8 +1182,8 @@ async function handleClusterAction(btn) {
       );
       if (!res.ok) throw new Error(await parseApiError(res));
       const data = await res.json();
-      clusters = data.clusters;
-      detections = data.detections;
+      applyReviewData(data);
+      reviewChanged();
       renderClusters();
       renderTable();
       await loadPreview();
@@ -1075,19 +1197,17 @@ async function handleClusterAction(btn) {
 let lastPreviewHighlights = [];
 
 async function loadPreview() {
-  const res = await fetch(
-    API + `/api/preview?session_id=${sessionId}&mode=${viewMode === 'anon' ? 'anon' : 'orig'}`
+  const sequence = ++previewSequence;
+  const res = await sessionFetch(
+    API + `/api/preview?session_id=${sessionId}&mode=orig`
   );
-  if (!res.ok) return;
+  if (!res.ok) throw new Error(await parseApiError(res));
   const data = await res.json();
+  if (sequence !== previewSequence) return;
   docText = data.text;
-  if (viewMode === 'orig') {
-    lastPreviewHighlights = Array.isArray(data.highlights) ? data.highlights : [];
-    renderHighlighted(data.text, lastPreviewHighlights);
-    if (window.searchTool) window.searchTool.refresh();
-  } else {
-    $('docPreview').textContent = data.text;
-  }
+  lastPreviewHighlights = Array.isArray(data.highlights) ? data.highlights : [];
+  renderPreviewLocal();
+  if (window.searchTool) window.searchTool.refresh();
 }
 
 function renderHighlighted(text, highlights, searchMatches, currentSearchIdx) {
@@ -1160,14 +1280,28 @@ function renderPreviewLocal() {
           replacements.push({ start: p.start, end: p.end, value: d.placeholder });
         });
       });
-    replacements.sort((a, b) => b.start - a.start);
+    replacements.sort((a, b) => a.start - b.start || b.end - a.end);
+    const clean = [];
+    for (const r of replacements) {
+      if (!Number.isInteger(r.start) || !Number.isInteger(r.end) ||
+          r.start < 0 || r.end > docText.length || r.end <= r.start) {
+        showToast('Hay posiciones inválidas. Volvé a analizar el documento.', 'error');
+        return;
+      }
+      const previous = clean[clean.length - 1];
+      if (previous && r.start < previous.end) previous.end = Math.max(previous.end, r.end);
+      else clean.push({ ...r });
+    }
     let out = docText;
-    replacements.forEach((r) => {
+    clean.reverse().forEach((r) => {
       out = out.substring(0, r.start) + r.value + out.substring(r.end);
     });
     $('docPreview').textContent = out;
   } else {
-    loadPreview();
+    lastPreviewHighlights = detections.filter((d) => d.enabled).flatMap((d) =>
+      d.positions.map((p) => ({ ...p, cat: d.cat, placeholder: d.placeholder }))
+    );
+    renderHighlighted(docText, lastPreviewHighlights);
   }
 }
 
@@ -1175,7 +1309,8 @@ $('viewOrig').addEventListener('click', () => {
   viewMode = 'orig';
   $('viewOrig').classList.add('active');
   $('viewAnon').classList.remove('active');
-  loadPreview();
+  renderPreviewLocal();
+  if (window.searchTool) window.searchTool.refresh();
 });
 $('viewAnon').addEventListener('click', () => {
   viewMode = 'anon';
@@ -1208,19 +1343,23 @@ function applyEditorPreviewStyle() {
 
 async function downloadExport(url, filename, payloadExtra = {}) {
   if (!requireSession()) throw new Error('Sesión perdida: cargá el documento de nuevo.');
+  const context = sessionContext();
   await flushPendingSaves();
+  assertCurrentSession(context);
+  if ('text' in payloadExtra) assertEditorCurrent();
   const body = {
     session_id: sessionId,
     use_confirmed_only: false,
     ...payloadExtra,
   };
-  const res = await fetch(url, {
+  const res = await sessionFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  });
+  }, context);
   if (!res.ok) throw new Error(await parseApiError(res));
   const blob = await res.blob();
+  if ('text' in payloadExtra) assertEditorCurrent();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -1229,17 +1368,33 @@ async function downloadExport(url, filename, payloadExtra = {}) {
 }
 
 async function openEditorPanel() {
+  if (!requireSession()) return;
+  const context = sessionContext();
   $('loaderPreview').classList.add('show');
   $('openEditorBtn').disabled = true;
   try {
-    const res = await fetch(API + '/api/export/preview', {
+    await flushPendingSaves();
+    assertCurrentSession(context);
+    const revision = reviewRevision;
+    if (editorSnapshot && editorSnapshot.generation === sessionGeneration &&
+        editorSnapshot.revision === revision) {
+      $('exportPanel').hidden = true;
+      $('editorPanel').hidden = false;
+      setActiveStep(4);
+      $('editorText').focus();
+      return;
+    }
+    if (editorSnapshot?.dirty && !confirm('Cambió la revisión. ¿Regenerar el texto y descartar las correcciones del editor?')) return;
+    const res = await sessionFetch(API + '/api/export/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, use_confirmed_only: false }),
-    });
+    }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
+    if (revision !== reviewRevision) throw new Error('La revisión cambió. Volvé a abrir el editor.');
     $('editorText').value = data.text || '';
+    editorSnapshot = { generation: sessionGeneration, revision, dirty: false };
     applyEditorPreviewStyle();
     $('exportPanel').hidden = true;
     $('editorPanel').hidden = false;
@@ -1253,6 +1408,17 @@ async function openEditorPanel() {
     $('openEditorBtn').disabled = false;
   }
 }
+
+function assertEditorCurrent() {
+  if (!editorSnapshot || editorSnapshot.generation !== sessionGeneration ||
+      editorSnapshot.revision !== reviewRevision) {
+    throw new Error('La revisión cambió. Volvé a revisión y abrí el editor antes de exportar.');
+  }
+}
+
+$('editorText').addEventListener('input', () => {
+  if (editorSnapshot) editorSnapshot.dirty = true;
+});
 
 function closeEditorPanel() {
   $('editorPanel').hidden = true;
@@ -1297,9 +1463,9 @@ $('exportPdf')?.addEventListener('click', async () => {
 });
 
 function buildMarkdownExport() {
+  assertEditorCurrent();
   const text = $('editorText')?.value || '';
-  const title = (currentDocName || 'documento').replace(/\.[^.]+$/, '').trim() || 'documento';
-  return `# ${title}\n\n${text}\n`;
+  return `# Documento anonimizado\n\n${text}\n`;
 }
 
 async function copyTextFallback(text) {
@@ -1323,7 +1489,14 @@ async function copyTextFallback(text) {
 }
 
 $('copyMdBtn')?.addEventListener('click', async () => {
-  const md = buildMarkdownExport();
+  let md;
+  try {
+    await flushPendingSaves();
+    md = buildMarkdownExport();
+  } catch (err) {
+    showToast(err.message, 'error');
+    return;
+  }
   if (!md.trim()) {
     showToast('No hay texto para copiar', 'error');
     return;
@@ -1451,59 +1624,6 @@ function hideSelectionToolbar() {
   if (bar) bar.hidden = true;
 }
 
-function applyLocalManualDetection(cat, sel) {
-  const text = sel.text.trim();
-  if (!text) return null;
-  const positions = [];
-  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(escaped, 'gi');
-  let m;
-  while ((m = re.exec(docText)) !== null) {
-    positions.push({ start: m.index, end: m.index + m[0].length, raw: m[0] });
-  }
-  if (!positions.length) {
-    positions.push({ start: sel.start, end: sel.end, raw: text });
-  }
-  const key = text.toLowerCase();
-  let det = detections.find(
-    (d) => d.cat === cat && d.original.trim().toLowerCase() === key
-  );
-  if (det) {
-    const seen = new Set(det.positions.map((p) => `${p.start}-${p.end}`));
-    positions.forEach((p) => {
-      const k = `${p.start}-${p.end}`;
-      if (!seen.has(k)) {
-        det.positions.push(p);
-        seen.add(k);
-      }
-    });
-    return det;
-  }
-  const counters = {};
-  detections.forEach((d) => {
-    counters[d.cat] = (counters[d.cat] || 0) + 1;
-  });
-  counters[cat] = (counters[cat] || 0) + 1;
-  const mode = getLabelMode();
-  const ph =
-    mode === 'gen'
-      ? `[${cat === 'PERSONA' ? 'NOMBRE' : cat}]`
-      : `[${cat}_${counters[cat]}]`;
-  const newId = detections.length ? Math.max(...detections.map((d) => d.id)) + 1 : 0;
-  det = {
-    id: newId,
-    cat,
-    original: text,
-    placeholder: ph,
-    enabled: true,
-    positions,
-    cluster_id: null,
-    user_added: true,
-  };
-  detections.push(det);
-  return det;
-}
-
 function clearTextSelection() {
   hideSelectionToolbar();
   const sel = window.getSelection();
@@ -1536,7 +1656,8 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
 
   try {
     let det = null;
-    const res = await fetch(API + '/api/manual-detection', {
+    await flushPendingSaves();
+    const res = await sessionFetch(API + '/api/manual-detection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1547,15 +1668,11 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
         original: sel.text,
       }),
     });
-    if (!res.ok) {
-      det = applyLocalManualDetection(cat, sel);
-      if (!det) throw new Error(await parseApiError(res));
-      detections = [...detections];
-    } else {
-      const data = await res.json();
-      detections = data.detections;
-      det = data.detection;
-    }
+    if (!res.ok) throw new Error(await parseApiError(res));
+    const data = await res.json();
+    applyReviewData(data);
+    reviewChanged();
+    det = data.detection;
 
     if (groupId && det) {
       await assignDetectionToCluster(det.id, groupId);
@@ -1804,7 +1921,8 @@ const searchTool = (() => {
     const btn = anonBtnEl();
     if (btn) btn.disabled = true;
     try {
-      const res = await fetch(API + '/api/search-and-anonymize', {
+      await flushPendingSaves();
+      const res = await sessionFetch(API + '/api/search-and-anonymize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1816,7 +1934,8 @@ const searchTool = (() => {
       });
       if (!res.ok) throw new Error(await parseApiError(res));
       const data = await res.json();
-      detections = data.detections;
+      applyReviewData(data);
+      reviewChanged();
       renderTable();
       renderStatsFromDetections();
       await loadPreview();
@@ -1895,17 +2014,7 @@ $('viewAnon')?.addEventListener('click', () => {
 
 $('resetAll').addEventListener('click', () => {
   if (!confirm('¿Descartar todo?')) return;
-  sessionId = null;
-  currentDocName = '';
-  detections = [];
-  clusters = [];
+  resetDocumentState();
   fileInput.value = '';
   $('fileInfo').classList.remove('show');
-  $('statsRow').hidden = true;
-  $('workspace').hidden = true;
-  $('exportPanel').hidden = true;
-  $('editorPanel').hidden = true;
-  $('analyzeBtn').disabled = true;
-  setActiveStep(1);
-  hideSelectionToolbar();
 });

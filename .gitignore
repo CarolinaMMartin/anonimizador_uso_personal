@@ -4,16 +4,17 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+pytest-cache-files-*/
 .mypy_cache/
 .ruff_cache/
 
 # Artefactos de build
 dist/
 build/
-C:/anon_build/
 dist/*.bak.*
 *.log
 *.exe
+/models/
 
 # Carpetas legacy / experimentales que NO se publican
 _archivo/

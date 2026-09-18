@@ -1,177 +1,86 @@
-# Manual de instalación — Anonimizador Judicial
+# Instalación — Anonimizador Judicial 3.3.12
 
-**Plataformas publicadas:** Windows 10/11 (64 bits) y macOS · **Uso:** personal / académico
+Aplicación portable de uso personal/académico. Esta entrega se verifica en
+**Windows 10/11 de 64 bits**. No requiere instalar Python ni conectarse a
+Internet para procesar documentos. En general no requiere administrador;
+pueden existir restricciones propias de tu equipo u organización.
 
-Esta es una **aplicación portable**: no es un instalador tradicional. No
-modifica tu sistema y, en general, **no requiere permisos de
-administrador** (salvo restricciones particulares de tu equipo o de tu
-organización).
+## Descargar y extraer
 
----
+1. Descargá AnonimizadorJudicial-Windows.zip desde la Release o recibí el ZIP
+   identificado como versión **3.3.12**.
+2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
+   escritura, por ejemplo Documentos\Anonimizador-3.3.12.
+3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
+   mezcles archivos _internal de versiones distintas.
 
-## 1. Qué recibís
+El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
+El tamaño y el SHA-256 de la descarga se informan junto a la entrega.
+**Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
 
-Descargás desde **Releases** el archivo correspondiente a tu sistema:
+## Iniciar y verificar
 
-- `AnonimizadorJudicial-Windows.zip` para Windows.
-- `AnonimizadorJudicial-Mac` para macOS.
+1. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
+2. El navegador abre la dirección indicada al iniciar. Usa 127.0.0.1:8787
+   o un puerto libre entre **8788 y 8796** si otra copia ocupa el primero.
+3. La cabecera debe indicar **100% local v3.3.12** y el estado de Presidio/spaCy.
 
-El tamaño exacto de cada descarga y el espacio que ocupa una vez extraída
-se informan en la Release correspondiente.
+Repetir INICIAR.bat vuelve a la instancia de esa misma carpeta. Las otras
+versiones siguen abiertas. Si el navegador no se abre, repetí el inicio o usá
+la dirección indicada en PUERTO_ACTUAL.txt dentro de esa carpeta.
 
-El paquete incluye el programa, el modelo local, los manuales y los avisos
-de licencia necesarios. No borres carpetas internas del paquete.
+**VERIFICAR.bat** comprueba esa instancia, aunque use otro puerto. En /health:
 
----
+- app_version: 3.3.12.
+- nlp_layers.presidio.available: true.
+- nlp_layers.spacy.available: true.
+- nlp_layers.dictionaries: catálogos disponibles y cantidades cargadas.
 
-## 2. Requisitos del equipo
+Para usarla, consultá el archivo MANUAL_USUARIO.md incluido junto a este manual.
 
-- Windows 10/11 de 64 bits o macOS.
-- Espacio libre en disco indicado en la Release.
-- Navegador web actual.
-- **No** requiere Python ni Internet para funcionar.
+## SmartScreen y antivirus
 
----
+La aplicación no tiene firma comercial. Si Windows muestra **Windows protegió
+tu PC**, verificá el origen de la descarga y su SHA-256; cuando corresponda,
+usá **Más información → Ejecutar de todas formas**. Si hay una política de
+tu organización, consultá a su responsable de sistemas.
 
-## 3. Instalación en Windows
+## Actualizar o cerrar
 
-### 3.1 Extraer el ZIP
+Para actualizar, guardá primero tus exportaciones. Extraé la nueva versión en
+otra carpeta y abrila desde allí. Los documentos abiertos en la copia anterior
+no se transfieren a la nueva; cada proceso tiene sesiones independientes.
 
-1. Descargá `AnonimizadorJudicial-Windows.zip` desde Releases.
-2. Clic derecho sobre el ZIP → **Extraer todo…**
-3. Elegí una carpeta fija, por ejemplo:
-   - `C:\Programas\Anonimizador\`
-   - o `Documentos\Anonimizador\`
-4. **No ejecutes el programa desde dentro del ZIP.** Primero hay que
-   extraerlo.
+Cerrar una pestaña del navegador puede dejar el programa funcionando. Para
+cerrarlo completamente, guardá tus exportaciones y finalizá
+AnonimizadorJudicial-NLP.exe desde el Administrador de tareas. Si hay varias
+copias, verificá su ruta para elegir la que corresponde. Al terminar el proceso
+se pierden sus sesiones en memoria.
 
-### 3.2 Abrir la aplicación
-
-1. Entrá a la carpeta extraída.
-2. Doble clic en **`INICIAR.bat`**.
-3. Se abre el navegador en <http://127.0.0.1:8787>.
-
-Durante el inicio puede aparecer brevemente una ventana; es normal y se
-cierra sola.
-
-### 3.3 Si aparece SmartScreen
-
-Windows puede mostrar el aviso “Windows protegió tu PC” porque la
-aplicación académica no tiene una firma comercial:
-
-1. Clic en **Más información**.
-2. Clic en **Ejecutar de todas formas**.
-
----
-
-## 4. Instalación en macOS
-
-1. Descargá **`AnonimizadorJudicial-Mac`** desde Releases.
-2. Descomprimí el archivo completo.
-3. Abrí la carpeta extraída.
-4. La primera vez, hacé clic derecho en **`INICIAR.command`** y elegí
-   **Abrir**.
-5. Confirmá nuevamente con **Abrir** si macOS muestra una advertencia.
-6. La aplicación se abre en <http://127.0.0.1:8787>.
-
-Si macOS bloquea la apertura, revisá **Configuración del Sistema →
-Privacidad y seguridad** y autorizá la aplicación descargada.
-
-No muevas `INICIAR.command` fuera de la carpeta extraída: necesita los
-demás archivos del paquete.
-
----
-
-## 5. Verificar funcionamiento y versión
-
-La parte superior de la aplicación muestra el estado del motor local y la
-versión instalada, por ejemplo:
-
-```text
-100% local v3.3.11 · Presidio · spaCy
-```
-
-Para una verificación técnica también podés abrir
-<http://127.0.0.1:8787/health> y comprobar:
-
-- `app_version`: versión instalada.
-- `presidio.available`: `true`.
-- `spacy.available`: `true`.
-
-Compará `app_version` con la **última versión** indicada en el README o en
-[GitHub Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest).
-Si coinciden, tenés la versión más reciente.
-
-En Windows también podés ejecutar `VERIFICAR.bat`; en macOS,
-`VERIFICAR.command`.
-
----
-
-## 6. Cómo cerrar completamente la aplicación
-
-Cerrar solo la pestaña del navegador puede no detener el programa que se
-ejecuta por detrás.
-
-### Windows
-
-1. Cerrá la pestaña del navegador.
-2. Abrí el **Administrador de tareas** (`Ctrl + Shift + Esc`).
-3. Buscá `AnonimizadorJudicial-NLP.exe`.
-4. Elegí **Finalizar tarea**.
-
-Volver a ejecutar `INICIAR.bat` también cierra una copia anterior del
-anonimizador antes de abrir una nueva.
-
-### macOS
-
-1. Cerrá la pestaña del navegador.
-2. Abrí **Monitor de Actividad**.
-3. Buscá `AnonimizadorJudicial-NLP`.
-4. Seleccionalo y elegí **Salir** o **Forzar salida**.
-
----
-
-## 7. Actualizar a una versión nueva
-
-1. Cerrá completamente la aplicación.
-2. Descargá otra vez el archivo correspondiente a tu sistema desde
-   Releases.
-3. Extraelo en **otra carpeta**.
-4. Abrí la aplicación desde la carpeta nueva.
-5. Verificá la versión mostrada en la parte superior.
-
-No abras dos versiones a la vez: ambas utilizan el puerto 8787.
-
----
-
-## 8. Problemas frecuentes
+## Problemas frecuentes
 
 | Problema | Solución |
-|----------|----------|
-| No abre el navegador | Abrí manualmente <http://127.0.0.1:8787> |
-| “Puerto en uso” | Cerrá otras copias del anonimizador y volvé a abrir |
-| Pantalla vieja o sin cambios | Usá la carpeta de la descarga más reciente |
-| Antivirus o macOS bloquean el programa | Autorizá la aplicación desde las opciones de seguridad del sistema |
-| `presidio` o `spacy` aparecen en `false` | Volvé a extraer el paquete completo |
-| El PDF no carga | Solo se admiten PDF digitales con texto seleccionable |
+|---|---|
+| No abre el navegador | Repetí INICIAR.bat o abrí la dirección de PUERTO_ACTUAL.txt. |
+| Puerto ocupado | INICIAR.bat busca otro. Si los diez puertos están ocupados, guardá y cerrá una copia que no necesites. |
+| Pantalla de una versión anterior | Iniciá desde la carpeta de la descarga nueva y verificá la versión en la cabecera. |
+| Falta el ejecutable o un archivo interno | Volvé a extraer el ZIP completo; revisá si el antivirus puso un archivo en cuarentena. |
+| Presidio o spaCy no disponibles | Volvé a extraer el paquete completo; deben conservarse _internal y models. |
+| No encuentra esta sesión | Cargá el documento otra vez: el proceso puede haberse cerrado o la página pertenecer a otra copia. |
+| PDF escaneado | Usá un PDF con texto digital o Word. Esta versión no incluye OCR. |
+| Archivo demasiado grande | El límite de carga es 40 MB. Dividilo o reducí su tamaño. |
 
----
+## Privacidad y licencia
 
-## 9. Privacidad
+La aplicación procesa los documentos en tu equipo, conserva las sesiones solo
+en memoria y no crea sessions.db. Los archivos que descargues se guardan
+donde vos elijas. El CSV de equivalencias incluye los datos originales.
 
-- Todo el procesamiento es **local** (`127.0.0.1`).
-- **No** se envían documentos ni datos a servidores externos.
-- **No** se requiere conexión a Internet.
-- Las sesiones viven **solo en memoria**: el texto del documento no se
-  guarda en disco y se pierde al cerrar la aplicación.
+Conservá LICENSE, NOTICE, THIRD_PARTY_NOTICES.txt, LICENSES,
+COMPLIANCE.md y models/es_core_news_md/LICENSE al compartir el portable.
 
----
+## macOS
 
-## 10. Licencias
-
-El paquete incluye componentes de terceros como Presidio, spaCy,
-pdfplumber y ReportLab.
-
-- Resumen: `THIRD_PARTY_NOTICES.txt`.
-- Textos legales: carpeta `LICENSES/`.
-- Informe de cumplimiento: `COMPLIANCE.md`.
+Este ZIP contiene un ejecutable Windows y no funciona en macOS. Los paquetes
+anteriores de macOS conservan su propia versión. Una entrega 3.3.12 para Mac
+necesita compilarse y verificarse en ese sistema antes de publicarse.

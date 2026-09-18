@@ -1,154 +1,42 @@
-# Guía de despliegue empaquetado (ZIP portable)
+# Construcción y distribución — 3.3.12
 
-Esta guía describe cómo construir y entregar el Anonimizador Judicial
-como una **aplicación portable**, lista para usuarios que no quieren o no
-pueden instalar Python, pip, spaCy ni otras dependencias.
+La entrega 3.3.12 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
 
-Hay descargas publicadas para:
+## Construcción
 
-- **Windows 10/11 de 64 bits**.
-- **macOS**.
-
-La versión vigente se obtiene de `APP_VERSION` en `app/config.py`, se
-muestra en la interfaz y también puede consultarse en
-<http://127.0.0.1:8787/health> mediante `app_version`.
-
-Para el flujo completo de publicación, ver
-[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
-
----
-
-## 1. Qué recibe el usuario final
-
-El usuario descarga desde GitHub Releases el archivo correspondiente a su
-sistema:
-
-| Plataforma | Archivo publicado | Inicio |
-|------------|-------------------|--------|
-| Windows | `AnonimizadorJudicial-Windows.zip` | `INICIAR.bat` |
-| macOS | `AnonimizadorJudicial-Mac` | `INICIAR.command` |
-
-El paquete descomprimido contiene el programa, el frontend, el modelo
-spaCy, los manuales y los avisos de licencias. No requiere instalar nada
-adicional.
-
-Contenido principal:
-
-| Elemento | Función |
-|----------|---------|
-| `INICIAR.bat` / `INICIAR.command` | Inicia la aplicación |
-| `VERIFICAR.bat` / `VERIFICAR.command` | Abre la verificación local |
-| `AnonimizadorJudicial-NLP.exe` o `AnonimizadorJudicial-NLP.app` | Aplicación empaquetada |
-| `_internal/` o contenido interno de la `.app` | Librerías embebidas |
-| `models/es_core_news_md/` | Modelo spaCy + licencia GPL-3.0 |
-| `LICENSE` | Apache 2.0 del código de la aplicación |
-| `NOTICE` | Copyright y nota de marca |
-| `THIRD_PARTY_NOTICES.txt` | Inventario de licencias |
-| `LICENSES/` | Textos completos de licencias de terceros |
-| `LEEME_INSTALACION.txt` | Inicio rápido |
-| `MANUAL_INSTALACION.md` | Instalación y problemas frecuentes |
-| `MANUAL_USUARIO.md` | Cómo usar la herramienta |
-
----
-
-## 2. Instalación del usuario
-
-### Windows
-
-1. Descomprimir el ZIP completo.
-2. Ejecutar `INICIAR.bat`.
-3. Abrir <http://127.0.0.1:8787> si el navegador no se abre solo.
-
-### macOS
-
-1. Descomprimir el archivo completo.
-2. La primera vez, hacer clic derecho en `INICIAR.command` → **Abrir**.
-3. Abrir <http://127.0.0.1:8787> si el navegador no se abre solo.
-
-No hay pasos de consola ni instalación de dependencias para el usuario
-final.
-
----
-
-## 3. Verificación posterior al empaquetado
-
-En cada plataforma:
-
-1. Abrir <http://127.0.0.1:8787/health>.
-2. Confirmar:
-   - `app_version` coincide con la Release.
-   - `presidio.available`: `true`.
-   - `spacy.available`: `true`.
-3. Probar sin conexión a Internet.
-4. Cargar un documento ficticio.
-5. Analizar, revisar y exportar a Word o PDF.
-6. Confirmar la presencia de:
-   - `THIRD_PARTY_NOTICES.txt`.
-   - licencia del modelo `es_core_news_md`.
-   - `NOTICE`.
-
-Checklist completo de cumplimiento: [COMPLIANCE.md](COMPLIANCE.md).
-
----
-
-## 4. Generación del paquete — desarrollo
-
-Estos comandos son para quienes mantienen o reutilizan el proyecto, no
-para usuarios finales.
-
-### Windows
+Desde la raíz del repositorio, con Python 3.11–3.13:
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt -r requirements-dev.txt
+.venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
+.venv\Scripts\python -m pytest tests -q
+node --test tests/frontend_session.test.cjs
+.venv\Scripts\python scripts\audit_repository.py
 .venv\Scripts\python scripts\build_portable_full.py
-.venv\Scripts\python scripts\package_release.py --suffix v3.3.11-Windows-x64
+.venv\Scripts\python -m pytest tests -q
+.venv\Scripts\python scripts\portable_smoke.py
+.venv\Scripts\python scripts\package_release.py --output dist/AnonimizadorJudicial-Windows.zip
 ```
 
-### macOS
+La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. Un modelo local válido evita volver a descargarlo. El programa empaquetado funciona sin conexión.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
-python scripts/install_nlp.py
-python scripts/build_portable_full.py
-python scripts/package_release.py --suffix v3.3.11-macOS
-```
+`build/` contiene archivos temporales de compilación y `dist/` el resultado generado; no son versiones independientes del código. La versión se obtiene de `APP_VERSION` en [config.py](../app/config.py) y figura en `VERSION_APP.txt`, la interfaz y `/health`.
 
-El paquete generado queda en `dist/`. PyInstaller debe ejecutarse en el
-mismo sistema operativo para el que se genera el portable.
+El constructor produce un paquete completo: ejecutable, frontend, diccionarios internos, modelo, lanzadores, manuales y licencias. El empaquetador rechaza un ejecutable con otra versión y genera un ZIP con carpeta interna versionada y un archivo SHA-256.
 
----
+## Verificación de la entrega
 
-## 5. Personalización y reutilización
+Probar el ZIP extraído en una carpeta nueva. Ejecutar `INICIAR.bat`; el lanzador muestra la dirección y busca un puerto libre entre 8787 y 8796. No cierra otras copias. En `/health`, verificar `app_version`, `nlp_layers.presidio.available` y `nlp_layers.spacy.available`. Verificar también carga, análisis, agrupación y exportaciones con documentos ficticios.
 
-Antes de redistribuir una versión derivada conviene revisar:
+Las pruebas de estructura del paquete se omiten antes de construirlo; después de construirlo deben ejecutarse sin omisiones. Para verificar otra carpeta, establecer `ANON_PKG_DIR`.
 
-- **Logo y marca:** el logo IALAB está en `frontend/logo-ialab.svg/.png`.
-  Quien no tenga autorización institucional debe reemplazarlo, conforme a
-  [NOTICE](../NOTICE).
-- **Canal de soporte:** adaptar los manuales a la persona u organización
-  que mantendrá el fork.
-- **Diccionarios locales:** pueden agregarse recursos propios en
-  `data/dictionaries/`.
-- **Regex específicos:** `regex_limpio_v2.json` puede extenderse sin
-  modificar el motor principal.
-- **Licencias:** conservar `LICENSE`, `NOTICE`,
-  `THIRD_PARTY_NOTICES.txt`, `LICENSES/` y la licencia del modelo spaCy.
+No distribuir documentos reales, equivalencias de usuarios, sesiones, bases de datos, registros, credenciales ni archivos de configuración personales. Los resultados de validación permanecen en `build/validation/`, fuera de Git y de la entrega.
 
----
+## Publicación y actualización
 
-## 6. Distribución y actualización
+Publicar el código en Git y el ZIP como adjunto de una Release; nunca incorporar ejecutables o modelos al historial. Conservar `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt`, `LICENSES/` y la licencia del modelo. Revisar las condiciones de marca en [NOTICE](../NOTICE) antes de reutilizar el logo.
 
-- Publicar los paquetes como archivos adjuntos de una GitHub Release, no
-  dentro del historial Git.
-- Indicar en cada Release la versión, plataforma, tamaño y SHA-256.
-- Mantener los nombres usados por los enlaces directos del README:
-  `AnonimizadorJudicial-Windows.zip` y `AnonimizadorJudicial-Mac`.
-- Para actualizar, el usuario descarga la versión nueva, la extrae en otra
-  carpeta y abre esa copia.
-- Ver [SECURITY.md](../SECURITY.md) para reportes de vulnerabilidades y
-  [MANUAL_INSTALACION.md](MANUAL_INSTALACION.md) para soporte básico.
+Para actualizar, extraer la nueva versión en otra carpeta y guardar las exportaciones antes de cerrar una sesión anterior. Las sesiones se mantienen en memoria y no migran entre procesos.
+
+Ver [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [COMPLIANCE.md](COMPLIANCE.md) y [MANUAL_INSTALACION.md](MANUAL_INSTALACION.md).

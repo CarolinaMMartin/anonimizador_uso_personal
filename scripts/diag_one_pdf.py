@@ -1,10 +1,9 @@
 import sys
+import argparse
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-PDF = Path(r"c:\Users\CarolinaM\Downloads\LC 4980-2025 - DICTAMEN FINAL-2.pdf")
 
 
 def log(msg: str) -> None:
@@ -12,12 +11,15 @@ def log(msg: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description='Diagnóstico local de extracción y análisis de un PDF.')
+    parser.add_argument('pdf', type=Path, help='Archivo PDF elegido por el usuario')
+    pdf = parser.parse_args().pdf
     from app.extraction.pdf import extract_pdf
     from app.detection.regex_ar import detect_regex_ar
     from app.detection.pipeline import run_detection
     from app.resolution.cluster import build_clusters
 
-    data = PDF.read_bytes()
+    data = pdf.read_bytes()
     log(f"file_mb={len(data)/1024/1024:.1f}")
 
     t0 = time.perf_counter()

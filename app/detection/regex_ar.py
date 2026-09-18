@@ -3,12 +3,13 @@ import re
 from dataclasses import dataclass
 
 from app.detection.dictionaries import (
-    SUFIJOS_EMPRESA,
     STOPWORDS_FRASE,
     get_apellidos,
     get_nombres,
 )
 from app.resolution.normalize import normalize_text
+from app.detection.organizations import company_spans, organism_spans
+from app.detection.person_context import actor_spans, signature_spans
 
 
 @dataclass
@@ -172,6 +173,35 @@ _PERSONA_LEGAL_PREFIX_RE = re.compile(
 # Caracteres no-nombre al inicio (puntuación, saltos de línea, slashes).
 _PERSONA_LEADING_PUNCT_RE = re.compile(r"^[\s,.;:\-/\\\"'()\[\]]+")
 
+# Narrative words terminate a candidate even in an all-uppercase document.
+# Dictionary anchors alone must never validate a complete sentence.
+PERSONA_BOUNDARY_WORDS = {
+    "solicita", "solicito", "solicitar", "declara", "declaro", "declarar",
+    "declararon", "manifiesta", "manifesto", "manifestaron", "comparece",
+    "comparecio", "presenta", "presento", "presentaron", "rechace", "demanda",
+    "afirma", "afirmo", "nego", "dispuso", "requiere", "requirio", "considera",
+    "considero", "expresa", "expreso", "informa", "informo", "denuncia",
+    "denuncio", "resuelve", "resolvio", "sentencia", "escrito", "medida",
+    "juzgado", "tribunal", "judicial", "nacional", "municipal", "provincial",
+    "que", "quien", "como", "se", "su", "sus", "ante", "contra", "sobre",
+    "para", "por", "con", "en", "fue", "ha", "habia", "poder",
+    "acierta", "sostiene", "sostuvo", "explico", "explica", "apeló", "apelo",
+}
+
+
+def trim_persona_tail(value: str) -> str:
+    """Stop before prose; allow lowercase catalog names and surname particles."""
+    anchors = get_nombres() | get_apellidos()
+    particles = {"de", "del", "la", "las", "los", "y", "e"}
+    for token in re.finditer(r"[^\W\d_]+(?:[-'][^\W\d_]+)*\.?", value):
+        word = token.group().rstrip(".")
+        norm = normalize_text(word)
+        if norm in PERSONA_BOUNDARY_WORDS or (
+            word.islower() and norm not in anchors and norm not in particles
+        ):
+            return value[:token.start()].rstrip(" ,.;:")
+    return value.rstrip(" ,.;:")
+
 
 def _trim_initial_nonname_token(value: str) -> tuple[str, int]:
     """Recorta el primer token cuando NO aparece en los diccionarios de
@@ -186,9 +216,15 @@ def _trim_initial_nonname_token(value: str) -> tuple[str, int]:
         return value, 0
     nombres = get_nombres()
     apellidos = get_apellidos()
-    first_norm = normalize_text(parts[0])
+    # "APELLIDO, NOMBRE" is a strong surname-order signal, including rare
+    # surnames absent from the dictionary. Never trim the surname as prose.
+    if parts[0].endswith(","):
+        return value, 0
+    first_norm = normalize_text(parts[0].strip(".,;:"))
     if first_norm in nombres or first_norm in apellidos:
         return value, 0
+    if first_norm not in PERSONA_BOUNDARY_WORDS:
+        return value, 0  # an unknown first name is not evidence of a prose prefix
     rest_norms = [normalize_text(p) for p in parts[1:]]
     has_name = any(p in nombres for p in rest_norms)
     has_surname = any(p in apellidos for p in rest_norms)
@@ -231,7 +267,7 @@ def _clean_persona_surface(original: str, start: int) -> tuple[str, int]:
     #    ("Acierta Silvia Palacio…", "Considera Juan Pérez…").
     value, skipped = _trim_initial_nonname_token(value)
     offset += skipped
-    return value.strip(), start + offset
+    return trim_persona_tail(value.strip()), start + offset
 
 
 def _detect_autos_parties(text: str) -> list[tuple[int, int, str]]:
@@ -259,19 +295,22 @@ def detect_regex_ar(text: str) -> list[RawItem]:
     items: list[RawItem] = []
     seen_ranges: list[tuple[int, int]] = []
 
-    def overlaps(a: tuple[int, int], b: tuple[int, int]) -> bool:
-        return a[0] < b[1] and b[0] < a[1]
-
     def add(cat: str, original: str, start: int, end: int, layer: str = "regex") -> bool:
         if cat == "PERSONA":
             original, start = _clean_persona_surface(original, start)
             end = start + len(original)
             if len(original.strip()) < 3:
                 return False
+        from app.detection.filters import is_valid_detection
+
+        if not is_valid_detection(cat, original, text, start):
+            return False
         r = (start, end)
-        for ex in seen_ranges:
-            if overlaps(r, ex):
+        for ex in items:
+            if cat == ex.cat and r == (ex.start, ex.end):
                 return False
+        # Categories are selected in the pipeline before resolving overlaps.
+        # A disabled category must not reserve and hide another category's span.
         seen_ranges.append(r)
         items.append(RawItem(cat=cat, original=original, start=start, end=end, source_layer=layer))
         return True
@@ -346,14 +385,8 @@ def detect_regex_ar(text: str) -> list[RawItem]:
             add("TELEFONO", raw, m.start(), m.end())
 
     # --- Empresas ---
-    empresa_re = re.compile(
-        rf"\b((?:[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ&\-\.]*\s+){{1,6}}{SUFIJOS_EMPRESA})\b",
-        re.IGNORECASE,
-    )
-    for m in empresa_re.finditer(text):
-        val = m.group(0).strip()
-        if len(val) >= 5:
-            add("EMPRESA", val, m.start(), m.end())
+    for start, end, val in company_spans(text):
+        add("EMPRESA", val, start, end)
 
     # --- Domicilios ---
     for start, end, val in _detect_domicilios(text):
@@ -395,18 +428,15 @@ def detect_regex_ar(text: str) -> list[RawItem]:
         add("EXPEDIENTE", m.group(0), m.start(), m.end())
 
     # --- Organismos judiciales ---
-    org_re = re.compile(
-        r"\b(?:Juzgado|Juz\.?|Fiscalía|Fiscalia|Defensoría|Defensoria|"
-        r"Tribunal|Cámara|Camara|Procuración|Procuracion|"
-        r"Ministerio Público|MPF|SCBA|CSJN|"
-        r"Unidad Fiscal|UF\s?\d+|Sala\s+[IVXLC\d]+)\s+"
-        r"(?:[A-ZÁÉÍÓÚÑ][\wáéíóúñÁÉÍÓÚÑ\s\.\-]+?)(?=[\.;,\n]|$)",
-        re.IGNORECASE,
-    )
-    for m in org_re.finditer(text):
-        val = m.group(0).strip()
-        if len(val) > 8:
-            add("ORGANISMO", val, m.start(), m.start() + len(val))
+    for start, end, val in organism_spans(text):
+        add("ORGANISMO", val, start, end)
+
+    # Explicit signatures identify names absent from the finite catalogs.
+    # Their exact repetitions, including inserted initials, are also personal data.
+    for start, end, val in signature_spans(text):
+        add("PERSONA", val, start, end, "signature")
+    for start, end, val in actor_spans(text):
+        add("PERSONA", val, start, end, "caratula")
 
     # --- Personas en carátulas/autos: "ACTOR c/ DEMANDADO s/ ..." ---
     for start, end, val in _detect_autos_parties(text):
@@ -454,8 +484,7 @@ def detect_regex_ar(text: str) -> list[RawItem]:
 
     # --- Personas: Sr./Sra. + apellido ---
     sr_re = re.compile(
-        r"\b(?:Sr|Sra|Srta)\.?[ \t]+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)\b",
-        re.IGNORECASE,
+        r"\b(?i:Sr|Sra|Srta|señor|señora)\.?\s+([A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)\b",
     )
     for m in sr_re.finditer(text):
         add("PERSONA", m.group(1), m.start(1), m.end(1), "ruler")

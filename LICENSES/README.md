@@ -1,18 +1,16 @@
 # Licencias de terceros
 
-Esta carpeta contiene textos de licencia para componentes incluidos o referenciados
-en el Anonimizador Judicial.
+Los textos de esta carpeta acompañan la distribución. Los avisos originales de cada componente prevalecen sobre los resúmenes.
 
-| Archivo | Componente |
+| Archivo | Referencia |
 |---------|------------|
-| `MIT.txt` | FastAPI, Presidio, spaCy (librería), RapidFuzz, python-docx, etc. |
-| `Apache-2.0.txt` | python-multipart, aiofiles |
-| `BSD-3-Clause.txt` | Uvicorn, NetworkX, NumPy (referencia) |
-| `GPL-3.0.txt` | Modelo spaCy `es_core_news_md` (copia de referencia; canonical: `models/es_core_news_md/LICENSE` en el portable) |
-| `BSD-3-Clause.txt` | ReportLab, Uvicorn, NetworkX |
+| MIT.txt | Componentes bajo MIT, incluidos FastAPI, Presidio y la librería spaCy |
+| Apache-2.0.txt | python-multipart y aiofiles |
+| BSD-3-Clause.txt | Componentes BSD; consultar también los avisos particulares |
+| GPL-3.0.txt | Referencia de la licencia del modelo spaCy |
 
-Resumen operativo: `../THIRD_PARTY_NOTICES.txt`  
-Informe para IT / Poder Judicial: `../docs/COMPLIANCE.md`
+En el portable, `models/es_core_news_md/LICENSE` contiene la licencia original del modelo. El constructor copia las licencias encontradas en las distribuciones instaladas a `LICENSES/third_party/` y genera `LICENSES/INVENTARIO_BUILD.json`, con nombres, versiones y rutas de esos avisos.
 
-En el paquete portable, las licencias de dependencias empaquetadas también figuran
-en `_internal/<paquete>.dist-info/licenses/`.
+El inventario corresponde al entorno de compilación y puede incluir herramientas de desarrollo. No reemplaza las licencias originales ni implica que todas las distribuciones del entorno se utilicen durante la ejecución.
+
+Consultar [THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt) y [COMPLIANCE.md](../docs/COMPLIANCE.md) en el repositorio. En la entrega portable, ambos archivos están en la raíz del paquete.

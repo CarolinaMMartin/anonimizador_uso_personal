@@ -1,181 +1,144 @@
 # Anonimizador Judicial
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Última versión](https://img.shields.io/github/v/release/CarolinaMMartin/anonimizador_uso_personal?label=%C3%BAltima%20versi%C3%B3n)](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)
-[![Windows y macOS](https://img.shields.io/badge/Windows%20%7C%20macOS-disponible-blue.svg)](#descargar-la-aplicación)
-[![Procesamiento 100% local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad)
+[![Licencia Apache 2.0](https://img.shields.io/badge/licencia-Apache_2.0-blue.svg)](LICENSE)
+[![Última versión publicada](https://img.shields.io/github/v/release/CarolinaMMartin/anonimizador_uso_personal?label=%C3%BAltima%20publicaci%C3%B3n)](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)
+[![Procesamiento local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad)
 
-Aplicación para anonimizar documentos judiciales argentinos (PDF / DOCX)
-con **procesamiento 100 % local**: detección por capas (regex + Presidio
-+ spaCy), revisión humana y exportación a Word, PDF y CSV. No envía nada
-a servidores externos.
+Aplicación de uso personal y académico para anonimizar documentos judiciales
+argentinos. Combina expresiones regulares, Microsoft Presidio y spaCy con
+revisión humana y exportación Word, PDF, CSV y Markdown. Los documentos se
+procesan en el equipo del usuario.
 
----
+**Versión del código: 3.3.12.** Cambios y limitaciones en
+[CHANGELOG.md](CHANGELOG.md). La versión publicada y los archivos disponibles
+para cada plataforma se consultan en [Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases).
 
-## Descargar la aplicación
+## Descargar y abrir
 
-Elegí la versión correspondiente a tu equipo.
+### Windows 10/11 de 64 bits
 
-### Windows 10/11 — 64 bits
+[Descargar el ZIP portable para Windows](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
 
-[➜ Descargar ZIP para Windows](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
+1. Descargá el ZIP desde Releases y elegí **Extraer todo**.
+2. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
+3. Verificá la versión que aparece junto al indicador **100% local**.
 
-Después de descargar:
-
-1. Clic derecho en el ZIP → **Extraer todo**.
-2. Abrí la carpeta extraída.
-3. Doble clic en **`INICIAR.bat`**.
-
+No requiere instalar Python ni conectarse a Internet para procesar documentos.
+El inicio usa 127.0.0.1:8787 o un puerto libre entre 8788 y 8796. Repetir el
+inicio abre la instancia de esa carpeta y conserva las otras copias abiertas.
+**VERIFICAR.bat** encuentra el puerto de esa misma versión.
 
 ### macOS
 
-[➜ Descargar ZIP para Mac](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Mac)
+La entrega 3.3.12 se verifica en Windows. Una compilación de macOS debe
+construirse y probarse en una Mac antes de publicarse. Las descargas anteriores
+de macOS permanecen en su [Release correspondiente](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/tag/v3.3.11)
+y conservan la versión de ese paquete.
 
-Después de descargar:
+**Code → Download ZIP** descarga los fuentes, no la aplicación portable.
+Instrucciones completas: [instalación](docs/MANUAL_INSTALACION.md) y
+[uso](docs/MANUAL_USUARIO.md).
 
-1. Descomprimí el archivo.
-2. Abrí la carpeta extraída.
-3. La primera vez, hacé clic derecho en **`INICIAR.command`** → **Abrir**.
+## Flujo de uso
 
-La aplicación se abre en el navegador, en <http://127.0.0.1:8787>.
-No requiere instalar Python ni usar una terminal.
-
-### Cómo saber si tenés la última versión
-
-La versión instalada aparece en la parte superior de la aplicación, junto
-al indicador **“100% local”**. Comparala con la insignia **“última
-versión”** que aparece al comienzo de este README o con la versión indicada
-en [Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest).
-Si coinciden, ya tenés la versión más reciente.
-
-> **No uses "Code → Download ZIP" (el botón verde de arriba).** Eso
-> descarga el código fuente, no la aplicación. Usá únicamente los enlaces
-> de descarga de esta sección.
-
-- Notas de versión y verificación SHA-256: <https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest>
-- Guía de instalación: [docs/MANUAL_INSTALACION.md](docs/MANUAL_INSTALACION.md).
-- Cómo usar la herramienta:[Manual de usuario](https://docs.google.com/document/d/1t6b5YhVHeYPvF67g9FQiOhXRq0xYIf17I-bfhhik9no/edit?tab=t.0)
-
----
-
-## Uso en tres pasos
-
-1. **Cargá** un documento Word (`.docx`) o PDF con texto seleccionable.
-2. **Analizá y revisá** las detecciones: podés activarlas, editarlas,
-   agrupar variantes o agregar datos a mano.
-3. **Exportá** el documento anonimizado a Word, PDF o la tabla CSV.
-
----
-
-## Requisitos
-
-- Windows 10/11 de 64 bits o macOS.
-- Un navegador actual (Edge, Chrome, Firefox o Safari).
-- No requiere Python, Internet ni permisos de administrador.
-
----
+1. Cargar un Word .docx o PDF digital con texto seleccionable, de hasta 40 MB.
+2. Elegir categorías y modo de sustitución, analizar y revisar los hallazgos.
+3. Confirmar las variantes que pertenecen a una misma identidad; las ambiguas
+   requieren revisar el contexto y pueden permanecer separadas.
+4. Abrir el editor, verificar el texto y exportar Word, PDF, CSV o Markdown.
 
 ## Funcionalidades
 
-- Carga de `.docx` o PDF digital (texto seleccionable).
-- Detección automática de personas, DNI, CUIT/CUIL, empresas, emails,
-  teléfonos, domicilios, patentes, expedientes y organismos.
-- Tres modos de etiquetado: categorizado (`[PERSONA_1]`), genérico
-  (`[NOMBRE]`) o iniciales (`J.P.G.`).
-- Revisión humana: cambiar tipo, editar la sustitución, unir variantes
-  similares y agregar detecciones manualmente.
-- Editor final para retocar texto y formato antes de exportar.
-- Exportación a Word, PDF, CSV de equivalencias y Markdown.
+- Personas, DNI, CUIT/CUIL, empresas, emails, teléfonos, domicilios, patentes,
+  expedientes y organismos. Expedientes se desactiva por defecto en la interfaz.
+- Nombres en mayúsculas, tildes, firmas, compuestos, orden con coma e iniciales.
+- Búsqueda de referencias cortas a partir de nombres completos detectados en
+  el documento, incluidos apellidos fuera del catálogo.
+- Propuestas de identidad con control de ambigüedad, confirmación, separación y
+  rechazo; las variantes confirmadas comparten su sustitución.
+- Edición de tipos y sustituciones, activación de filas y agregado manual desde
+  la selección o la búsqueda de texto en la vista previa.
+- Tres modos: categorizado ([PERSONA_1]), genérico ([NOMBRE]) e iniciales.
+- Extracción Word de párrafos, tablas, encabezados y pies; PDF digital y mixto.
+- Editor final con formato y exportaciones coherentes con la revisión guardada.
 
----
+La búsqueda a partir de una **persona ingresada por el usuario** es una
+propuesta para una próxima versión; no forma parte de 3.3.12. Ver
+[el diseño pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md).
 
 ## Privacidad
 
-- El procesamiento ocurre **íntegramente en tu equipo** (`127.0.0.1`).
-- No hay llamadas a servicios en la nube, ni seguimiento de uso.
-- Las sesiones viven **solo en memoria**: el texto del documento no se
-  guarda en disco y se pierde al cerrar la aplicación.
-
----
+- El servidor escucha solamente en 127.0.0.1.
+- El procesamiento no llama a servicios en la nube ni usa CDN o telemetría.
+- La instancia de uso personal conserva las sesiones **solo en memoria**;
+  no crea una base SQLite ni guarda el texto extraído en disco.
+- Cerrar la pestaña del navegador puede dejar el proceso abierto. Al terminar
+  ese proceso se pierden sus sesiones: guardá las exportaciones antes de cerrarlo.
+- Word, PDF, CSV y Markdown descargados son archivos que el usuario guarda.
+  El CSV de equivalencias contiene datos originales y debe tratarse como tal.
 
 ## Limitaciones
 
-- Solo procesa PDF **digital** (con texto seleccionable) o Word; no lee
-  PDF escaneados (imágenes). Para poder incorporar esta funcionalidad, se puede aregar un OCR. Se eligió matener esta opcion liviana. 
-- La detección automática **no es perfecta**: revisá siempre antes de
-  exportar y no compartas un documento sin verificar que no queden datos
-  sensibles.
-- Las versiones publicadas para usuarios están disponibles para Windows
-  y macOS.
+- No incluye OCR: las páginas de un PDF sin texto digital se omiten. Word con
+  texto en imágenes, dibujos, notas o revisiones pendientes requiere verificación.
+- La detección es heurística y necesita revisión antes de compartir el resultado.
+- Las referencias aprendidas requieren un nombre completo detectado como
+  evidencia; no identifican automáticamente menciones ambiguas.
+- Las exportaciones reconstruyen el texto y no conservan el diseño original.
+  La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
+  interlineado, alineación y márgenes se aplican a ambos formatos.
+- Las ediciones del editor no se vuelven a analizar ni cambian el CSV.
 
----
+## Desarrollo
 
-## Documentación para desarrolladores
-
-Requisitos: **Python 3.11+** (las dependencias fijadas del build
-verificado requieren 3.11 o superior). Windows recomendado si vas a
-generar el paquete portable; macOS / Linux sirven para desarrollo y tests.
+Python 3.11–3.13. La entrega Windows se valida con Python 3.13.15 de 64 bits.
 
 ```powershell
 git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
 cd anonimizador_uso_personal
 python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt -r requirements-dev.txt
-.venv\Scripts\python scripts\install_nlp.py
-.venv\Scripts\python scripts\run_dev.py
+.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+.venv\Scripts\python.exe scripts\install_nlp.py
+.venv\Scripts\python.exe scripts\run_dev.py
 ```
 
-Abrí <http://127.0.0.1:8787>. Verificá las capas NLP en
-<http://127.0.0.1:8787/health>: `presidio` y `spacy` deben aparecer en
-`true`.
+En macOS/Linux, usar .venv/bin/python. También hay lanzadores de desarrollo
+INICIAR_DESARROLLO.bat y INICIAR_DESARROLLO.sh. Estos conservan los procesos
+abiertos y eligen un puerto disponible. Se puede especificar ANON_PORT.
 
-En Windows podés usar el lanzador de desarrollo `INICIAR_DESARROLLO.bat`
-(macOS / Linux: `INICIAR_DESARROLLO.sh`). El nombre `INICIAR.bat` queda
-reservado para el paquete portable.
-
-Para correr los tests:
+La respuesta de /health informa app_version, frontend_dir y nlp_layers.
+Los estados son nlp_layers.presidio.available, nlp_layers.spacy.available y
+nlp_layers.dictionaries; no campos booleanos en la raíz de la respuesta.
 
 ```powershell
-.venv\Scripts\python -m pytest tests/ -v
+.venv\Scripts\python.exe -m pytest tests -q
+node --test tests/frontend_session.test.cjs
+.venv\Scripts\python.exe scripts\audit_repository.py
 ```
 
-Generar y publicar el paquete portable: ver
-[docs/DEPLOY.md](docs/DEPLOY.md) y
-[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+Los tests de estructura del portable se omiten si todavía no se compiló.
+Después del build deben ejecutarse con ANON_PKG_DIR apuntando al paquete;
+la entrega exige que pasen sin omisiones. Node solo se usa para pruebas.
 
-### Arquitectura
+Arquitectura: FastAPI/Uvicorn; HTML/CSS/JavaScript locales; regex + Presidio +
+spaCy es_core_news_md; identidad personal por estructura y candidatos únicos;
+similitud RapidFuzz y grafo NetworkX para otras categorías; pdfplumber para
+leer PDF y ReportLab/python-docx para exportar.
 
-- **FastAPI** en `127.0.0.1:8787` (solo localhost).
-- **Frontend** HTML / CSS / JS sin CDN (fuentes del sistema).
-- **Detección por capas:** regex argentinos, Microsoft Presidio + spaCy
-  (`es_core_news_md`) y un catálogo externo `regex_limpio_v2.json`.
-- **PDF:** pdfplumber (lectura) + ReportLab (export).
-- **Resolución:** RapidFuzz + grafo (NetworkX) + panel de revisión.
+Para compilar y publicar: [DEPLOY.md](docs/DEPLOY.md) y
+[RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md). Dependencias fijadas en
+requirements.txt y requirements-dev.txt; inventario del entorno Windows
+en [docs/dependencies-frozen.txt](docs/dependencies-frozen.txt).
 
----
+## Contribuciones y licencias
 
-## Contribuciones
+Ver [CONTRIBUTING.md](CONTRIBUTING.md) y [SECURITY.md](SECURITY.md).
 
-Antes de mandar un PR leé:
+- Código: [Apache 2.0](LICENSE).
+- Componentes: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) y [LICENSES](LICENSES/).
+- Modelo spaCy: GPL-3.0, incluido con su licencia en el portable; sus pesos
+  permanecen fuera del historial Git.
+- Logo y nombre IALAB: marcas institucionales sujetas a [NOTICE](NOTICE).
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, tests, estilo y áreas
-  donde necesitamos ayuda.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-
----
-
-## Licencia
-
-- **Código de la aplicación:** Apache 2.0 (ver [LICENSE](LICENSE)).
-- **Componentes de terceros:** [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt)
-  y [LICENSES/](LICENSES/).
-- **Modelo spaCy `es_core_news_md`:** GPL-3.0; se incluye solo en el
-  paquete portable, no en el código fuente.
-- **Logo y nombre IALAB:** marcas institucionales, **no cubiertas** por
-  la licencia Apache 2.0 (ver [NOTICE](NOTICE)).
-
----
-
-Desarrollado por **IALAB** — Laboratorio de Innovación e Inteligencia
-Artificial, Facultad de Derecho, Universidad de Buenos Aires.
+Desarrollado por IALAB — Laboratorio de Innovación e Inteligencia Artificial,
+Facultad de Derecho, Universidad de Buenos Aires.

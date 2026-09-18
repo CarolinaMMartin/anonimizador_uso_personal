@@ -19,16 +19,18 @@ async def cancel_analyze(req: CancelRequest):
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_document(req: AnalyzeRequest):
+def analyze_document(req: AnalyzeRequest):
     state = store.get(req.session_id)
     if not state:
         raise HTTPException(404, "Sesión no encontrada")
     if not state.doc_text:
         raise HTTPException(400, "No hay documento cargado")
 
+    if req.enabled_categories == []:
+        raise HTTPException(400, "Seleccioná al menos una categoría para analizar.")
     state.label_mode = req.label_mode
-    if req.enabled_categories:
-        state.enabled_categories = req.enabled_categories
+    # None explicitly restores defaults instead of keeping an earlier subset.
+    state.enabled_categories = req.enabled_categories or []
 
     try:
         result = run_full_analysis(state)

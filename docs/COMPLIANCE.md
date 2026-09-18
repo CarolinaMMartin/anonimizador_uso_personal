@@ -1,92 +1,31 @@
-# Cumplimiento legal y de licencias — Anonimizador Judicial
+# Licencias y privacidad — 3.3.12
 
-Versión de referencia: ver `app_version` en `/health`.
+Revisión técnica de la distribución: 18 de septiembre de 2026. Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
 
----
+## Código, marca y terceros
 
-## 1. Resumen ejecutivo
+El código del proyecto se distribuye con [LICENSE](../LICENSE), Apache 2.0. [NOTICE](../NOTICE) contiene avisos de autoría y condiciones de uso de la marca institucional. La licencia del código no concede autorización para usar marcas.
 
-| Aspecto | Estado en build estándar |
-|---------|--------------------------|
-| Procesamiento de datos | 100 % local (`127.0.0.1`), sin APIs en la nube |
-| Conexión a Internet en runtime | **No requerida** (UI sin CDN; Presidio sin tldextract/red) |
-| Datos personales en el ZIP | **No** (sin `sessions.db` ni documentos de ejemplo) |
-| Componentes copyleft | **Modelo spaCy (GPL-3.0)** |
-| PDF | **pdfplumber (MIT) + ReportLab (BSD)** |
-| Licencias de terceros | `THIRD_PARTY_NOTICES.txt` + carpeta `LICENSES/` |
+[THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt) enumera las dependencias principales fijadas en `requirements.txt`. El portable conserva textos de referencia en `LICENSES/` y copias de avisos originales de las distribuciones instaladas en `LICENSES/third_party/`.
 
-**Titularidad:** confirmar con IALAB/UBA (ver `LICENSE` en la raíz).
+`LICENSES/INVENTARIO_BUILD.json` identifica versiones y archivos de licencia del entorno de compilación. Puede incluir herramientas de desarrollo; no afirma que todas esas herramientas se ejecuten dentro del portable. Las versiones completas del entorno validado se documentan en [dependencies-frozen.txt](dependencies-frozen.txt).
 
----
+## Modelo local
 
-## 2. Tabla de cumplimiento por componente
+El paquete incluye `es_core_news_md` 3.8.0. Su licencia GPL-3.0 está en `models/es_core_news_md/LICENSE`, junto con su configuración y metadatos. Se conserva sin modificar. `LICENSES/GPL-3.0.txt` es una copia de referencia. La librería spaCy tiene licencia MIT; la licencia del modelo es independiente.
 
-| Componente / licencia | Qué requiere | Qué hacemos | Dónde queda |
-|----------------------|--------------|-------------|-------------|
-| **MIT / BSD / Apache** | Conservar aviso de licencia | `LICENSES/` + `THIRD_PARTY_NOTICES.txt` | Raíz + ZIP portable |
-| **FastAPI, Presidio, spaCy lib., NetworkX, RapidFuzz, python-docx, pdfplumber, reportlab, Uvicorn, Pydantic** | Aviso permisivo | Listados como terceros | Informe + portable |
-| **Modelo `es_core_news_md` (GPL-3.0)** | Aviso GPL al redistribuir binario + modelo | `LICENSES/GPL-3.0.txt` | Portable + docs |
-| **PyInstaller** | Herramienta de build | Solo desarrollo | `THIRD_PARTY_NOTICES.txt` |
-| **Diccionarios JSON propios** | Documentar autoría | `data/README.md` | Repo + ZIP |
-| **Logo / marca IALAB** | Autorización institucional | Pendiente IALAB | Manual |
-| **Fuentes** | Sin CDN | Fuentes del sistema | `frontend/styles.css` |
-| **SQLite / sessions.db** | Privacidad | No se distribuye | Manual §7 |
-| **Frontend propio** | Titularidad | `LICENSE` | Repo |
+PyInstaller se utiliza para construir el ejecutable y tiene licencia GPL con excepción para su bootloader; conservar sus avisos originales incluidos en el inventario.
 
----
+## Funcionamiento y datos
 
-## 3. Modelo spaCy GPL-3.0
+El servidor escucha en `127.0.0.1`. El análisis utiliza regex, Presidio y spaCy local. No hay OCR, LLM, servicios externos de IA ni telemetría.
 
-El portable incluye `models/es_core_news_md/` (~40 MB). Licencia **GPL-3.0**.
+Las sesiones y documentos cargados permanecen en memoria del proceso. El programa no crea automáticamente una base SQLite para guardar sesiones. Al cerrar la copia se pierde la sesión; las exportaciones guardadas por el usuario permanecen en disco. El almacenamiento SQLite auxiliar existe para desarrollo y no forma parte del flujo normal.
 
-Texto completo incluido en el paquete: **`models/es_core_news_md/LICENSE`** (no editar).
-Copia de referencia adicional: `LICENSES/GPL-3.0.txt`.
+La entrega excluye sesiones, bases de datos, documentos de usuarios, equivalencias y registros. El CSV exportado contiene los valores originales: requiere el mismo cuidado que el documento de origen. Un texto anonimizado necesita revisión humana antes de compartirse.
 
----
+La interfaz no utiliza CDN ni fuentes web. Presidio tiene desactivado su `EmailRecognizer`; los correos se detectan mediante regex. `app/detection/presidio_offline.py` configura tldextract con un snapshot local. [test_presidio_offline.py](../tests/test_presidio_offline.py) comprueba que esta capa no solicita recursos de red.
 
-## 4. Componentes runtime del paquete 
+Descargar dependencias y el modelo durante la preparación del entorno requiere Internet; el portable validado funciona sin conexión.
 
-- Motor: FastAPI + Uvicorn (localhost)
-- Detección: **regex AR + Presidio + spaCy**
-- Extracción PDF: **pdfplumber** (MIT)
-- Export: **python-docx** (MIT), **ReportLab** (BSD)
-- Resolución: RapidFuzz, NetworkX
-- UI: HTML/CSS/JS propio
-- Diccionarios + modelo spaCy
-
-No hay OCR, LLM local, ni APIs externas de IA.
-
-### Presidio y red (tldextract) 
-
-Por defecto, el `EmailRecognizer` de Presidio usa `tldextract`, que en su
-primera invocación intenta descargar la Public Suffix List desde
-`publicsuffix.org` ([Presidio #1205](https://github.com/microsoft/presidio/issues/1205)).
-Esto rompía la promesa de "procesamiento 100 % local" en redes aisladas. Esto es solo una advertencia para los desarrolladores. Del publicado ya fue eliminado. 
-
-**Mitigación aplicada desde v3.3.9 (vigente):**
-- `EmailRecognizer` **removido** del analyzer Presidio.
-- Emails detectados por **regex AR** + catálogo (`RGX_EMAIL`).
-- `tldextract` forzado a usar un snapshot local embebido
-  (`app/detection/presidio_offline.py`) que bloquea cualquier llamada a
-  red.
-- Test de regresión: `tests/test_presidio_offline.py` verifica que ni
-  `tldextract` ni `presidio_analyzer` intenten resolver `publicsuffix.org`.
-
-Se conserva esta nota como **decisión de diseño documentada**: si alguien
-en un fork reactiva el `EmailRecognizer`, debe revisar también
-`presidio_offline.py` para no reintroducir la fuga de red.
-
-
-## 5. Generación del paquete *(solo desarrollo; no aplica al usuario final)*
-
-El usuario final **no ejecuta** estos comandos. Recibe el ZIP ya empaquetado.
-
-```powershell
-.venv\Scripts\python scripts\install_nlp.py
-.venv\Scripts\python scripts\build_portable_full.py
-.venv\Scripts\python scripts\package_release.py --suffix PJ-v3.3.11
-```
-
----
-
-*Última revisión: junio 2026*
+Ver [DEPLOY.md](DEPLOY.md) y [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) para construcción y distribución.

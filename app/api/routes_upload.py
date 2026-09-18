@@ -15,7 +15,9 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(400, "Nombre de archivo requerido")
 
     name_lower = file.filename.lower()
-    data = await file.read()
+    if not name_lower.endswith((".docx", ".pdf")):
+        raise HTTPException(400, "Formato no admitido. Usá .docx o .pdf")
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
     if not data:
         raise HTTPException(400, "Archivo vacío")
     if len(data) > MAX_UPLOAD_BYTES:
@@ -31,8 +33,8 @@ async def upload_document(file: UploadFile = File(...)):
             text = extract_docx(data)
         elif name_lower.endswith(".pdf"):
             text = extract_pdf(data)
-        else:
-            raise HTTPException(400, "Formato no admitido. Usa .docx o .pdf")
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
     except Exception as e:

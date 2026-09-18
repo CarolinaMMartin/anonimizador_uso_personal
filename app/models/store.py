@@ -1,4 +1,4 @@
-"""Almacenamiento en memoria (MVP1) y SQLite (MVP2)."""
+"""Sesiones en memoria, con almacenamiento SQLite opcional para otros usos."""
 import json
 import sqlite3
 import uuid

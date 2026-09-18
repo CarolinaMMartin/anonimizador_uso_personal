@@ -46,6 +46,8 @@ class Detection(BaseModel):
     positions: list[Position] = Field(default_factory=list)
     mention_ids: list[str] = Field(default_factory=list)
     cluster_id: str | None = None
+    source_layers: list[str] = Field(default_factory=list)
+    cluster_confirmed: bool = False
     manual_placeholder: bool = False
     user_added: bool = False
 

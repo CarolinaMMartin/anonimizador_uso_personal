@@ -1,4 +1,4 @@
-"""Capa Presidio (MVP2) - analyzer con NLP en español y recognizers AR.
+"""Capa Presidio: analyzer con NLP en español y recognizers AR.
 
 Requiere (ver https://microsoft.github.io/presidio/installation/):
   pip install presidio-analyzer presidio-anonymizer spacy
@@ -146,14 +146,14 @@ def presidio_status() -> dict:
         return {"available": False, "error": str(e)}
 
 
-def detect_presidio(text: str) -> list[RawItem]:
+def detect_presidio(text: str, session_id: str | None = None) -> list[RawItem]:
+    from app.detection.text_chunks import iter_text_chunks
+    from app.services.analysis_cancel import check_cancel
+
     analyzer = _get_analyzer()
-    # Presidio recomienda chunks en textos muy largos
-    chunk_size = 100_000
     items: list[RawItem] = []
-    offset = 0
-    while offset < len(text):
-        chunk = text[offset : offset + chunk_size]
+    for offset, chunk in iter_text_chunks(text):
+        check_cancel(session_id)
         results = analyzer.analyze(
             text=chunk,
             language="es",
@@ -184,5 +184,4 @@ def detect_presidio(text: str) -> list[RawItem]:
                     source_layer="presidio",
                 )
             )
-        offset += chunk_size
     return items

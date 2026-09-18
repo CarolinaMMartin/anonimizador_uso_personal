@@ -1,127 +1,41 @@
 # Contribuir al Anonimizador Judicial
 
-Gracias por interesarte en mejorar el proyecto! Esta guía resume cómo
-preparar el entorno, abrir issues, mandar pull requests y mantener la
-calidad del detector.
+El proyecto procesa documentos localmente con regex, Presidio y spaCy. Mantener el control del usuario sobre las detecciones, agrupaciones y exportaciones, y utilizar únicamente ejemplos ficticios en código, tests, Issues y documentación.
 
+## Entorno
 
-## Filosofía del proyecto
-
-- **100 % local.** Todo el procesamiento corre en `127.0.0.1`. No
-  agregamos llamadas a APIs externas ni dependencias de red en runtime.
-- **Sin LLMs ni OCR en la configuración base.** La detección se basa en
-  regex + Presidio + spaCy (modelo local) para mantener una instalación
-  liviana que llegue a todo tipo de usuarios. Hicimos pruebas
-  experimentales con modelos de lenguaje (Qwen 2.5 y 3.0) que mejoraron
-  la detección y la vinculación de entidades. Su incorporación futura
-  debería evaluarse como una extensión opcional, no como dependencia
-  obligatoria: si una mejora requiere modelos pesados o GPU, primero abrí
-  un issue para discutir si encaja.
-- **Pensado para juzgados, defensorías y estudios jurídicos.** La UI
-  prioriza claridad sobre features, y el flujo respeta el control humano
-  (revisión, edición, exportación). Este fue el objetivo inicial, pero
-  puede adaptarse con relativa facilidad a otros entornos; habría que
-  tener en cuenta la modificación de etiquetas predeterminadas y la
-  incorporación de regex específicas al campo.
-
-## Setup de desarrollo
-
-Requisitos: **Python 3.11 o superior** y, opcionalmente, Windows si vas
-a generar el `.exe` portable.
+Python 3.11–3.13. La entrega Windows 3.3.12 se verifica con Python 3.13.15. Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
 
 ```powershell
-git clone <url-del-fork>
-cd anonimizador_uso_personal
 python -m venv .venv
-.venv\Scripts\activate          # Windows
-# source .venv/bin/activate     # macOS / Linux
-pip install -r requirements.txt -r requirements-dev.txt
-python scripts/install_nlp.py   # descarga es_core_news_md (~40 MB)
-python scripts/run_dev.py       # levanta http://127.0.0.1:8787
+.venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
+.venv\Scripts\python scripts\install_nlp.py
+.venv\Scripts\python scripts\run_dev.py
 ```
 
-`requirements.txt` tiene las dependencias de runtime; `requirements-dev.txt`
-suma `pytest` y `pyinstaller` (sólo necesarias para correr la suite y
-generar el ZIP portable).
+En macOS/Linux usar `.venv/bin/python`. El instalador utiliza el modelo fijo 3.8.0; el inicio busca un puerto disponible e informa la dirección. En `/health`, las capas se consultan en `nlp_layers.presidio.available` y `nlp_layers.spacy.available`.
 
-Verificá las capas NLP en <http://127.0.0.1:8787/health>: `presidio` y
-`spacy` deben aparecer en `true`.
-
-## Tests
-
-Cualquier cambio sobre detectores, filtros o exportadores debe incluir
-tests. La suite usa **pytest**:
+## Verificación
 
 ```powershell
-.venv\Scripts\python -m pytest tests/ -v
+.venv\Scripts\python -m pip check
+.venv\Scripts\python -m pytest tests -q
+node --test tests/frontend_session.test.cjs
+.venv\Scripts\python scripts\audit_repository.py
 ```
 
-Casos típicos:
+Los tests del portable se omiten si aún no se construyó; deben pasar sin omisiones para una entrega. Ver [DEPLOY.md](docs/DEPLOY.md).
 
-- Falsos positivos en producción → agregá una fila al CSV mental y un
-  test parametrizado en `tests/test_detection_filters.py`.
-- Bug en un exportador (DOCX / PDF / Markdown) → agregá fixture en
-  `tests/test_pdf_export.py` o similar.
-- Cambios en regex argentinos → reutilizá ejemplos reales **anonimizados**
-  (nunca pegues datos personales en tests).
+Agregar regresiones que representen el comportamiento general del problema. Cubrir nombres nuevos, mayúsculas, tildes, orden de apellido/nombre, iniciales, partículas y ambigüedad. No introducir listas de excepciones ligadas a un documento real.
 
-## Estilo de código
+La normalización de nombres y la identidad se resuelven en el backend. El frontend utiliza esos grupos. La coincidencia de un apellido compartido no basta para fusionar personas. El análisis NLP recorre fragmentos superpuestos del texto completo; preservar posiciones absolutas y cancelación entre fragmentos.
 
-- Python: **PEP 8**, anotaciones de tipo cuando aportan, docstrings en
-  funciones públicas.
-- Frontend: HTML/CSS/JS plano, sin frameworks ni CDN. Mantener
-  compatibilidad con navegadores actuales (Edge / Chrome / Firefox).
-- Mensajes de commit en español o inglés; preferimos descripciones
-  cortas en imperativo (ej.: `fix(detector): rechazar Ley XXX como
-  patente`).
-- Evitá agregar dependencias nuevas. Si es imprescindible, justifícalo
-  en el PR y actualizá `requirements.txt`, `THIRD_PARTY_NOTICES.txt` y
-  `NOTICE` (si la licencia lo requiere).
+Después de modificar los catálogos, ejecutar `python scripts/update_name_rules.py` y las pruebas de nombres. No introducir llamadas de red durante el análisis, telemetría o carga automática de modelos generativos.
 
-## Cómo contribuir un cambio
+## Proponer cambios
 
-1. Abrí un **issue** describiendo el bug o la mejora antes de codear
-   cambios grandes. Para typos / docs pequeños podés ir directo al PR.
-2. Hacé fork y branch desde `main`. Nombre sugerido:
-   `fix/organismo-narrativa`, `feat/markdown-export`,
-   `docs/contributing`.
-3. Codeá, agregá tests y verificá que `pytest` pase en local.
-4. Abrí un **pull request** completando la plantilla. Incluí:
-   - Qué problema resuelve.
-   - Cómo lo verificaste (tests + pasos manuales si aplica).
-   - Si modificás detectores, ejemplos de entrada / salida.
-5. Una persona del equipo de IALAB revisará. Puede haber rondas de
-   feedback. Los cambios se mergean por *squash* para mantener el log
-   limpio.
+Para cambios grandes, abrir un Issue con el problema y alcance; para correcciones pequeñas, presentar directamente un PR desde una rama basada en `main`. Describir el comportamiento final, la validación y cualquier limitación. No afirmar que se probó una plataforma o interfaz que no se verificó.
 
-## Áreas en las que estamos trabajando:
+Mantener versiones fijadas, avisos de terceros y manuales consistentes con el comportamiento. Las contribuciones se distribuyen bajo Apache 2.0 conforme a [LICENSE](LICENSE); el uso del logo y marca se rige por [NOTICE](NOTICE).
 
-- **Diccionarios.** Sumar variantes regionales de nombres, apellidos y
-  fórmulas judiciales (`data/dictionaries/`). Nada de datos reales,
-  sólo listas genéricas.
-- **Regex argentinos.** El catálogo `regex_limpio_v2.json` se puede
-  ampliar con patrones nuevos (documentos, dominios, etc.).
-- **Tests de regresión.** Más cobertura sobre PDF complicados (mixtos,
-  con encabezados, multicolumna).
-- **Performance.** El pipeline procesa documentos en chunks; mejoras a
-  `app/detection/pipeline.py` o `app/extraction/` son bienvenidas.
-- **Accesibilidad de la UI.** Etiquetas ARIA, navegación por teclado y
-  contraste.
-
-## No aceptamos
-
-- Funcionalidades que requieran enviar texto del documento a servidores
-  remotos / APIs en la nube.
-- Modelos generativos (LLMs) corriendo dentro del proceso por defecto.
-- Telemetría, analytics o tracking de uso.
-- Datos personales reales en tests, fixtures, documentación o commits.
-
-## Licencia de las contribuciones
-
-Al enviar un pull request aceptás que tu aporte se distribuya bajo la
-**licencia Apache 2.0** del proyecto. No se requiere CLA. Conservás el
-copyright de tu contribución; la licencia es perpetua e irrevocable
-(ver sección 5 de Apache 2.0).
-
-Las marcas registradas y logo de IALAB **no** se ceden con la licencia
-del código (ver [NOTICE](NOTICE)).
+La función de personas conocidas es una [propuesta pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md) y no se incluye en 3.3.12.

@@ -89,7 +89,7 @@ def run_server(open_browser: bool = True, cache_bust: bool = True):
     url = f"http://{HOST}:{PORT}"
     if cache_bust:
         url += f"?_{int(time.time())}"
-    if open_browser:
+    if open_browser and os.environ.get('ANON_NO_BROWSER') != '1':
         webbrowser.open(url)
     uvicorn.run(app, host=HOST, port=PORT, log_level="info")
 

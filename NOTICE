@@ -49,8 +49,9 @@ DATOS Y PRIVACIDAD
 ================================================================================
 
 El proyecto NO distribuye documentos judiciales reales, sentencias,
-expedientes ni sesiones de uso. La base local `data/sessions.db` se crea
-en tiempo de ejecución junto al binario y queda excluida del repositorio
+expedientes ni sesiones de uso. Las sesiones del flujo normal permanecen
+en memoria del proceso; no se crea automáticamente una base SQLite.
+Las bases auxiliares de desarrollo quedan excluidas del repositorio
 público (`.gitignore`). Los diccionarios incluidos en `data/dictionaries/`
 contienen únicamente nombres y apellidos genéricos de uso público, junto
 con expresiones regulares para detección.

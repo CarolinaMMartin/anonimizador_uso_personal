@@ -1,13 +1,14 @@
 """Alta y baja manual de detecciones."""
 import re
+from uuid import uuid4
 
-from app.anonymize.placeholders import make_placeholder
+from app.anonymize.placeholders import make_placeholder, next_placeholder_number
 from app.models.schemas import Category, Detection, Mention, Position, SessionState
+from app.resolution.normalize import normalize_text
 
 
 def _next_mention_id(state: SessionState) -> str:
-    n = len(state.mentions)
-    return f"m_manual_{n}"
+    return f"m_manual_{uuid4().hex}"
 
 
 def _find_positions(text: str, surface: str) -> list[Position]:
@@ -64,12 +65,12 @@ def add_manual_detection(
     )
     state.mentions.append(mention)
 
-    key = f"{cat}||{surface.lower()}"
+    key = f"{cat}||{normalize_text(surface)}"
     existing = next(
         (
             d
             for d in state.detections
-            if f"{d.cat}||{d.original.strip().lower()}" == key
+            if f"{d.cat}||{normalize_text(d.original)}" == key
         ),
         None,
     )
@@ -80,18 +81,17 @@ def add_manual_detection(
                 existing.positions.append(p)
                 seen.add((p.start, p.end))
         existing.mention_ids.append(mention.id)
+        if existing.cluster_id:
+            from app.services.clusters import add_detections_to_cluster
+            add_detections_to_cluster(state, existing.cluster_id, [existing.id])
         return existing
 
-    counters: dict[str, int] = {}
-    for d in state.detections:
-        counters[d.cat] = counters.get(d.cat, 0) + 1
-    counters[cat] = counters.get(cat, 0) + 1
     new_id = max((d.id for d in state.detections), default=-1) + 1
     det = Detection(
         id=new_id,
         cat=cat,  # type: ignore[arg-type]
         original=surface,
-        placeholder=make_placeholder(cat, surface, counters[cat], state.label_mode),
+        placeholder=make_placeholder(cat, surface, next_placeholder_number(state.detections, cat), state.label_mode),
         enabled=True,
         positions=positions,
         mention_ids=[mention.id],
@@ -123,6 +123,8 @@ def add_bulk_detection(
     """
     text = state.doc_text
     surface = original.strip()
+    if placeholder is not None and not placeholder.strip():
+        raise ValueError('La sustitución no puede estar vacía')
     if len(surface) < 2:
         raise ValueError("El texto a anonimizar es demasiado corto (mínimo 2 caracteres)")
 
@@ -154,12 +156,12 @@ def add_bulk_detection(
     )
     state.mentions.append(mention)
 
-    key = f"{cat}||{surface.lower()}"
+    key = f"{cat}||{normalize_text(surface)}"
     existing = next(
         (
             d
             for d in state.detections
-            if f"{d.cat}||{d.original.strip().lower()}" == key
+            if f"{d.cat}||{normalize_text(d.original)}" == key
         ),
         None,
     )
@@ -170,18 +172,16 @@ def add_bulk_detection(
                 existing.positions.append(p)
                 existing_keys.add((p.start, p.end))
         existing.mention_ids.append(mention.id)
+        if existing.cluster_id:
+            from app.services.clusters import add_detections_to_cluster
+            add_detections_to_cluster(state, existing.cluster_id, [existing.id])
         if placeholder is not None:
             clean = placeholder.strip()
             if not clean:
                 raise ValueError("La sustitución no puede estar vacía")
-            existing.placeholder = clean
-            existing.manual_placeholder = True
+            update_detection(state, existing.id, placeholder=clean)
         return existing
 
-    counters: dict[str, int] = {}
-    for d in state.detections:
-        counters[d.cat] = counters.get(d.cat, 0) + 1
-    counters[cat] = counters.get(cat, 0) + 1
     new_id = max((d.id for d in state.detections), default=-1) + 1
 
     if placeholder is not None:
@@ -191,7 +191,7 @@ def add_bulk_detection(
         final_placeholder = clean
         manual_ph = True
     else:
-        final_placeholder = make_placeholder(cat, surface, counters[cat], state.label_mode)
+        final_placeholder = make_placeholder(cat, surface, next_placeholder_number(state.detections, cat), state.label_mode)
         manual_ph = False
 
     det = Detection(
@@ -214,14 +214,10 @@ def remove_detection(state: SessionState, detection_id: int) -> None:
     if not det:
         raise ValueError("Detección no encontrada")
     mids = set(det.mention_ids)
+    from app.services.clusters import detach_mentions
+    detach_mentions(state, mids)
     state.mentions = [m for m in state.mentions if m.id not in mids]
     state.detections = [d for d in state.detections if d.id != detection_id]
-    for i, d in enumerate(state.detections):
-        d.id = i
-    for c in state.clusters:
-        if det.cluster_id and c.cluster_id == det.cluster_id:
-            c.surfaces = [s for s in c.surfaces if s.strip().lower() != det.original.strip().lower()]
-            c.mention_ids = [mid for mid in c.mention_ids if mid not in mids]
 
 
 def update_detection(
@@ -235,16 +231,21 @@ def update_detection(
     if not det:
         raise ValueError("Detección no encontrada")
 
+    if placeholder is not None and not placeholder.strip():
+        raise ValueError('La sustitución no puede estar vacía')
+
     if cat and cat != det.cat:
+        from app.services.clusters import detach_mentions
+        detach_mentions(state, set(det.mention_ids))
         det.cat = cat  # type: ignore[assignment]
         det.cluster_id = None
+        det.cluster_confirmed = False
         for mid in det.mention_ids:
             mention = next((m for m in state.mentions if m.id == mid), None)
             if mention:
                 mention.cat = cat  # type: ignore[assignment]
         if placeholder is None or not det.manual_placeholder:
-            same_cat_count = sum(1 for d in state.detections if d.cat == cat)
-            det.placeholder = make_placeholder(cat, det.original, same_cat_count, state.label_mode)
+            det.placeholder = make_placeholder(cat, det.original, next_placeholder_number(state.detections, cat), state.label_mode)
             det.manual_placeholder = False
 
     if placeholder is not None:
@@ -253,6 +254,13 @@ def update_detection(
             raise ValueError("La sustitución no puede estar vacía")
         det.placeholder = clean
         det.manual_placeholder = True
+        if det.cluster_confirmed and det.cluster_id:
+            from app.services.clusters import _sync_cluster_to_detections
+            cluster = next((c for c in state.clusters if c.cluster_id == det.cluster_id), None)
+            if cluster:
+                cluster.placeholder = clean
+                cluster.canonical_label = clean
+                _sync_cluster_to_detections(state, cluster)
 
     if enabled is not None:
         det.enabled = enabled

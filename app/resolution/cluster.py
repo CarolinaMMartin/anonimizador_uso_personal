@@ -4,19 +4,20 @@ from collections import defaultdict
 from app.anonymize.placeholders import build_detections_from_mentions
 from app.models.schemas import Cluster, Confidence, Detection, Mention, Position
 from app.resolution.graph import build_graph, connected_components
-from app.resolution.normalize import get_surnames, normalize_mention, tokenize_name
-from app.resolution.similarity import compute_edge, link_personas_near_identifier
+from app.resolution.normalize import normalize_mention
+from app.resolution.person_identity import person_edges
+from app.resolution.similarity import compute_edge
 
 
 def _best_confidence(reasons: list[str], scores: list[float]) -> Confidence:
-    if "shared_identifier" in reasons or "exact" in reasons:
+    if 'unique_partial_name' in reasons or 'initials_match' in reasons:
+        return 'media'
+    if "exact" in reasons or 'name_format' in reasons:
         return "alta"
-    if "initials_match" in reasons or "fuzzy_high" in reasons:
+    if "fuzzy_high" in reasons:
         return "alta"
     if max(scores, default=0) >= 0.92:
         return "alta"
-    if "shared_surname" in reasons or "proximity" in reasons:
-        return "media"
     if max(scores, default=0) >= 0.85:
         return "media"
     return "baja"
@@ -59,10 +60,11 @@ def _try_edge(
 
 
 def build_edges(mentions: list[Mention], text: str) -> list[tuple[str, str, float, str]]:
-    """Arma aristas para clustering sin comparar cada par de menciones (O(n²))."""
+    """Resolve people globally and compare unique surfaces in other categories."""
     edges: list[tuple[str, str, float, str]] = []
-    groups = _exact_match_groups(mentions)
+    groups = _exact_match_groups([m for m in mentions if m.cat != 'PERSONA'])
     _append_exact_edges(edges, groups)
+    edges.extend(person_edges([m for m in mentions if m.cat == 'PERSONA']))
 
     representatives = [members[0] for members in groups.values()]
     by_cat: dict[str, list[Mention]] = defaultdict(list)
@@ -71,27 +73,10 @@ def build_edges(mentions: list[Mention], text: str) -> list[tuple[str, str, floa
 
     seen: set[tuple[str, str]] = set()
     for cat, cat_reps in by_cat.items():
-        if cat == "PERSONA":
-            buckets: dict[str, list[Mention]] = defaultdict(list)
-            for rep in cat_reps:
-                tokens = tokenize_name(normalize_mention(rep.surface))
-                surnames = get_surnames(tokens)
-                if not surnames:
-                    key = tokens[0] if tokens else "_unknown"
-                    buckets[key].append(rep)
-                    continue
-                for surname in surnames:
-                    buckets[surname].append(rep)
-            for bucket in buckets.values():
-                for i, m1 in enumerate(bucket):
-                    for m2 in bucket[i + 1 :]:
-                        _try_edge(m1, m2, text, edges, seen)
-        else:
-            for i, m1 in enumerate(cat_reps):
-                for m2 in cat_reps[i + 1 :]:
-                    _try_edge(m1, m2, text, edges, seen)
+        for i, m1 in enumerate(cat_reps):
+            for m2 in cat_reps[i + 1 :]:
+                _try_edge(m1, m2, text, edges, seen)
 
-    edges.extend(link_personas_near_identifier(mentions))
     return edges
 
 
@@ -106,19 +91,21 @@ def build_clusters(mentions: list[Mention], text: str) -> list[Cluster]:
     mention_map = {m.id: m for m in mentions}
     clusters: list[Cluster] = []
 
+    components.sort(key=lambda comp: min((mention_map[mid].start, mid) for mid in comp))
     for idx, comp in enumerate(components):
         if len(comp) < 2:
             continue
 
-        comp_mentions = [mention_map[mid] for mid in comp if mid in mention_map]
+        comp_mentions = sorted((mention_map[mid] for mid in comp if mid in mention_map),
+                               key=lambda m: (m.start, m.end, m.id))
         if not comp_mentions:
             continue
 
-        surfaces = list({m.surface.strip() for m in comp_mentions})
+        surfaces = list(dict.fromkeys(m.surface.strip() for m in comp_mentions))
         # No sugerir grupos solo numéricos (2026, 3310)
         if all(s.isdigit() or (len(s) == 4 and s.isdigit()) for s in surfaces):
             continue
-        if all(len(s) < 4 for s in surfaces):
+        if comp_mentions[0].cat != 'PERSONA' and all(len(s) < 4 for s in surfaces):
             continue
 
         cat = comp_mentions[0].cat
@@ -142,7 +129,7 @@ def build_clusters(mentions: list[Mention], text: str) -> list[Cluster]:
                 surfaces=surfaces,
                 confidence=confidence,
                 status="suggested",
-                reasons=list(set(reasons)),
+                reasons=sorted(set(reasons)),
             )
         )
 
@@ -155,4 +142,11 @@ def mentions_to_detections(
     clusters: list[Cluster],
 ) -> list[Detection]:
     """Detecciones exactas (una por superficie única) para tabla."""
-    return build_detections_from_mentions(mentions, label_mode)
+    detections = build_detections_from_mentions(mentions, label_mode)
+    owners = {mid: cluster for cluster in clusters for mid in cluster.mention_ids}
+    for detection in detections:
+        groups = {owners[mid].cluster_id for mid in detection.mention_ids if mid in owners}
+        if len(groups) == 1:
+            detection.cluster_id = next(iter(groups))
+            detection.cluster_confirmed = owners[next(mid for mid in detection.mention_ids if mid in owners)].status == 'confirmed'
+    return detections

@@ -1,5 +1,8 @@
 name: Tests
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -14,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -27,12 +30,22 @@ jobs:
           cache: pip
 
       - name: Install dependencies
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          python -m pip check
 
       - name: Download spaCy model (es_core_news_md)
-        run: python -m spacy download es_core_news_md
+        run: python scripts/install_nlp.py
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Frontend and repository review
+        shell: bash
+        run: |
+          node --test tests/frontend_session.test.cjs
+          python scripts/audit_repository.py

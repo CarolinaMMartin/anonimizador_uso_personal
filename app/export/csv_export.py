@@ -11,7 +11,7 @@ _FORMULA_PREFIXES = ("=", "+", "-", "@")
 
 def _sanitize(value: str) -> str:
     """Evita inyección de fórmulas CSV en aplicaciones de planillas."""
-    if value and value[0] in _FORMULA_PREFIXES:
+    if value.lstrip().startswith(_FORMULA_PREFIXES):
         return "'" + value
     return value
 

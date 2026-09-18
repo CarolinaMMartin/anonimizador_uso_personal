@@ -1,7 +1,11 @@
 """Carga de diccionarios de nombres y apellidos."""
 import json
+import logging
 
 from app.config import DATA_DIR, RESOURCE_DATA_DIR
+from app.resolution.normalize import normalize_text
+
+logger = logging.getLogger(__name__)
 
 _nombres: set[str] | None = None
 _apellidos: set[str] | None = None
@@ -14,7 +18,11 @@ def _load_json(name: str) -> set[str]:
         path = base / "dictionaries" / name
         if path.exists():
             with open(path, encoding="utf-8") as f:
-                return set(json.load(f))
+                values = json.load(f)
+            if not isinstance(values, list) or not all(isinstance(v, str) and v.strip() for v in values):
+                raise ValueError(f"Catálogo inválido: {name}")
+            return {normalize_text(v) for v in values}
+    logger.warning("Catálogo de personas no encontrado: %s", name)
     return set()
 
 

@@ -94,7 +94,7 @@ def main() -> None:
         "Expediente N SAC 12345/2026. Juzgado Nacional en lo Civil N 45.\n"
         "El imputado Juan Carlos Perez, DNI 27.353.518, CUIT 20-27353518-3,\n"
         "domiciliado en Av. Corrientes 1234, piso 3, dto. B, CABA.\n"
-        "Telefono 011-4567-8901. Email juan.perez@mail.com.\n"
+        "Telefono 011-4567-8901. Email juan.perez@example.invalid.\n"
         "La Sra. Maria Elena Rodriguez comparece como testigo.\n"
         "Dr. Roberto Martinez, abogado patrocinante.\n"
     )

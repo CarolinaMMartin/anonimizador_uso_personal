@@ -1,4 +1,4 @@
-"""Patrones judiciales adicionales (spaCy EntityRuler en MVP2)."""
+"""Patrones judiciales adicionales para spaCy EntityRuler."""
 import re
 from app.detection.regex_ar import RawItem
 

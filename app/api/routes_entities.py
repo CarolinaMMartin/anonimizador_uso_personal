@@ -14,6 +14,7 @@ from app.models.schemas import (
 )
 from app.models.store import store
 from app.services.clusters import (
+    detach_mentions,
     add_detections_to_cluster,
     confirm_cluster,
     create_cluster_from_detections,
@@ -50,7 +51,7 @@ async def merge_clusters_endpoint(session_id: str, body: ClusterMergeRequest):
     if not merged:
         raise HTTPException(400, "Se requieren al menos 2 clusters")
     store.save(state)
-    return {"cluster": merged, "clusters": state.clusters}
+    return {"cluster": merged, "clusters": state.clusters, "detections": state.detections}
 
 
 @router.get("/clusters")
@@ -82,7 +83,20 @@ async def split_cluster_endpoint(
         raise HTTPException(404, "Sesión no encontrada")
     new_clusters = split_cluster(state, cluster_id, body.mention_ids)
     store.save(state)
-    return {"clusters": state.clusters, "new_clusters": new_clusters}
+    return {"clusters": state.clusters, "new_clusters": new_clusters, "detections": state.detections}
+
+
+@router.post('/clusters/{cluster_id}/reject')
+async def reject_cluster_endpoint(cluster_id: str, session_id: str):
+    state = store.get(session_id)
+    if not state:
+        raise HTTPException(404, 'Sesión no encontrada')
+    cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
+    if not cluster:
+        raise HTTPException(404, 'Cluster no encontrado')
+    detach_mentions(state, set(cluster.mention_ids))
+    store.save(state)
+    return {'clusters': state.clusters, 'detections': state.detections}
 
 
 @router.post("/clusters/{cluster_id}/remove-surface")
@@ -151,7 +165,7 @@ async def update_cluster(
     if body.canonical_label:
         cluster.canonical_label = body.canonical_label
     store.save(state)
-    return {"cluster": cluster}
+    return {"cluster": cluster, "clusters": state.clusters, "detections": state.detections}
 
 
 @router.get("/preview")

@@ -1,22 +1,24 @@
 """Perfil de regex sobre un PDF concreto."""
 import sys
+import argparse
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-PDF = Path(r"c:\Users\CarolinaM\Downloads\LC 4980-2025 - DICTAMEN FINAL-2.pdf")
-
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description='Perfil local de regex sobre un PDF elegido.')
+    parser.add_argument('pdf', type=Path)
+    pdf = parser.parse_args().pdf
     import re
 
     from app.detection.regex_ar import detect_regex_ar
     from app.detection.regex_catalog import load_catalog_patterns
     from app.extraction.pdf import extract_pdf
 
-    text = extract_pdf(PDF.read_bytes())
+    text = extract_pdf(pdf.read_bytes())
     print(f"chars={len(text)}", flush=True)
 
     print("\n--- regex_ar por bloque ---", flush=True)

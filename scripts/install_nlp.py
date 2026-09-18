@@ -1,30 +1,31 @@
-"""Instala dependencias NLP según documentación Presidio.
-
-https://microsoft.github.io/presidio/installation/
-"""
+"""Install the pinned runtime and the verified Spanish spaCy model."""
 import subprocess
 import sys
+from pathlib import Path
 
-PACKAGES = [
-    "presidio-analyzer>=2.2.0",
-    "presidio-anonymizer>=2.2.0",
-    "spacy>=3.7.0",
-]
-
-SPACY_MODEL = "es_core_news_md"
-
-
-def run(cmd: list[str]) -> None:
-    print(">", " ".join(cmd))
-    subprocess.check_call(cmd)
+ROOT = Path(__file__).resolve().parent.parent
+SPACY_MODEL = 'es_core_news_md'
+MODEL_VERSION = '3.8.0'
+MODEL_URL = ('https://github.com/explosion/spacy-models/releases/download/'
+             f'{SPACY_MODEL}-{MODEL_VERSION}/{SPACY_MODEL}-{MODEL_VERSION}-py3-none-any.whl')
 
 
 def main() -> None:
-    run([sys.executable, "-m", "pip", "install", *PACKAGES])
-    run([sys.executable, "-m", "spacy", "download", SPACY_MODEL])
-    print("\nListo. Verificá con:")
-    print(f"  {sys.executable} scripts/verify_nlp.py")
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', str(ROOT / 'requirements.txt')])
+    sys.path.insert(0, str(ROOT))
+    import spacy
+    from app.runtime_paths import spacy_model_dir
+
+    try:
+        nlp = spacy.load(spacy_model_dir() or SPACY_MODEL)
+        if nlp.meta.get('version') == MODEL_VERSION:
+            print(f'Modelo disponible: {SPACY_MODEL} {MODEL_VERSION}')
+            return
+    except OSError:
+        pass
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', MODEL_URL])
+    print('Modelo instalado. Verificá con: python scripts/verify_nlp.py')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

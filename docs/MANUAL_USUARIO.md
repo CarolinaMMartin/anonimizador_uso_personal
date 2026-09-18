@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador de uso personal
+# Manual de usuario — Anonimizador Judicial 3.3.12
 
 Herramienta académica de uso personal (IALAB).
 
@@ -28,12 +28,18 @@ Reemplaza cada dato por una etiqueta, por ejemplo `[PERSONA_1]` o
 ### Windows
 
 1. Doble clic en **`INICIAR.bat`**.
-2. Se abre <http://127.0.0.1:8787> en el navegador.
+2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
+   Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
+3. Verificá **v3.3.12** en el indicador superior.
+
+Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
+otras copias ni transfiere sus documentos.
 
 ### macOS
 
-1. La primera vez, clic derecho en **`INICIAR.command`** → **Abrir**.
-2. Se abre <http://127.0.0.1:8787> en el navegador.
+La entrega 3.3.12 se verifica en Windows. Los paquetes anteriores de macOS
+conservan su propia versión y sus instrucciones. Este ZIP Windows no funciona
+en Mac; una compilación nueva debe probarse en ese sistema antes de publicarse.
 
 El indicador superior debe mostrar algo similar a:
 
@@ -41,9 +47,8 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy
 ```
 
-`vX.Y.Z` es la versión instalada. Podés compararla con la insignia
-**“última versión”** del README o con la versión publicada en
-[Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest).
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.3.12**.
+Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---
 
@@ -54,6 +59,8 @@ El indicador superior debe mostrar algo similar a:
 - Formatos: **Word (.docx)** o **PDF digital** con texto seleccionable.
 - Arrastrá el archivo o hacé clic en la zona de carga.
 - No se procesan PDFs completamente escaneados.
+- Límite: **40 MB**. Word extrae párrafos, tablas, encabezados y pies; verificá
+  por separado contenido de imágenes, dibujos, notas y revisiones pendientes.
 
 **Consejo:** si el PDF es una imagen, convertilo antes a Word o a PDF con
 capa de texto.
@@ -65,6 +72,8 @@ capa de texto.
 - **Modo iniciales:** reemplaza nombres por iniciales.
 - Marcá las categorías que querés buscar.
 - Hacé clic en **Analizar documento**.
+- Seleccioná al menos una categoría. **Detener** solicita la cancelación;
+  el motor la atiende al llegar a un punto de control entre sus bloques.
 
 ### Paso 3 — Revisar
 
@@ -75,6 +84,19 @@ La revisión tiene dos pestañas:
 - **Identidades o grupos:** reúne variantes que podrían corresponder al
   mismo dato.
 
+Revisá las variantes y usá **Confirmar grupo** para que todas reciban la
+misma etiqueta. **Unir similares** confirma las variantes propuestas para
+esa identidad; **Ignorar similares** desmarca esas filas.
+
+Si un nombre o apellido corto puede corresponder a varias personas, queda
+separado. Podés asignarlo manualmente después de revisar el contexto.
+El análisis también busca referencias cortas a partir de los nombres completos
+que detectó en ese documento, aunque el apellido no esté en el catálogo.
+Para aplicar esta mejora a una exportación anterior, volvé a cargar y analizar
+el documento original.
+Quitar una variante o rechazar un grupo separa sus reemplazos. Editar la
+etiqueta de un grupo confirmado cambia todas sus variantes.
+
 En la vista previa podés comparar el texto original con el anonimizado y
 seleccionar manualmente información que no haya sido detectada.
 
@@ -84,6 +106,11 @@ seleccionar manualmente información que no haya sido detectada.
 2. Leé y corregí el texto anonimizado.
 3. Ajustá fuente, tamaño, interlineado, márgenes o alineación.
 4. Exportá a Word o PDF.
+
+La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
+interlineado, alineación y márgenes se aplican a ambos formatos. La exportación
+reconstruye el texto y no conserva el diseño original ni sus tablas.
+Las ediciones del editor no cambian la tabla CSV ni se vuelven a analizar.
 5. Descargá la tabla CSV de equivalencias si la necesitás.
 
 > **Atención:** al editar manualmente, no restaures datos personales
@@ -120,6 +147,8 @@ seleccionar manualmente información que no haya sido detectada.
 - Procesamiento 100 % local.
 - Las sesiones viven **solo en memoria**: el texto del documento no se
   guarda en disco y se pierde al cerrar la aplicación.
+- El CSV contiene las equivalencias con datos originales; no es un documento
+  anonimizado para compartir indiscriminadamente.
 - La detección automática **no es perfecta**.
 - Revisá siempre el resultado antes de compartirlo.
 - No publiques documentos reales, datos personales ni capturas sensibles
@@ -139,8 +168,8 @@ ejecuta por detrás.
 3. Buscá `AnonimizadorJudicial-NLP.exe`.
 4. Elegí **Finalizar tarea**.
 
-Volver a ejecutar `INICIAR.bat` también cierra una copia anterior antes de
-abrir una nueva.
+Si el puerto está ocupado, `INICIAR.bat` busca otro puerto libre y conserva la copia anterior.
+Guardá tus exportaciones antes de terminar esa copia y abrir otra.
 
 ### macOS
 

@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 
 import pytest
+from app.config import APP_VERSION
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST_NAME = "AnonimizadorJudicial-NLP"
@@ -24,6 +25,9 @@ def _find_pkg_dir() -> Path | None:
     if env:
         p = Path(env).expanduser().resolve()
         return p if p.is_dir() else None
+    released = ROOT.parent / f"{DIST_NAME}-{APP_VERSION}"
+    if released.is_dir():
+        return released
     for name in (DIST_NAME, f"{DIST_NAME}.app"):
         candidate = ROOT / "dist" / name
         if candidate.is_dir():
@@ -67,6 +71,9 @@ def test_launcher_present():
         pkg_dir.parent / "INICIAR.bat",
         pkg_dir.parent / "INICIAR.command",
     ), "Falta el launcher (INICIAR.bat / INICIAR.command)"
+    if (pkg_dir / "INICIAR.bat").is_file():
+        assert (pkg_dir / "iniciar.ps1").is_file(), "Falta iniciar.ps1"
+        assert (pkg_dir / "VERSION_APP.txt").read_text(encoding="ascii").strip() == APP_VERSION
 
 
 @requires_package

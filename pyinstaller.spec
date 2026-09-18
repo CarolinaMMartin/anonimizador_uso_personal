@@ -1,10 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""Spec canónica para empaquetar el Anonimizador Judicial con PyInstaller.
+"""Referencia de compilación del ejecutable con PyInstaller.
 
 En la práctica el build se hace con `scripts/build_portable_full.py`,
 que arma su propia spec vía flags de línea de comandos para garantizar
 paths reproducibles entre máquinas. Esta spec se conserva como
-**referencia legible** y para builds manuales (`pyinstaller pyinstaller.spec`).
+**referencia legible**. No produce por sí sola una entrega completa:
+para incluir modelo, lanzadores, manuales y licencias usar el constructor.
 
 Rutas relativas a `SPECPATH` para que el archivo sea portable.
 """
@@ -33,9 +34,12 @@ hiddenimports = [
     "uvicorn.lifespan.on",
 ]
 
-hiddenimports += collect_submodules("spacy")
 for pkg in ("spacy", "presidio_analyzer", "presidio_anonymizer", "thinc"):
-    pkg_datas, pkg_binaries, pkg_hidden = collect_all(pkg)
+    pkg_datas, pkg_binaries, pkg_hidden = collect_all(
+        pkg, include_py_files=False,
+        filter_submodules=lambda name: not name.startswith((f'{pkg}.tests', f'{pkg}.benchmarks')),
+        exclude_datas=['**/tests/**', '**/benchmarks/**'],
+    )
     datas += pkg_datas
     binaries += pkg_binaries
     hiddenimports += pkg_hidden
@@ -46,7 +50,7 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=[],
+    hookspath=[str(ROOT / 'scripts/pyinstaller_hooks')],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[

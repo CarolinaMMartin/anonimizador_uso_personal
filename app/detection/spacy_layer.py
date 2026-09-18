@@ -1,8 +1,8 @@
-"""Capa spaCy EntityRuler (MVP2) - complementa regex/Presidio."""
+"""Capa spaCy EntityRuler: complementa regex/Presidio."""
 import logging
 import re
 
-from app.detection.regex_ar import RawItem
+from app.detection.regex_ar import RawItem, trim_persona_tail
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ JUDICIAL_RULER_PATTERNS = [
     {"label": "ORGANISMO", "pattern": [{"LOWER": "fiscalia"}, {"IS_ALPHA": True}]},
     # Nombre completo precedido por título profesional / de cortesía. Captura de 1 a 4
     # palabras capitalizadas para no cortar apellidos poco frecuentes
-    # (ej. "Dra. María Andrea Piesco").
+    # independientemente del documento de origen.
     {
         "label": "PERSONA",
         "pattern": [
@@ -63,7 +63,7 @@ def _get_nlp():
     except OSError as e:
         _init_error = (
             f"Modelo {SPACY_MODEL_ES} no instalado. "
-            f"Ejecutá: python -m spacy download {SPACY_MODEL_ES}"
+            "En desarrollo: python scripts/install_nlp.py. En el portable: extraer nuevamente el ZIP completo."
         )
         raise RuntimeError(_init_error) from e
     except Exception as e:
@@ -93,33 +93,35 @@ LABEL_MAP = {
 }
 
 
-def detect_spacy(text: str) -> list[RawItem]:
-    nlp = _get_nlp()
-    # Procesar en chunks para documentos largos
-    max_len = nlp.max_length if hasattr(nlp, "max_length") else 1_000_000
-    if len(text) > max_len:
-        nlp.max_length = len(text) + 100
+def detect_spacy(text: str, session_id: str | None = None) -> list[RawItem]:
+    from app.detection.text_chunks import iter_text_chunks
+    from app.services.analysis_cancel import check_cancel
 
-    doc = nlp(text[: min(len(text), 500_000)])
+    nlp = _get_nlp()
     items: list[RawItem] = []
     from app.detection.filters import is_valid_detection
 
-    for ent in doc.ents:
-        cat = LABEL_MAP.get(ent.label_, "OTRO")
-        if cat == "OTRO":
-            continue
-        if not is_valid_detection(cat, ent.text, text, ent.start_char):
-            continue
-        items.append(
-            RawItem(
-                cat=cat,
-                original=ent.text,
-                start=ent.start_char,
-                end=ent.end_char,
-                source_layer="spacy",
+    for offset, chunk in iter_text_chunks(text):
+        check_cancel(session_id)
+        doc = nlp(chunk)
+        for ent in doc.ents:
+            cat = LABEL_MAP.get(ent.label_, "OTRO")
+            if cat == "OTRO":
+                continue
+            start, end = offset + ent.start_char, offset + ent.end_char
+            if not is_valid_detection(cat, ent.text, text, start):
+                continue
+            items.append(
+                RawItem(
+                    cat=cat,
+                    original=ent.text,
+                    start=start,
+                    end=end,
+                    source_layer="spacy",
+                )
             )
-        )
 
+    check_cancel(session_id)
     # Buscar nombre después de rol judicial
     rol_re = re.compile(
         r"\b(?:imputad[oa]|víctima|victima|denunciante|testig[oa])\s+"
@@ -128,8 +130,10 @@ def detect_spacy(text: str) -> list[RawItem]:
     )
     for m in rol_re.finditer(text):
         if m.group(1):
-            name = m.group(1)
-            start = m.start() + m.group(0).index(name)
+            name = trim_persona_tail(m.group(1))
+            start = m.start(1)
+            if not is_valid_detection("PERSONA", name, text, start):
+                continue
             items.append(
                 RawItem(
                     cat="PERSONA",

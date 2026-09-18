@@ -2,6 +2,17 @@
 from app.models.schemas import Detection, Mention, Position
 
 
+def next_placeholder_number(detections: list[Detection], cat: str) -> int:
+    import re
+    numbers = []
+    for detection in detections:
+        if detection.cat == cat:
+            match = re.fullmatch(r'\[[A-Z_]+_(\d+)\]', detection.placeholder)
+            if match:
+                numbers.append(int(match.group(1)))
+    return max(numbers, default=0) + 1
+
+
 def make_placeholder(cat: str, original: str, idx: int, mode: str) -> str:
     if mode == "gen":
         mapping = {
@@ -50,20 +61,28 @@ def make_placeholder(cat: str, original: str, idx: int, mode: str) -> str:
 def build_detections_from_mentions(
     mentions: list[Mention], mode: str
 ) -> list[Detection]:
+    from app.resolution.normalize import normalize_text
+
     groups: dict[str, dict] = {}
     for m in mentions:
-        key = f"{m.cat}||{m.surface.strip().lower()}"
+        normalized = normalize_text(m.surface)
+        if m.cat == 'EMPRESA':
+            normalized = normalized.replace('.', '')
+        key = f"{m.cat}||{normalized}"
         if key not in groups:
             groups[key] = {
                 "cat": m.cat,
                 "original": m.surface.strip(),
                 "positions": [],
                 "mention_ids": [],
+                "source_layers": [],
             }
         groups[key]["positions"].append(
             Position(start=m.start, end=m.end, raw=m.surface)
         )
         groups[key]["mention_ids"].append(m.id)
+        if m.source_layer not in groups[key]['source_layers']:
+            groups[key]['source_layers'].append(m.source_layer)
 
     counters: dict[str, int] = {}
     detections: list[Detection] = []
@@ -81,6 +100,7 @@ def build_detections_from_mentions(
                 enabled=True,
                 positions=g["positions"],
                 mention_ids=g["mention_ids"],
+                source_layers=g['source_layers'],
             )
         )
         det_id += 1

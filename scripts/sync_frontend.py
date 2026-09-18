@@ -19,6 +19,10 @@ DIST_PKG = ROOT / "dist" / "AnonimizadorJudicial-NLP"
 
 
 def copy_tree(src: Path, dst: Path) -> None:
+    target = dst.resolve()
+    allowed = (DIST_PKG.resolve() / 'frontend', DIST_PKG.resolve() / '_internal/frontend')
+    if target not in allowed or not target.is_relative_to((ROOT / 'dist').resolve()):
+        raise ValueError('La ruta no pertenece al frontend del paquete generado.')
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
@@ -32,6 +36,8 @@ def main() -> None:
         raise SystemExit(
             f"No existe {DIST_PKG}. Ejecutá build_portable_full.py al menos una vez."
         )
+    from package_release import verify_package
+    verify_package(DIST_PKG)
 
     print(f"Sincronizando {SRC} …")
     targets = [

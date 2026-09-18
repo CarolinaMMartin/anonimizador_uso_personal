@@ -7,11 +7,12 @@ Uso (desde la raíz del proyecto, con venv activo o .venv\\Scripts\\python):
 
 Salida:
   dist\\AnonimizadorJudicial-NLP\\   (carpeta para probar / instalar)
-  dist\\AnonimizadorJudicial-NLP.zip (solo con --zip; si no, usá package_release.py)
+  dist\\AnonimizadorJudicial-NLP-VERSION.zip (solo con --zip)
 """
 from __future__ import annotations
 
 import argparse
+import ast
 import importlib.util
 import os
 import shutil
@@ -34,16 +35,24 @@ def is_mac() -> bool:
 
 
 def default_stage_root() -> Path:
-    if is_windows():
-        return Path(r"C:\anon_build")
-    return Path.home() / "anon_build"
+    return ROOT / "build" / "portable-stage"
 
 
-# PyInstaller escribe miles de archivos durante el build. En Windows, si la carpeta
-# destino está dentro de OneDrive, el sincronizador bloquea archivos a mitad de
-# proceso. Por eso compilamos en una ruta local fuera de OneDrive (Windows) o en
-# ~/anon_build (macOS) y al final copiamos el resultado a dist/.
+# ANON_BUILD_DIR permite elegir un staging local si el repositorio está en una
+# carpeta sincronizada. Por defecto, los artefactos quedan dentro de build/.
 STAGE_ROOT = Path(os.environ.get("ANON_BUILD_DIR", str(default_stage_root()))).resolve()
+
+
+def check_generated_path(path: Path) -> None:
+    """A recursive removal may touch generated descendants only."""
+    target = path.resolve()
+    stage = STAGE_ROOT.resolve()
+    if stage == Path(stage.anchor) or stage == ROOT or stage in ROOT.parents:
+        raise ValueError('ANON_BUILD_DIR debe ser una carpeta dedicada a artefactos.')
+    for parent in (stage, (ROOT / 'dist').resolve()):
+        if target != parent and target.is_relative_to(parent):
+            return
+    raise ValueError(f'La ruta no pertenece a los artefactos generados: {target}')
 
 
 def run(cmd: list[str], **kwargs) -> None:
@@ -53,6 +62,7 @@ def run(cmd: list[str], **kwargs) -> None:
 
 def robust_rmtree(path: Path, attempts: int = 5) -> None:
     """Borra un árbol tolerando bloqueos transitorios (OneDrive/antivirus)."""
+    check_generated_path(path)
     for i in range(attempts):
         if not path.exists():
             return
@@ -87,24 +97,25 @@ def ensure_nlp() -> Path:
         )
     import spacy
 
+    sys.path.insert(0, str(ROOT))
+    from app.runtime_paths import spacy_model_dir
+
+    model = spacy_model_dir() or SPACY_MODEL
     try:
-        spacy.load(SPACY_MODEL)
+        nlp = spacy.load(model)
     except OSError:
-        run([sys.executable, "-m", "spacy", "download", SPACY_MODEL])
-
-    import spacy as sp
-
-    nlp = sp.load(SPACY_MODEL)
+        run([sys.executable, 'scripts/install_nlp.py'])
+        nlp = spacy.load(spacy_model_dir() or SPACY_MODEL)
     model_path = Path(nlp._path).resolve()
     if not (model_path / "config.cfg").exists():
         raise SystemExit(
             f"Modelo incompleto en {model_path}. Reinstalá: "
-            f"{sys.executable} -m spacy download {SPACY_MODEL}"
+            f"{sys.executable} scripts/install_nlp.py"
         )
     if not (model_path / "LICENSE").is_file():
         raise SystemExit(
             f"Falta LICENSE (GPL-3.0) en {model_path}. "
-            f"Reinstalá el modelo con: {sys.executable} -m spacy download {SPACY_MODEL}"
+            f"Reinstalá el modelo con: {sys.executable} scripts/install_nlp.py"
         )
     return model_path
 
@@ -164,18 +175,14 @@ def build_onedir() -> Path:
         f"--distpath={stage_dist}",
         f"--workpath={stage_work}",
         f"--specpath={STAGE_ROOT}",
-        "--collect-all",
-        "spacy",
+        '--additional-hooks-dir',
+        str(ROOT / 'scripts/pyinstaller_hooks'),
         "--collect-all",
         "presidio_analyzer",
         "--collect-all",
         "presidio_anonymizer",
-        "--collect-all",
-        "thinc",
         "--collect-data",
         "tldextract",
-        "--collect-submodules",
-        "spacy",
         # Excluir módulos de tests/benchmarks que no se usan en runtime y
         # demoran enormemente la fase de Analysis (>1500 módulos extra).
         "--exclude-module",
@@ -226,7 +233,7 @@ def runtime_dir(pkg_dir: Path) -> Path:
 def copy_model(pkg_dir: Path, model_src: Path) -> None:
     dest = runtime_dir(pkg_dir) / "models" / SPACY_MODEL
     if dest.exists():
-        shutil.rmtree(dest)
+        robust_rmtree(dest)
     shutil.copytree(model_src, dest)
     if not (dest / "LICENSE").is_file():
         raise SystemExit(
@@ -240,7 +247,7 @@ def copy_frontend_overlay(pkg_dir: Path) -> None:
     src = ROOT / "frontend"
     dest = runtime_dir(pkg_dir) / "frontend"
     if dest.exists():
-        shutil.rmtree(dest)
+        robust_rmtree(dest)
     shutil.copytree(src, dest)
     print(f"Frontend overlay -> {dest}")
 
@@ -250,46 +257,20 @@ def write_launchers(pkg_dir: Path) -> None:
     readme = deliver / "LEEME_INSTALACION.txt"
 
     if is_windows():
-        exe_name = f"{DIST_NAME}.exe"
-        (pkg_dir / "INICIAR.bat").write_text(
-            f"""@echo off
-title Anonimizador Judicial
-cd /d "%~dp0"
-
-REM Cerrar solo nuestra aplicacion si quedo abierta de antes
-taskkill /IM {exe_name} /F >nul 2>&1
-timeout /t 2 /nobreak >nul 2>&1
-
-REM Si el puerto 8787 sigue ocupado, lo usa OTRO programa: avisar y salir
-netstat -ano | findstr :8787 | findstr LISTENING >nul 2>&1
-if %errorlevel%==0 (
-  echo.
-  echo No se puede iniciar: el puerto 8787 esta siendo usado por otro programa.
-  echo Cerra ese programa y volve a ejecutar INICIAR.bat.
-  echo.
-  pause
-  exit /b 1
-)
-
-echo Iniciando Anonimizador Judicial...
-echo Se abrira http://127.0.0.1:8787 en el navegador.
-start "" "{exe_name}"
-""",
-            encoding="ascii",
-        )
-        (pkg_dir / "VERIFICAR.bat").write_text(
-            """@echo off
-cd /d "%~dp0"
-start "" "http://127.0.0.1:8787/health"
-""",
-            encoding="ascii",
-        )
+        for name in ("INICIAR.bat", "VERIFICAR.bat", "iniciar.ps1"):
+            shutil.copyfile(ROOT / "scripts/windows" / name, pkg_dir / name)
+        config = ast.parse((ROOT / "app/config.py").read_text(encoding="utf-8"))
+        version = next(ast.literal_eval(node.value) for node in config.body
+                       if isinstance(node, ast.Assign) and any(
+                           isinstance(target, ast.Name) and target.id == "APP_VERSION"
+                           for target in node.targets))
+        (pkg_dir / "VERSION_APP.txt").write_text(version + "\n", encoding="ascii")
         readme.write_text(_readme_windows(), encoding="utf-8")
         return
 
     # macOS — lanzadores al lado del .app
     launcher = deliver / "INICIAR.command"
-    if is_mac() and stage_pkg.suffix == ".app":
+    if is_mac() and pkg_dir.suffix == ".app":
         open_line = f'open "{pkg_dir.name}"'
     elif (deliver / f"{DIST_NAME}.app").is_dir():
         open_line = f'open "{DIST_NAME}.app"'
@@ -299,7 +280,11 @@ start "" "http://127.0.0.1:8787/health"
     launcher.write_text(
         f"""#!/bin/bash
 cd "$(dirname "$0")"
-lsof -ti:8787 | xargs kill -9 2>/dev/null || true
+if lsof -ti:8787 >/dev/null 2>&1; then
+  echo "El puerto 8787 esta ocupado. Se conserva la aplicacion abierta."
+  echo "Guarda tus exportaciones antes de cerrar esa copia."
+  exit 1
+fi
 echo "Iniciando Anonimizador IALAB..."
 echo "Abrí http://127.0.0.1:8787 si no se abre solo"
 {open_line}
@@ -336,7 +321,9 @@ Instalación (3 pasos)
 ---------------------
 1. Clic derecho en el ZIP -> Extraer todo, en una carpeta fija.
 2. Doble clic en INICIAR.bat
-3. Se abre el navegador en http://127.0.0.1:8787
+3. Se abre el navegador en la direccion local indicada al iniciar.
+   Usa 8787 o un puerto libre entre 8788 y 8796 si hay otra copia abierta.
+   Repetir INICIAR.bat abre la misma instancia de esta carpeta.
 
 Para cerrar del todo: finalizá AnonimizadorJudicial-NLP.exe desde el
 Administrador de tareas (cerrar solo el navegador puede no detenerlo).
@@ -358,9 +345,9 @@ def _readme_mac() -> str:
 
 Requisitos
 ----------
-- macOS 11+ (Intel o Apple Silicon)
+- macOS y arquitectura correspondientes al equipo de compilacion
 - NO requiere Python ni Internet para funcionar
-- ~250–400 MB en disco
+- Espacio en disco: ver la Release de ese paquete
 
 Instalación
 -----------
@@ -371,7 +358,7 @@ Instalación
 
 Verificación: ejecutar VERIFICAR.command o abrir /health
 - app_version indica la versión
-- presidio.available y spacy.available: true
+- nlp_layers.presidio.available y nlp_layers.spacy.available: true
 
 Uso
 ---
@@ -383,10 +370,9 @@ Privacidad: todo local (127.0.0.1).
 
 
 def make_zip(pkg_dir: Path) -> Path:
-    zip_path = ROOT / "dist" / f"{pkg_dir.name}.zip"
-    if zip_path.exists():
-        zip_path.unlink()
-    shutil.make_archive(str(zip_path.with_suffix("")), "zip", pkg_dir.parent, pkg_dir.name)
+    from package_release import app_version, write_release_zip
+    zip_path = ROOT / 'dist' / f'{DIST_NAME}-{app_version()}.zip'
+    write_release_zip(pkg_dir, zip_path)
     return zip_path
 
 
@@ -402,6 +388,7 @@ def smoke_test_pkg(pkg_dir: Path | None = None) -> None:
             if cfg.exists():
                 print(f"Modelo empaquetado OK: {cfg.parent}")
                 return
+        raise SystemExit('Falta el modelo en el paquete generado.')
     from app.detection.nlp_status import get_nlp_layers_status
 
     status = get_nlp_layers_status()
@@ -450,8 +437,13 @@ def main() -> None:
     sys.path.insert(0, str(ROOT / "scripts"))
     from bundle_compliance import bundle_compliance  # noqa: E402
 
+    from package_release import bundle_docs, verify_portable_compliance
+
+    print('Copiando manuales e inventario de dependencias…')
+    bundle_docs(final_dir)
     print("Copiando avisos legales y licencias…")
     bundle_compliance(final_dir)
+    verify_portable_compliance(final_dir)
 
     print(f"\nListo:")
     print(f"  Carpeta: {final_dir}")
@@ -461,8 +453,8 @@ def main() -> None:
         print(f"  ZIP:     {zip_path} ({size_mb:.1f} MB)")
     else:
         print("  ZIP:     (omitido)")
-        print("           Cuando la versión esté lista para alumnos:")
-        print("           .venv\\Scripts\\python scripts\\package_release.py --suffix IALAB-v3.1")
+        print("           Cuando la versión esté lista para compartir:")
+        print("           .venv\\Scripts\\python scripts\\package_release.py")
     print("\nPara probar cambios de interfaz sin rebuild: scripts\\sync_frontend.py")
 
 

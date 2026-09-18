@@ -2,7 +2,9 @@
 import re
 
 from app.detection.dictionaries import STOPWORDS_FRASE, get_apellidos, get_nombres
-from app.detection.regex_ar import RawItem
+from app.detection.regex_ar import PERSONA_BOUNDARY_WORDS, RawItem
+from app.detection.organizations import is_company_name, is_organism_name
+from app.detection.person_context import is_contextual_person, is_vehicle_name
 from app.resolution.normalize import normalize_text
 
 _bad_after_calle_re = re.compile(
@@ -36,29 +38,6 @@ _verbs_re = re.compile(
     r"\b(?:que|manifiesta|declara|considera|solicita|respondió|respondio|"
     r"recibió|recibio|encontró|encontro|guardó|guardo|mantuvo|trata|"
     r"fue|había|habia|pudo|desde|hacia|sobre|bajo|también|tambien)\b",
-    re.IGNORECASE,
-)
-
-# Verbos y conectores narrativos que NO deben aparecer dentro del nombre de
-# un organismo. Ej.: "Tribunal Superior quien revise la sentencia", "Cámara
-# se apartó", "Procuración consideró que…". Es una lista más amplia que la
-# de personas porque los organismos atrapan colas narrativas frecuentes.
-_ORG_NARRATIVE_RE = re.compile(
-    r"\b(?:quien|quienes|cual|cuales|cuya|cuyo|cuyas|cuyos|"
-    r"se\s+(?:apart[óo]|expid[ióo]|pronunci[óo]|expres[óo])|"
-    r"apart[óo]|aparte|revise|revisa|revisar[áa]?|"
-    r"considera|consider[óeao]|considere|"
-    r"manifest[óaeo]|declara|declare|declar[óao]|"
-    r"resolverá|resolvera|dispuso|disponga|dispone|"
-    r"sentencia|sentenci[óa]|hechos|fundamentos|recurso|recursos)\b",
-    re.IGNORECASE,
-)
-
-# Abreviaturas que indican que el surface quedó truncado (cortado antes del
-# número o complemento). Ej.: "Defensoría en lo Contravencional nro" o
-# "Juzgado Civil n°".
-_ORG_TRAILING_ABBR_RE = re.compile(
-    r"\b(?:nro|n[°º]|art|inc|sec|dpto|depto|nº)\s*\.?\s*$",
     re.IGNORECASE,
 )
 
@@ -183,20 +162,23 @@ def _has_street_context(text: str, start: int, window: int = 120) -> bool:
     return bool(_street_prefix_re.search(chunk))
 
 
-def _looks_like_narrative(surface: str) -> bool:
+def _looks_like_narrative(surface: str, max_chars: int = 40, max_words: int = 8) -> bool:
     s = surface.strip()
     low = s.lower()
-    if len(s) > 40:
+    if len(s) > max_chars:
         return True
     if any(phrase in low for phrase in _NARRATIVE_PHRASES):
         return True
     words = s.split()
     if len(words) >= 4 and _verbs_re.search(s):
         return True
-    if len(words) >= 8:
+    if len(words) >= max_words:
         return True
-    norm = [normalize_text(w) for w in words]
-    if sum(1 for w in norm if w in get_formulas() or w in STOPWORDS_FRASE) >= max(
+    norm = [normalize_text(w.strip(".,;:")) for w in words]
+    if any(w in PERSONA_BOUNDARY_WORDS for w in norm):
+        return True
+    particles = {"de", "del", "la", "las", "los", "y", "e"}
+    if sum(1 for w in norm if w not in particles and (w in get_formulas() or w in STOPWORDS_FRASE)) >= max(
         1, len(words) // 2
     ):
         return True
@@ -244,7 +226,9 @@ def _is_valid_persona(surface: str) -> bool:
     words = [w for w in s.split() if len(w) > 1]
     if not words:
         return False
-    norm = [normalize_text(w) for w in words]
+    norm = [normalize_text(w.strip(".,;:")) for w in words]
+    if any(w in PERSONA_BOUNDARY_WORDS for w in norm):
+        return False
     nombres = get_nombres()
     apellidos = get_apellidos()
     has_name = any(w in nombres for w in norm)
@@ -417,6 +401,10 @@ def is_valid_detection(cat: str, surface: str, text: str = "", start: int = 0) -
     if not s or len(s) < 2:
         return False
     if cat == "PERSONA":
+        if is_company_name(s) or is_vehicle_name(s, text, start):
+            return False
+        if is_contextual_person(s, text, start) and not _looks_like_narrative(s, max_chars=120, max_words=12):
+            return True
         if _has_autos_context(text, start) and not _looks_like_narrative(s):
             return 2 <= len(s.split()) <= 6 or s.isupper()
         return _is_valid_persona(s)
@@ -429,43 +417,10 @@ def is_valid_detection(cat: str, surface: str, text: str = "", start: int = 0) -
     if cat == "DNI":
         return _is_valid_dni(s, text, start)
     if cat == "ORGANISMO":
-        low = s.lower()
-        if len(s) > 55 or len(s.split()) > 6:
-            return False
-        if any(
-            x in low
-            for x in (
-                "papeler",
-                "cerrajer",
-                "unidad funcional",
-                "edificio",
-                "dispuso",
-                "requirió",
-                "requirio",
-                "acompañara",
-                "acompanara",
-                "correr traslado",
-                "presentación",
-                "presentacion",
-                "comunicaciones mantenidas",
-            )
-        ):
-            return False
-        if not re.match(
-            r"^(?:juzgado|fiscal|tribunal|cámara|camara|defensor|ministerio|procuración|procuracion)",
-            low,
-        ):
-            return False
-        # Rechazar frases que arrastran verbos o conectores narrativos: el
-        # nombre real de un organismo nunca contiene "quien revise…" o
-        # "se apartó…".
-        if _ORG_NARRATIVE_RE.search(s):
-            return False
-        # Rechazar surfaces que terminan en abreviatura sin completar
-        # (truncados por la regex al toparse con un punto interno).
-        if _ORG_TRAILING_ABBR_RE.search(s):
-            return False
-        return len(s) >= 8
+        return is_organism_name(s)
+    if cat == "EMPRESA":
+        return is_company_name(s) or bool(re.fullmatch(
+            r"(?:Hotel|Automotores|Local|Comercio|TOTOS)\s+[A-ZÁÉÍÓÚÜÑ][\wÁÉÍÓÚÜÑáéíóúüñ&'’\-. ]{1,45}", s))
     if cat == "PATENTE":
         return _is_valid_patente(s)
     if cat == "OTRO":

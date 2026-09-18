@@ -24,4 +24,16 @@ def get_nlp_layers_status() -> dict:
         except Exception as e:
             status["spacy"]["error"] = str(e)
 
+    from app.detection.dictionaries import get_apellidos, get_nombres
+    from app.detection.regex_catalog import load_catalog_patterns
+
+    status["dictionaries"] = {}
+    for name, load in (("nombres", get_nombres), ("apellidos", get_apellidos),
+                       ("regex", load_catalog_patterns)):
+        try:
+            values = load()
+            status["dictionaries"][name] = {"available": bool(values), "count": len(values)}
+        except (OSError, ValueError, TypeError) as exc:
+            status["dictionaries"][name] = {"available": False, "error": str(exc)}
+
     return status

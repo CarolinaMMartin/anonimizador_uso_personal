@@ -11,7 +11,10 @@ Archivos en `data/dictionaries/` — **recursos propios** del anonimizador IALAB
 
 **No incluyen:** corpus judiciales confidenciales, sentencias reales, ni datos personales.
 
-**No distribuir:** `data/sessions.db` (base SQLite local de sesiones de desarrollo/uso).
+**No distribuir:** documentos cargados, exportaciones con datos originales,
+logs ni bases SQLite de una configuración de desarrollo que active persistencia.
 
 En el paquete portable, solo se empaquetan los diccionarios (solo lectura).
-La base `sessions.db` se crea en runtime junto al ejecutable si el usuario procesa documentos.
+La instancia de uso personal mantiene las sesiones en memoria y no crea
+`sessions.db`. El almacenamiento SQLite de `SessionStore` es opcional y está
+desactivado en la aplicación distribuida.

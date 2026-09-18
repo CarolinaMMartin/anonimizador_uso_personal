@@ -1,143 +1,21 @@
-# Checklist de publicación (GitHub Releases)
+# Publicación de versiones
 
-Los paquetes portables **no se versionan dentro del historial Git**. Se
-publican como archivos adjuntos de una **GitHub Release**.
+Repositorio: [anonimizador_uso_personal](https://github.com/CarolinaMMartin/anonimizador_uso_personal).
+La versión 3.3.12 se entrega para Windows x64. Publicar macOS únicamente después de construir y verificar esa misma versión en una Mac.
 
-Plataformas publicadas:
+1. Actualizar `APP_VERSION`, README, manuales, changelog y notas de versión. Las propuestas pendientes no deben aparecer como funcionalidades disponibles.
+2. Revisar todos los archivos publicables y ejecutar `python scripts/audit_repository.py`, `python -m pip check`, `python -m pytest tests -q` y `node --test tests/frontend_session.test.cjs`.
+3. Construir en el sistema de destino con `python scripts/build_portable_full.py`. Repetir pytest con el paquete presente; no debe omitir pruebas de estructura.
+4. Ejecutar `python scripts/portable_smoke.py` y `python scripts/check_grouping.py --url http://127.0.0.1:PUERTO --learned-alias-cases` sobre el ejecutable compilado. Los casos deben ser ficticios.
+5. Crear la entrega con `python scripts/package_release.py --output dist/AnonimizadorJudicial-Windows.zip`. Verificar el CRC, SHA-256 y exclusión de sesiones, documentos, equivalencias, registros y credenciales.
+6. Extraer el ZIP en una carpeta nueva y verificar inicio, versión, capas NLP locales, carga y exportaciones. El lanzador debe conservar procesos anteriores.
+7. Guardar el código revisado en Git. Crear el tag `vVERSION` sobre el mismo commit que se compila y una Release con notas, plataforma, limitaciones, ZIP y SHA-256.
+8. Comprobar los enlaces de descarga y la coincidencia entre versión del tag, código, interfaz, `/health` y `VERSION_APP.txt`.
 
-| Plataforma | Archivo estable usado por el README | Inicio |
-|------------|--------------------------------------|--------|
-| Windows 10/11 x64 | `AnonimizadorJudicial-Windows.zip` | `INICIAR.bat` |
-| macOS | `AnonimizadorJudicial-Mac` | `INICIAR.command` |
+## Automatización de Windows
 
-Repositorio: <https://github.com/CarolinaMMartin/anonimizador_uso_personal>
+[release-windows.yml](../.github/workflows/release-windows.yml) construye y verifica el portable antes de generar un artifact. Una ejecución manual publica solamente si se selecciona `publish`. Un commit en `main` con el marcador explícito `[publicar-version]` también solicita la publicación de la versión definida en el código.
 
----
+Las ejecuciones por tag y las ejecuciones manuales sin `publish` construyen artifacts para revisión. Los demás commits en `main` no publican. La publicación crea una Release nueva y adjunta el ZIP y su SHA-256 después de pasar las verificaciones; no reemplaza archivos de versiones anteriores.
 
-## Checklist por versión
-
-1. **Actualizar `APP_VERSION`** en [`app/config.py`](../app/config.py).
-   Esa versión aparece en la interfaz, en `/health` y en FastAPI.
-
-2. **Ejecutar los tests.**
-
-   ```bash
-   python -m pytest tests/ -v
-   ```
-
-3. **Generar cada portable en su sistema operativo.**
-
-   PyInstaller no genera de forma cruzada: el paquete Windows se construye
-   en Windows y el de macOS en una Mac.
-
-   ```bash
-   python scripts/install_nlp.py
-   python scripts/build_portable_full.py
-   python scripts/test_portable_smoke.py
-   python scripts/package_release.py --suffix vVERSION-PLATAFORMA
-   ```
-
-4. **Probar la copia que realmente se va a publicar.**
-
-   En una carpeta limpia:
-
-   - extraer el paquete completo;
-   - iniciar con `INICIAR.bat` o `INICIAR.command`;
-   - abrir `/health`;
-   - confirmar que `app_version` coincide con la Release;
-   - confirmar `presidio.available` y `spacy.available` en `true`;
-   - cargar un documento ficticio;
-   - exportar al menos a Word o PDF.
-
-5. **Verificar la estructura del paquete.**
-
-   Debe incluir:
-
-   - aplicación o ejecutable;
-   - launcher y verificador de la plataforma;
-   - frontend;
-   - modelo spaCy y su licencia;
-   - manuales;
-   - `LICENSE`;
-   - `NOTICE`;
-   - `THIRD_PARTY_NOTICES.txt`;
-   - `LICENSES/`;
-   - `COMPLIANCE.md`.
-
-   No debe incluir sesiones, bases de datos, documentos reales, logs,
-   credenciales ni archivos `.env`.
-
-6. **Calcular SHA-256** para cada archivo publicado.
-
-   Windows:
-
-   ```powershell
-   Get-FileHash .\AnonimizadorJudicial-Windows.zip -Algorithm SHA256
-   ```
-
-   macOS:
-
-   ```bash
-   shasum -a 256 AnonimizadorJudicial-Mac
-   ```
-
-7. **Crear el tag y la Release.**
-
-   ```bash
-   git tag vVERSION
-   git push origin vVERSION
-   ```
-
-   La Release debe indicar:
-
-   - versión;
-   - plataformas disponibles;
-   - instrucciones de inicio;
-   - cambios principales;
-   - limitaciones conocidas;
-   - SHA-256 de cada descarga.
-
-8. **Subir los dos archivos a la misma Release.**
-
-   Mantener los nombres estables porque el README utiliza enlaces directos:
-
-   ```text
-   AnonimizadorJudicial-Windows.zip
-   AnonimizadorJudicial-Mac
-   ```
-
-9. **Comprobar los enlaces del README.**
-
-   Abrir el repositorio en una ventana privada y verificar que ambos
-   botones descarguen el archivo correcto.
-
-10. **Comprobar la versión visible.**
-
-    - La insignia “última versión” del README debe apuntar a la Release
-      recién publicada.
-    - La interfaz debe mostrar la misma versión junto al indicador
-      “100% local”.
-    - `/health` debe devolver esa misma versión en `app_version`.
-
----
-
-## Notas
-
-- No subir ZIP, ejecutables ni bases de datos al historial Git.
-- No usar documentos reales en tests, Issues o capturas.
-- No prometer plazos de soporte.
-- Conservar todos los avisos y textos de licencia al reutilizar o
-  redistribuir el proyecto.
-- Si un fork no tiene autorización para usar la marca IALAB, debe
-  reemplazar logo y referencias institucionales conforme a `NOTICE`.
-
-## Automatización disponible
-
-El workflow
-[`.github/workflows/release-windows.yml`](../.github/workflows/release-windows.yml)
-construye el portable de Windows, ejecuta tests y genera un artifact con su
-SHA-256. No publica automáticamente la Release: la revisión y publicación
-siguen siendo manuales.
-
-El paquete de macOS se genera actualmente en una Mac siguiendo esta misma
-lista de control.
+Las notas se obtienen de [NOTAS_VERSION.md](NOTAS_VERSION.md). Si falla una comprobación, corregir el problema y repetir la validación antes de publicar. No usar documentos reales en Issues, tests, capturas ni artifacts.

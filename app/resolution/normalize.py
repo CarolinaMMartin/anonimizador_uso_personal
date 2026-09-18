@@ -3,9 +3,9 @@ import re
 import unicodedata
 
 TREATMENTS = re.compile(
-    r"^(?:el|la|los|las)\s+"
-    r"|(?:sr\.?|sra\.?|srta\.?|dr\.?|dra\.?|lic\.?|ing\.?|don|doña|señor|señora)\s+"
-    r"|(?:imputad[oa]|víctima|victima|denunciante|testig[oa]|menor|niñ[oa])\s+",
+    r"^(?:(?:el|la|los|las)\s+"
+    r"|(?:sr\.?|sra\.?|srta\.?|dr\.?|dra\.?|lic\.?|ing\.?|don|dona|senor|senora)\s+"
+    r"|(?:imputad[oa]|victima|denunciante|testig[oa]|menor|nin[oa])\s+)+",
     re.IGNORECASE,
 )
 
@@ -31,8 +31,9 @@ def normalize_mention(surface: str) -> str:
 
 
 def tokenize_name(s: str) -> list[str]:
-    parts = re.split(r"\s+", s)
-    skip = {"de", "del", "la", "las", "los", "y", "i"}
+    s = normalize_text(s).replace('’', "'").replace('ʼ', "'")
+    parts = re.findall(r"[^\W\d_]+(?:'[^\W\d_]+)*", s, re.UNICODE)
+    skip = {"de", "del", "la", "las", "los", "y"}
     return [p for p in parts if p and p not in skip]
 
 

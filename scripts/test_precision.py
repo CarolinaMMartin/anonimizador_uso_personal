@@ -1,4 +1,4 @@
-"""Tests de precisión — casos del CSV de equivalencias."""
+"""Comprobación de precisión sobre un documento sintético."""
 import sys
 from pathlib import Path
 
@@ -25,7 +25,6 @@ BAD = [
     "matías s/",
     "mariana c/",
     "negó los hechos",
-    "calderini",
 ]
 
 GOOD_SUBSTR = [

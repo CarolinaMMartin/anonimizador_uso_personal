@@ -68,7 +68,7 @@ async def export_docx(req: ExportDocumentRequest):
         fmt = format_from_options(req.format)
         paragraphs = text_to_paragraphs(anon)
         data = build_docx_bytes(paragraphs, fmt)
-        filename = f"{state.doc_name}_anonimizado.docx"
+        filename = "documento_anonimizado.docx"
         return Response(
             content=data,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -95,7 +95,7 @@ async def export_pdf(req: ExportDocumentRequest):
         fmt = format_from_options(req.format)
         paragraphs = text_to_paragraphs(anon)
         data = build_pdf_bytes(paragraphs, fmt)
-        filename = f"{state.doc_name}_anonimizado.pdf"
+        filename = "documento_anonimizado.pdf"
         return Response(
             content=data,
             media_type="application/pdf",
@@ -119,7 +119,7 @@ async def export_csv(req: ExportRequest):
     try:
         detections = _prune_detections(state.detections, state.doc_text)
         data = build_csv_bytes(detections)
-        filename = f"{state.doc_name}_equivalencias.csv"
+        filename = "equivalencias.csv"
         return Response(
             content=data,
             media_type="text/csv; charset=utf-8",

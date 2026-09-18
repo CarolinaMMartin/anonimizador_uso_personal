@@ -132,7 +132,7 @@
     <section class="workspace" id="workspace" hidden>
       <div class="callout callout-tip workspace-tip">
         <strong>Cómo revisar</strong> En la tabla corregí tipo, sustitución o desmarcá filas incorrectas.
-        Usá <strong>Unir similares</strong> cuando el mismo nombre aparece con distintas variantes (ORIGINAL, DUPLICADO, etc.).
+        Revisá las variantes propuestas y usá <strong>Unir similares</strong> para confirmar que corresponden a la misma persona.
         En la vista previa seleccioná texto para agregar algo que no se detectó.
       </div>
       <div class="split-pane" id="splitPane">
@@ -296,13 +296,13 @@
       <div class="editor-layout">
         <aside class="editor-format" aria-label="Formato del documento">
           <h3 class="format-title">Formato</h3>
-          <label class="field-label" for="fmtFont">Fuente</label>
+          <label class="field-label" for="fmtFont">Fuente de Word</label>
           <select class="field-input" id="fmtFont">
             <option value="Times New Roman" selected>Times New Roman</option>
             <option value="Arial">Arial</option>
             <option value="Calibri">Calibri</option>
           </select>
-
+          <p class="field-hint">El PDF usa Times Roman. Tamaño, interlineado y márgenes se aplican a ambos formatos.</p>
           <label class="field-label" for="fmtSize">Tamaño</label>
           <select class="field-input" id="fmtSize">
             <option value="11">11 pt</option>
@@ -358,6 +358,6 @@
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="/static/app.js?v=22"></script>
+<script src="/static/app.js?v=24"></script>
 </body>
 </html>

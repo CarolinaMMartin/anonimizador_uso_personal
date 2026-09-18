@@ -15,19 +15,19 @@ def _prune_detections(detections, text: str):
 
     pruned = []
     for d in detections:
-        if getattr(d, "user_added", False):
+        # Export preparation must not mutate the live session or renumber IDs.
+        d = d.model_copy(deep=True)
+        if d.user_added or d.cluster_confirmed or 'document_alias' in d.source_layers:
             pruned.append(d)
             continue
         if is_valid_detection(d.cat, d.original, text, d.positions[0].start if d.positions else 0):
             pruned.append(d)
     pruned = _drop_substring_personas(pruned)
-    for i, d in enumerate(pruned):
-        d.id = i
     return pruned
 
 
 def _drop_substring_personas(detections):
-    """Quita 'Mariana', 'Ailen', 'Bressan' si ya existe el nombre completo."""
+    """Quita únicamente posiciones cubiertas por una mención personal mayor."""
     personas = [d for d in detections if d.cat == "PERSONA"]
     otros = [d for d in detections if d.cat != "PERSONA"]
     personas.sort(key=lambda d: len(d.original), reverse=True)
@@ -39,15 +39,17 @@ def _drop_substring_personas(detections):
             kept_norm.append(d.original.strip().lower())
             continue
         low = d.original.strip().lower()
-        if len(low) < 4:
-            # Nombres muy cortos: solo si no están contenidos en otro
-            if any(
-                low != k and (f" {low} " in f" {k} " or k.startswith(low + " ") or k.endswith(" " + low))
-                for k in kept_norm
-            ):
+        if any(low != k and low in k for k in kept_norm):
+            # A surname mentioned elsewhere is still personal data. Drop only
+            # occurrences already covered by another detection, never the row
+            # just because its text is a substring of a longer person's name.
+            positions = [p for p in d.positions if not any(
+                other.start <= p.start and p.end <= other.end
+                for existing in kept for other in existing.positions
+            )]
+            if not positions:
                 continue
-        elif any(low != k and low in k for k in kept_norm):
-            continue
+            d.positions = positions
         kept.append(d)
         kept_norm.append(low)
     return otros + kept

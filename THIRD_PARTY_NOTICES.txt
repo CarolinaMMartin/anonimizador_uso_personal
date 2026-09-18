@@ -1,79 +1,56 @@
 THIRD-PARTY SOFTWARE NOTICES
 Anonimizador Judicial — IALAB
-Version: see /health (app_version)
+Version 3.3.12; runtime version also available as app_version in /health.
 
-This application bundles open-source and separately licensed components.
-Full license texts are in the LICENSES/ directory.
+PRIMARY RUNTIME DEPENDENCIES
+Component                 Pinned version    License
+FastAPI                   0.136.1           MIT
+Uvicorn                   0.47.0            BSD-3-Clause
+python-multipart          0.0.29            Apache-2.0
+python-docx               1.2.0             MIT
+pdfplumber                0.11.9            MIT
+ReportLab                 4.5.1             BSD-style (see original license)
+RapidFuzz                 3.14.5            MIT
+NetworkX                  3.6.1             BSD-3-Clause
+Pydantic                  2.13.4            MIT
+aiofiles                  25.1.0            Apache-2.0
+presidio-analyzer         2.2.362           MIT
+presidio-anonymizer       2.2.362           MIT
+spaCy (library)           3.8.14            MIT
 
-================================================================================
-PERMISSIVE COMPONENTS (runtime — requirements.txt)
-================================================================================
+MODEL AND BUILD TOOL
+es_core_news_md           3.8.0             GPL-3.0
+Model original license: models/es_core_news_md/LICENSE
+Model metadata and configuration accompany the bundled model.
+The model license is separate from the spaCy library license.
 
-Component              Version (ref.)   License
----------------------  ---------------  -----------------
-FastAPI                0.110+           MIT
-Uvicorn                0.27+            BSD-3-Clause
-python-multipart       0.0.9+           Apache-2.0
-python-docx            1.1+             MIT
-pdfplumber             0.11+            MIT
-reportlab              4.0+             BSD-3-Clause (custom license, permissive)
-RapidFuzz              3.6+             MIT
-NetworkX               3.2+             BSD-3-Clause
-Pydantic               2.6+             MIT
-aiofiles               23.2+            Apache-2.0
-presidio-analyzer      2.2+             MIT
-presidio-anonymizer    2.2+             MIT
-spacy (library)        3.7+             MIT
+PyInstaller               6.20.0            GPL with bootloader exception
+Used for compilation. Consult its original notices.
 
-Transitive dependencies (numpy, lxml, cryptography, etc.) are included in the
-portable build under _internal/ with their respective LICENSE files in
-_internal/*.dist-info/licenses/.
+LICENSE COPIES AND BUILD INVENTORY
+LICENSES/ contains reference license texts.
+LICENSES/third_party/ contains original notices copied from installed wheels.
+LICENSES/INVENTARIO_BUILD.json lists installed distributions and notices found
+during compilation, including development tools. It is an environment inventory,
+not a declaration that every listed tool is a runtime dependency.
+DEPENDENCIAS_BUILD.txt in the portable and docs/dependencies-frozen.txt in the
+repository document the validated environment, including transitive packages.
+Preserve component-specific copyright and license notices when redistributing.
 
-================================================================================
-COPYLEFT / SPECIAL LICENSE COMPONENTS
-================================================================================
+PROJECT RESOURCES AND MARKS
+Application code and project dictionaries: see LICENSE, NOTICE and data/README.md.
+No real judicial documents are distributed as examples.
+IALAB logo and institutional marks: see NOTICE; the code license does not grant
+trademark authorization.
 
-El modelo es_core_news_md se distribuye bajo licencia GPL-3.0.
-Texto completo de la licencia: models/es_core_news_md/LICENSE
+PRIVACY AND OFFLINE OPERATION
+The frontend uses system fonts, without web font or CDN downloads.
+Presidio's EmailRecognizer is disabled; email detection uses local regex.
+tldextract uses its local snapshot; analysis requires no network.
+Sessions are held in process memory; no SQLite session database is created
+automatically by the normal application workflow.
+The release excludes user documents, sessions, equivalence CSVs and logs.
+Exported equivalence CSVs contain original personal values.
 
-Component              Version (ref.)   License              Notes
----------------------  ---------------  -------------------  ------------------
-es_core_news_md        3.8.0            GPL-3.0              Spanish NLP model (Explosion).
-(spaCy model)                                            Bundled in models/es_core_news_md/.
-                                                         Ver LICENSE en esa carpeta.
-
-PyInstaller            6.x              GPL + exception      Build tool only.
-
-NOTE: PyMuPDF was removed in v3.3.8. PDF I/O uses pdfplumber (MIT) + ReportLab (BSD).
-
-Presidio dependency tldextract: configured offline (no publicsuffix.org). Email
-detection via regex AR, not Presidio EmailRecognizer.
-
-================================================================================
-PROprietary / PROJECT-OWNED RESOURCES
-================================================================================
-
-  - Application source code (app/, frontend/, scripts/)
-  - data/dictionaries/*.json (regex_limpio_v2.json, nombres.json, apellidos.json,
-    formulas_judiciales.json) — developed for this project; no real judicial
-    corpus or personal data. See data/README.md.
-
-  - Logo IALAB (frontend/logo-ialab.*) — institutional mark; use requires
-    authorization from IALAB/UBA.
-
-================================================================================
-FONTS
-================================================================================
-
-The production UI uses system fonts only (Segoe UI, Georgia, etc.).
-No web fonts or CDN requests at runtime.
-
-================================================================================
-PRIVACY
-================================================================================
-
-  - No sessions.db or sample documents are distributed in the release ZIP.
-  - Local SQLite database is created at runtime in data/ next to the executable.
-
-For institutional deployment guidance: docs/COMPLIANCE.md and
-docs/DEPLOY_PODER_JUDICIAL.md
+Distribution guidance: docs/COMPLIANCE.md and docs/DEPLOY.md in the repository;
+COMPLIANCE.md and DEPLOY.md in the portable.
