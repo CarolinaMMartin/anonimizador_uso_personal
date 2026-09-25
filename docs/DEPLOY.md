@@ -1,6 +1,6 @@
-# Construcción y distribución — 3.3.12
+# Construcción y distribución — 3.3.13
 
-La entrega 3.3.12 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
+La entrega 3.3.13 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
 
 ## Construcción
 

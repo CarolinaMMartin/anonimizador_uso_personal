@@ -1,6 +1,6 @@
 THIRD-PARTY SOFTWARE NOTICES
 Anonimizador Judicial — IALAB
-Version 3.3.12; runtime version also available as app_version in /health.
+Version 3.3.13; runtime version also available as app_version in /health.
 
 PRIMARY RUNTIME DEPENDENCIES
 Component                 Pinned version    License

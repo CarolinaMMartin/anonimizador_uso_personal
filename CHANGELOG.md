@@ -1,5 +1,22 @@
 # Cambios — Anonimizador Judicial
 
+
+## 3.3.13 — Correcciones manuales y descarga accesible
+
+- La selección manual respeta la categoría elegida, incluidos domicilios como
+  «Campana 39» y otros datos que no reconoce el análisis automático.
+- Volver a agregar un dato existente lo activa y conserva su sustitución.
+- La vista final, Word, PDF y CSV respetan las filas revisadas sin volver a
+  descartarlas mediante filtros automáticos.
+- Se corrigen las posiciones entre navegador y servidor en textos con emojis
+  u otros caracteres fuera del plano Unicode básico.
+- La búsqueda usa el texto actual aunque se pulse antes de terminar la espera
+  de actualización. Una selección pendiente no se aplica a otro documento.
+- README orientado a personas sin conocimientos técnicos, con descarga directa
+  de Windows, inicio paso a paso y ayuda para el agregado manual.
+- Regresiones automatizadas de selección, categorías, reactivación, grupos,
+  posiciones Unicode y exportaciones con datos ficticios.
+
 ## 3.3.12 — 18 de septiembre de 2026
 
 - Detección de nombres y apellidos con cualquier capitalización y tildes, basada en los catálogos locales y contexto de personas. Los límites evitan absorber oraciones completas.

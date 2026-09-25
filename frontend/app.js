@@ -74,6 +74,8 @@ function resetDocumentState() {
   sessionId = null;
   currentDocName = '';
   docText = '';
+  offsetText = null;
+  browserOffsets = [];
   detections = [];
   clusters = [];
   lastPreviewHighlights = [];
@@ -1210,6 +1212,39 @@ async function loadPreview() {
   if (window.searchTool) window.searchTool.refresh();
 }
 
+// Python usa puntos Unicode; el navegador usa unidades UTF-16. Convertir
+// únicamente en los límites de la API para no desplazar datos tras un emoji.
+let offsetText = null;
+let browserOffsets = [];
+function documentOffsets() {
+  if (offsetText !== docText) {
+    offsetText = docText;
+    browserOffsets = [0];
+    let offset = 0;
+    for (const char of docText) {
+      offset += char.length;
+      browserOffsets.push(offset);
+    }
+  }
+  return browserOffsets;
+}
+
+function toBrowserOffset(offset) {
+  return documentOffsets()[offset];
+}
+
+function toDocumentOffset(offset) {
+  const offsets = documentOffsets();
+  let low = 0, high = offsets.length - 1;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (offsets[mid] < offset) low = mid + 1;
+    else high = mid;
+  }
+  if (offsets[low] !== offset) throw new Error('Volvé a seleccionar el texto completo.');
+  return low;
+}
+
 function renderHighlighted(text, highlights, searchMatches, currentSearchIdx) {
   const detHls = Array.isArray(highlights) ? [...highlights] : [];
   detHls.sort((a, b) => a.start - b.start);
@@ -1277,7 +1312,7 @@ function renderPreviewLocal() {
       .filter((d) => d.enabled)
       .forEach((d) => {
         d.positions.forEach((p) => {
-          replacements.push({ start: p.start, end: p.end, value: d.placeholder });
+          replacements.push({ start: toBrowserOffset(p.start), end: toBrowserOffset(p.end), value: d.placeholder });
         });
       });
     replacements.sort((a, b) => a.start - b.start || b.end - a.end);
@@ -1299,7 +1334,8 @@ function renderPreviewLocal() {
     $('docPreview').textContent = out;
   } else {
     lastPreviewHighlights = detections.filter((d) => d.enabled).flatMap((d) =>
-      d.positions.map((p) => ({ ...p, cat: d.cat, placeholder: d.placeholder }))
+      d.positions.map((p) => ({ ...p, start: toBrowserOffset(p.start), end: toBrowserOffset(p.end),
+        cat: d.cat, placeholder: d.placeholder }))
     );
     renderHighlighted(docText, lastPreviewHighlights);
   }
@@ -1313,6 +1349,7 @@ $('viewOrig').addEventListener('click', () => {
   if (window.searchTool) window.searchTool.refresh();
 });
 $('viewAnon').addEventListener('click', () => {
+  clearTextSelection();
   viewMode = 'anon';
   $('viewAnon').classList.add('active');
   $('viewOrig').classList.remove('active');
@@ -1653,36 +1690,38 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
   }
 
   const sel = { ...pendingSelection };
+  const context = sessionContext();
 
   try {
     let det = null;
     await flushPendingSaves();
+    assertCurrentSession(context);
     const res = await sessionFetch(API + '/api/manual-detection', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         session_id: sessionId,
         cat,
-        start: sel.start,
-        end: sel.end,
+        start: toDocumentOffset(sel.start),
+        end: toDocumentOffset(sel.end),
         original: sel.text,
       }),
-    });
+    }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
     applyReviewData(data);
     reviewChanged();
     det = data.detection;
 
-    if (groupId && det) {
-      await assignDetectionToCluster(det.id, groupId);
-      return;
-    }
-
     clearTextSelection();
     renderTable();
     renderStatsFromDetections();
     await loadPreview();
+    if (groupId && det) {
+      assertCurrentSession(context);
+      await assignDetectionToCluster(det.id, groupId);
+      return;
+    }
     showToast(`Anonimizado: ${det.original}`, 'success');
   } catch (e) {
     showToast(e.message, 'error');
@@ -1900,6 +1939,8 @@ const searchTool = (() => {
 
   async function anonymizeAll() {
     if (!requireSession()) return;
+    // El usuario puede pulsar antes de que venza el debounce del buscador.
+    computeMatches();
     if (!matches.length) {
       showToast('No hay coincidencias para anonimizar', 'error');
       return;
@@ -1914,14 +1955,16 @@ const searchTool = (() => {
       localStorage.setItem(CAT_KEY, cat);
     } catch (_) {}
     const positions = matches.map((m) => ({
-      start: m.start,
-      end: m.end,
+      start: toDocumentOffset(m.start),
+      end: toDocumentOffset(m.end),
       raw: docText.substring(m.start, m.end),
     }));
     const btn = anonBtnEl();
+    const context = sessionContext();
     if (btn) btn.disabled = true;
     try {
       await flushPendingSaves();
+      assertCurrentSession(context);
       const res = await sessionFetch(API + '/api/search-and-anonymize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1931,7 +1974,7 @@ const searchTool = (() => {
           original: q,
           positions,
         }),
-      });
+      }, context);
       if (!res.ok) throw new Error(await parseApiError(res));
       const data = await res.json();
       applyReviewData(data);

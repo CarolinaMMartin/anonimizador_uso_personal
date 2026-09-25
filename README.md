@@ -1,144 +1,87 @@
 # Anonimizador Judicial
 
-[![Licencia Apache 2.0](https://img.shields.io/badge/licencia-Apache_2.0-blue.svg)](LICENSE)
-[![Última versión publicada](https://img.shields.io/github/v/release/CarolinaMMartin/anonimizador_uso_personal?label=%C3%BAltima%20publicaci%C3%B3n)](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest)
-[![Procesamiento local](https://img.shields.io/badge/procesamiento-100%25%20local-success.svg)](#privacidad)
+**Ocultá datos personales de un documento antes de compartirlo.**
+La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros datos
+por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
+Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-Aplicación de uso personal y académico para anonimizar documentos judiciales
-argentinos. Combina expresiones regulares, Microsoft Presidio y spaCy con
-revisión humana y exportación Word, PDF, CSV y Markdown. Los documentos se
-procesan en el equipo del usuario.
+## Descargar para Windows
 
-**Versión del código: 3.3.12.** Cambios y limitaciones en
-[CHANGELOG.md](CHANGELOG.md). La versión publicada y los archivos disponibles
-para cada plataforma se consultan en [Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases).
+### [⬇ DESCARGAR LA APLICACIÓN PARA WINDOWS](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
 
-## Descargar y abrir
+**Hacé clic en el enlace de arriba. La descarga del ZIP comienza directamente.**
+No necesitás una cuenta de GitHub ni conocimientos de programación.
+Funciona en **Windows 10 y 11 de 64 bits**. La descarga puede tardar unos minutos.
 
-### Windows 10/11 de 64 bits
+## Abrir por primera vez
 
-[Descargar el ZIP portable para Windows](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
+1. Buscá **AnonimizadorJudicial-Windows.zip** en la carpeta **Descargas**.
+2. Hacé clic derecho sobre el archivo y elegí **Extraer todo**. Después, **Extraer**.
+3. Abrí la carpeta que se creó y entrá en la carpeta del anonimizador.
+4. Hacé doble clic en **INICIAR.bat** (puede aparecer como **INICIAR**).
+5. Esperá a que la aplicación se abra en tu navegador. Aunque se vea allí,
+   funciona en tu computadora y podés usarla sin conexión.
 
-1. Descargá el ZIP desde Releases y elegí **Extraer todo**.
-2. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
-3. Verificá la versión que aparece junto al indicador **100% local**.
+**Conservá toda la carpeta extraída.** Para volver a usarla, abrí **INICIAR**.
+No hace falta instalar otros programas.
 
-No requiere instalar Python ni conectarse a Internet para procesar documentos.
-El inicio usa 127.0.0.1:8787 o un puerto libre entre 8788 y 8796. Repetir el
-inicio abre la instancia de esa carpeta y conserva las otras copias abiertas.
-**VERIFICAR.bat** encuentra el puerto de esa misma versión.
+## Anonimizar un documento
 
-### macOS
+1. **Cargá el archivo:** un Word **.docx** o un **PDF donde puedas seleccionar
+   el texto**, de hasta 40 MB.
+2. **Elegí los datos que querés ocultar** y hacé clic en **Analizar documento**.
+3. **Revisá los resultados:** cada fila muestra el dato original y la etiqueta
+   que lo reemplazará. Desmarcá lo que quieras conservar.
+4. **Agregá lo que falte:** en la vista **Original**, seleccioná el texto,
+   elegí su categoría y hacé clic en **Solo anonimizar**. Esto también oculta
+   sus repeticiones iguales. Para buscar otras apariciones, usá la lupa.
+5. **Comprobá el resultado** en la vista **Anonimizado**. Después, hacé clic
+   en **Abrir editor y verificar**, revisá el texto y descargá el Word o PDF.
 
-La entrega 3.3.12 se verifica en Windows. Una compilación de macOS debe
-construirse y probarse en una Mac antes de publicarse. Las descargas anteriores
-de macOS permanecen en su [Release correspondiente](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/tag/v3.3.11)
-y conservan la versión de ese paquete.
+**Revisá siempre el archivo descargado antes de compartirlo.** La detección
+puede omitir datos o marcar algo que quieras conservar.
 
-**Code → Download ZIP** descarga los fuentes, no la aplicación portable.
-Instrucciones completas: [instalación](docs/MANUAL_INSTALACION.md) y
-[uso](docs/MANUAL_USUARIO.md).
+## Si algo no funciona
 
-## Flujo de uso
+| Qué sucede | Qué hacer |
+| --- | --- |
+| No encuentro INICIAR | Asegurate de haber descargado con el enlace de arriba y de haber usado **Extraer todo**. Luego abrí la carpeta que está dentro. |
+| No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
+| El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
+| Falta ocultar un dato | Seleccionalo en **Original**, elegí su categoría y pulsá **Solo anonimizar**. Comprobá que su fila esté marcada. |
+| Cambié la revisión después de abrir el editor | Volvé a **Abrir editor y verificar** para actualizar el resultado antes de descargarlo. |
+| El documento sale con otro formato | Es esperable: se genera un documento nuevo con el texto revisado. No se conserva la distribución original de tablas, imágenes y páginas. |
 
-1. Cargar un Word .docx o PDF digital con texto seleccionable, de hasta 40 MB.
-2. Elegir categorías y modo de sustitución, analizar y revisar los hallazgos.
-3. Confirmar las variantes que pertenecen a una misma identidad; las ambiguas
-   requieren revisar el contexto y pueden permanecer separadas.
-4. Abrir el editor, verificar el texto y exportar Word, PDF, CSV o Markdown.
+## Actualizar una versión anterior
 
-## Funcionalidades
+Guardá primero tus resultados. Descargá otra vez desde el enlace de arriba y
+extraé el ZIP **en una carpeta nueva**. Abrí **INICIAR** desde esa carpeta;
+los accesos directos anteriores siguen abriendo la versión anterior.
+El número de versión aparece en la parte superior de la aplicación.
 
-- Personas, DNI, CUIT/CUIL, empresas, emails, teléfonos, domicilios, patentes,
-  expedientes y organismos. Expedientes se desactiva por defecto en la interfaz.
-- Nombres en mayúsculas, tildes, firmas, compuestos, orden con coma e iniciales.
-- Búsqueda de referencias cortas a partir de nombres completos detectados en
-  el documento, incluidos apellidos fuera del catálogo.
-- Propuestas de identidad con control de ambigüedad, confirmación, separación y
-  rechazo; las variantes confirmadas comparten su sustitución.
-- Edición de tipos y sustituciones, activación de filas y agregado manual desde
-  la selección o la búsqueda de texto en la vista previa.
-- Tres modos: categorizado ([PERSONA_1]), genérico ([NOMBRE]) e iniciales.
-- Extracción Word de párrafos, tablas, encabezados y pies; PDF digital y mixto.
-- Editor final con formato y exportaciones coherentes con la revisión guardada.
+Los cambios de esta actualización (**3.3.13**) corrigen el agregado manual,
+la conservación de las correcciones al descargar y las selecciones en textos
+con emojis. [Ver las novedades](docs/NOTAS_VERSION.md).
 
-La búsqueda a partir de una **persona ingresada por el usuario** es una
-propuesta para una próxima versión; no forma parte de 3.3.12. Ver
-[el diseño pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md).
+## Tus documentos y tu privacidad
 
-## Privacidad
+Los documentos se procesan en tu equipo. Guardá tus resultados antes de cerrar
+la aplicación: el trabajo en curso se pierde al cerrar por completo la aplicación.
+Cerrar solo la pestaña del navegador puede dejar la aplicación funcionando.
 
-- El servidor escucha solamente en 127.0.0.1.
-- El procesamiento no llama a servicios en la nube ni usa CDN o telemetría.
-- La instancia de uso personal conserva las sesiones **solo en memoria**;
-  no crea una base SQLite ni guarda el texto extraído en disco.
-- Cerrar la pestaña del navegador puede dejar el proceso abierto. Al terminar
-  ese proceso se pierden sus sesiones: guardá las exportaciones antes de cerrarlo.
-- Word, PDF, CSV y Markdown descargados son archivos que el usuario guarda.
-  El CSV de equivalencias contiene datos originales y debe tratarse como tal.
+Si descargás la **tabla de equivalencias (CSV)**, ese archivo contiene los
+**datos originales** junto a sus etiquetas. Guardalo de forma privada y
+compartí el documento anonimizado que revisaste.
 
-## Limitaciones
+## Más ayuda
 
-- No incluye OCR: las páginas de un PDF sin texto digital se omiten. Word con
-  texto en imágenes, dibujos, notas o revisiones pendientes requiere verificación.
-- La detección es heurística y necesita revisión antes de compartir el resultado.
-- Las referencias aprendidas requieren un nombre completo detectado como
-  evidencia; no identifican automáticamente menciones ambiguas.
-- Las exportaciones reconstruyen el texto y no conservan el diseño original.
-  La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
-  interlineado, alineación y márgenes se aplican a ambos formatos.
-- Las ediciones del editor no se vuelven a analizar ni cambian el CSV.
+[Manual de uso](docs/MANUAL_USUARIO.md) · [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
-## Desarrollo
+Esta descarga es para Windows. **No funciona en Mac ni en celulares.**
 
-Python 3.11–3.13. La entrega Windows se valida con Python 3.13.15 de 64 bits.
+Desarrollado por **IALAB — Laboratorio de Innovación e Inteligencia Artificial,
+Facultad de Derecho, Universidad de Buenos Aires**. Uso personal y académico.
 
-```powershell
-git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
-cd anonimizador_uso_personal
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
-.venv\Scripts\python.exe scripts\install_nlp.py
-.venv\Scripts\python.exe scripts\run_dev.py
-```
-
-En macOS/Linux, usar .venv/bin/python. También hay lanzadores de desarrollo
-INICIAR_DESARROLLO.bat y INICIAR_DESARROLLO.sh. Estos conservan los procesos
-abiertos y eligen un puerto disponible. Se puede especificar ANON_PORT.
-
-La respuesta de /health informa app_version, frontend_dir y nlp_layers.
-Los estados son nlp_layers.presidio.available, nlp_layers.spacy.available y
-nlp_layers.dictionaries; no campos booleanos en la raíz de la respuesta.
-
-```powershell
-.venv\Scripts\python.exe -m pytest tests -q
-node --test tests/frontend_session.test.cjs
-.venv\Scripts\python.exe scripts\audit_repository.py
-```
-
-Los tests de estructura del portable se omiten si todavía no se compiló.
-Después del build deben ejecutarse con ANON_PKG_DIR apuntando al paquete;
-la entrega exige que pasen sin omisiones. Node solo se usa para pruebas.
-
-Arquitectura: FastAPI/Uvicorn; HTML/CSS/JavaScript locales; regex + Presidio +
-spaCy es_core_news_md; identidad personal por estructura y candidatos únicos;
-similitud RapidFuzz y grafo NetworkX para otras categorías; pdfplumber para
-leer PDF y ReportLab/python-docx para exportar.
-
-Para compilar y publicar: [DEPLOY.md](docs/DEPLOY.md) y
-[RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md). Dependencias fijadas en
-requirements.txt y requirements-dev.txt; inventario del entorno Windows
-en [docs/dependencies-frozen.txt](docs/dependencies-frozen.txt).
-
-## Contribuciones y licencias
-
-Ver [CONTRIBUTING.md](CONTRIBUTING.md) y [SECURITY.md](SECURITY.md).
-
-- Código: [Apache 2.0](LICENSE).
-- Componentes: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) y [LICENSES](LICENSES/).
-- Modelo spaCy: GPL-3.0, incluido con su licencia en el portable; sus pesos
-  permanecen fuera del historial Git.
-- Logo y nombre IALAB: marcas institucionales sujetas a [NOTICE](NOTICE).
-
-Desarrollado por IALAB — Laboratorio de Innovación e Inteligencia Artificial,
-Facultad de Derecho, Universidad de Buenos Aires.
+[Información para quienes desarrollan](docs/DESARROLLO.md) ·
+[Licencia de uso](LICENSE) · [Créditos y componentes](THIRD_PARTY_NOTICES.txt) ·
+[Aviso sobre marcas](NOTICE) · [Informar un problema de seguridad](SECURITY.md)

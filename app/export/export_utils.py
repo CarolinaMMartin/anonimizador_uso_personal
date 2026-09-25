@@ -4,7 +4,6 @@ from __future__ import annotations
 from app.anonymize.apply import anonymize_text
 from app.export.docx_format import DEFAULT_DOCX_FORMAT, DocxExportFormat
 from app.models.schemas import ExportDocumentRequest, ExportFormatOptions, SessionState
-from app.services.analyze import _prune_detections
 
 
 def format_from_options(opts: ExportFormatOptions | None) -> DocxExportFormat:
@@ -23,7 +22,7 @@ def format_from_options(opts: ExportFormatOptions | None) -> DocxExportFormat:
 def resolve_export_text(state: SessionState, req: ExportDocumentRequest) -> str:
     if req.text is not None:
         return req.text
-    detections = _prune_detections(state.detections, state.doc_text)
+    detections = state.detections
     return anonymize_text(
         state.doc_text, detections, confirmed_only=req.use_confirmed_only
     )

@@ -8,7 +8,7 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("ANON_PORT", "8787"))
 if not 1 <= PORT <= 65535:
     raise ValueError("ANON_PORT debe ser un puerto válido (1–65535)")
-APP_VERSION = "3.3.12"
+APP_VERSION = "3.3.13"
 
 # Recursos embebidos (frontend, diccionarios en el bundle)
 BUNDLE_DIR = bundle_dir()

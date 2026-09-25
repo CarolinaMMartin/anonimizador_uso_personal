@@ -20,14 +20,14 @@ from app.models.schemas import (
     ExportRequest,
 )
 from app.models.store import store
-from app.services.analyze import _prune_detections
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["export"])
 
 
 def _anonymized_preview_text(state, use_confirmed_only: bool = False) -> str:
-    detections = _prune_detections(state.detections, state.doc_text)
+    # Exportar exactamente la revisión actual, sin reclasificarla en silencio.
+    detections = state.detections
     return anonymize_text(
         state.doc_text, detections, confirmed_only=use_confirmed_only
     )
@@ -117,7 +117,7 @@ async def export_csv(req: ExportRequest):
         raise HTTPException(400, "No hay detecciones")
 
     try:
-        detections = _prune_detections(state.detections, state.doc_text)
+        detections = state.detections
         data = build_csv_bytes(detections)
         filename = "equivalencias.csv"
         return Response(

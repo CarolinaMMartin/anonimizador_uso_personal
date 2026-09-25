@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador Judicial 3.3.12
+# Manual de usuario — Anonimizador Judicial 3.3.13
 
 Herramienta académica de uso personal (IALAB).
 
@@ -30,14 +30,14 @@ Reemplaza cada dato por una etiqueta, por ejemplo `[PERSONA_1]` o
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.3.12** en el indicador superior.
+3. Verificá **v3.3.13** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
 
 ### macOS
 
-La entrega 3.3.12 se verifica en Windows. Los paquetes anteriores de macOS
+La entrega 3.3.13 se verifica en Windows. Los paquetes anteriores de macOS
 conservan su propia versión y sus instrucciones. Este ZIP Windows no funciona
 en Mac; una compilación nueva debe probarse en ese sistema antes de publicarse.
 
@@ -47,7 +47,7 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.3.12**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.3.13**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---
@@ -99,6 +99,15 @@ etiqueta de un grupo confirmado cambia todas sus variantes.
 
 En la vista previa podés comparar el texto original con el anonimizado y
 seleccionar manualmente información que no haya sido detectada.
+
+Para agregar un dato, elegí **Original**, seleccioná el texto, indicá su
+categoría y pulsá **Solo anonimizar**. La selección que confirmás se respeta
+aunque el análisis automático no la reconozca. Se ocultan sus repeticiones
+iguales; la lupa permite buscar otras apariciones, incluso sin tildes.
+Si la fila estaba desmarcada, se vuelve a activar al agregarla manualmente.
+Usá **En grupo** únicamente cuando quieras asociar el dato a un grupo.
+Comprobá el resultado en **Anonimizado** y luego en el archivo descargado.
+Cambiar el tipo de una fila se conserva también al exportar.
 
 ### Paso 4 — Verificar y exportar
 

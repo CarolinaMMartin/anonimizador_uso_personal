@@ -5,6 +5,7 @@ import io
 import json
 import time
 import urllib.error
+import urllib.request
 import uuid
 from pathlib import Path
 from docx import Document
@@ -23,6 +24,44 @@ def document_bytes(document):
     document.save(stream)
     return stream.getvalue()
 
+
+def verify_manual_review():
+    """El caso informado debe pasar también contra el ejecutable de Windows."""
+    document = Document()
+    document.add_paragraph('Documento ficticio para verificar revisión manual.')
+    document.add_paragraph('📄 Campana 39. Repite: Campana 39. Fin.')
+    sid = upload(document_bytes(document))['session_id']
+    original = json.loads(http.request(f'/api/preview?session_id={sid}&mode=orig'))['text']
+    start = original.index('Campana 39')
+    payload = {'session_id': sid, 'cat': 'DOMICILIO', 'original': 'Campana 39',
+               'start': start, 'end': start + len('Campana 39')}
+    added = http.post('/api/manual-detection', payload)['detection']
+    patch = urllib.request.Request(http.BASE + f'/api/detections/{added["id"]}',
+        data=json.dumps({'session_id': sid, 'enabled': False}).encode(),
+        headers={'Content-Type': 'application/json'}, method='PATCH')
+    with http.OPENER.open(patch, timeout=30) as response:
+        assert response.status == 200
+    readded = http.post('/api/manual-detection', payload)['detection']
+    preview = http.post('/api/export/preview', {'session_id': sid})['text']
+    checks = {
+        'manual_address_accepted': added['cat'] == 'DOMICILIO' and len(added['positions']) == 2,
+        'manual_reselection_reactivates': readded['enabled'] and readded['id'] == added['id'],
+        'preview_masks_both_occurrences': 'Campana 39' not in preview and preview.count(added['placeholder']) == 2,
+        'unicode_context_preserved': '📄 ' in preview and 'Fin.' in preview,
+    }
+    for extension in ('docx', 'pdf'):
+        raw = http.request('/api/export/' + extension,
+            json.dumps({'session_id': sid}).encode(), {'Content-Type': 'application/json'})
+        if extension == 'docx':
+            text = '\n'.join(p.text for p in Document(io.BytesIO(raw)).paragraphs)
+        else:
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(raw)) as pdf:
+                text = '\n'.join(p.extract_text() or '' for p in pdf.pages)
+        checks[extension + '_manual_export'] = ('Campana 39' not in text
+            and text.count(added['placeholder']) == 2 and 'Fin.' in text)
+    return {'mode': 'manual_review', 'checks': checks}
+
 def verify():
     document = Document()
     document.add_paragraph('El Dr. Juan Perez presentó un escrito.')
@@ -32,7 +71,7 @@ def verify():
     section.header.paragraphs[0].text = 'La Dra. Laura Suarez figura en el encabezado.'
     section.footer.paragraphs[0].text = 'El Dr. Diego Ramirez figura en el pie.'
     data = document_bytes(document)
-    results = []
+    results = [verify_manual_review()]
     for categories in (['PERSONA'], None):
         sid = upload(data)['session_id']
         analyzed = http.post('/api/analyze', {'session_id': sid, 'enabled_categories': categories})
