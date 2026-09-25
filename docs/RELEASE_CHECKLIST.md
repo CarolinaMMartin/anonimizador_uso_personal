@@ -1,7 +1,7 @@
 # Publicación de versiones
 
 Repositorio: [anonimizador_uso_personal](https://github.com/CarolinaMMartin/anonimizador_uso_personal).
-La versión 3.3.12 se entrega para Windows x64. Publicar macOS únicamente después de construir y verificar esa misma versión en una Mac.
+La versión 3.3.13 se entrega para Windows x64. Publicar macOS únicamente después de construir y verificar esa misma versión en una Mac.
 
 1. Actualizar `APP_VERSION`, README, manuales, changelog y notas de versión. Las propuestas pendientes no deben aparecer como funcionalidades disponibles.
 2. Revisar todos los archivos publicables y ejecutar `python scripts/audit_repository.py`, `python -m pip check`, `python -m pytest tests -q` y `node --test tests/frontend_session.test.cjs`.

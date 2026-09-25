@@ -1,11 +1,32 @@
-# Anonimizador Judicial 3.3.12
+# Anonimizador Judicial 3.3.13
 
-Nueva entrega para Windows x64. Descargar y extraer completamente `AnonimizadorJudicial-Windows.zip`, luego ejecutar `INICIAR.bat`. No requiere instalar Python. El archivo `.sha256` permite comprobar la descarga.
+## Descargar y abrir
 
-Esta versión mejora los límites de detección, nombres en mayúsculas, agrupación de variantes y apellidos identificados por evidencia del documento. Corrige el guardado y exportación, recorre el texto completo con NLP y permite cancelar durante el análisis. Word ahora incorpora tablas, encabezados y pies.
+[**DESCARGAR PARA WINDOWS**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.3.13/AnonimizadorJudicial-Windows.zip)
 
-El inicio conserva otras copias abiertas y busca un puerto disponible. Se incluyen manuales actualizados, modelo local, licencias e inventario del entorno.
+1. Descargá **AnonimizadorJudicial-Windows.zip** y elegí **Extraer todo**.
+2. Abrí la carpeta extraída y luego la carpeta del anonimizador.
+3. Hacé doble clic en **INICIAR.bat** y esperá a que abra el navegador.
 
-Revisar las detecciones antes de compartir. No hay OCR; las exportaciones reconstruyen el texto y no preservan el diseño original. Los CSV de equivalencias contienen valores originales. La función de personas conocidas queda para una versión posterior. macOS 3.3.12 no se publica sin compilación y validación en una Mac.
+Funciona en Windows 10/11 de 64 bits. No requiere instalar Python.
+Para actualizar, extraé esta versión en una carpeta nueva y guardá antes
+el trabajo que tengas abierto en la versión anterior.
 
-Consultar [CHANGELOG](https://github.com/CarolinaMMartin/anonimizador_uso_personal/blob/v3.3.12/CHANGELOG.md) y los manuales incluidos.
+## Qué se corrigió
+
+- Agregar manualmente un domicilio u otro dato funciona aunque el análisis
+  automático no lo reconozca. Incluye el caso informado «Campana 39».
+- Volver a agregar un dato desmarcado lo activa para anonimizarlo.
+- Las categorías y correcciones elegidas se conservan al generar Word y PDF.
+- Se corrigen selecciones y resaltados en documentos que contienen emojis.
+- El buscador aplica la consulta actual y las selecciones pendientes quedan
+  vinculadas al documento en el que se hicieron.
+- La página principal explica cómo descargar, abrir y usar la aplicación sin
+  conocimientos de GitHub ni programación.
+
+Revisá el resultado antes de compartirlo. Se necesita texto seleccionable;
+la aplicación no lee escaneos ni imágenes. El documento exportado reconstruye
+el texto y no conserva el diseño original. La tabla de equivalencias CSV
+contiene datos originales y debe guardarse de forma privada.
+
+Esta entrega es para Windows. El ZIP no funciona en Mac ni en celulares.

@@ -1,4 +1,4 @@
-# Instalación — Anonimizador Judicial 3.3.12
+# Instalación — Anonimizador Judicial 3.3.13
 
 Aplicación portable de uso personal/académico. Esta entrega se verifica en
 **Windows 10/11 de 64 bits**. No requiere instalar Python ni conectarse a
@@ -7,10 +7,9 @@ pueden existir restricciones propias de tu equipo u organización.
 
 ## Descargar y extraer
 
-1. Descargá AnonimizadorJudicial-Windows.zip desde la Release o recibí el ZIP
-   identificado como versión **3.3.12**.
+1. [Descargá la aplicación para Windows](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip).
 2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
-   escritura, por ejemplo Documentos\Anonimizador-3.3.12.
+   escritura, por ejemplo Documentos\Anonimizador-3.3.13.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
    mezcles archivos _internal de versiones distintas.
 
@@ -23,7 +22,7 @@ El tamaño y el SHA-256 de la descarga se informan junto a la entrega.
 1. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
 2. El navegador abre la dirección indicada al iniciar. Usa 127.0.0.1:8787
    o un puerto libre entre **8788 y 8796** si otra copia ocupa el primero.
-3. La cabecera debe indicar **100% local v3.3.12** y el estado de Presidio/spaCy.
+3. La cabecera debe indicar **100% local v3.3.13** y el estado de Presidio/spaCy.
 
 Repetir INICIAR.bat vuelve a la instancia de esa misma carpeta. Las otras
 versiones siguen abiertas. Si el navegador no se abre, repetí el inicio o usá
@@ -31,7 +30,7 @@ la dirección indicada en PUERTO_ACTUAL.txt dentro de esa carpeta.
 
 **VERIFICAR.bat** comprueba esa instancia, aunque use otro puerto. En /health:
 
-- app_version: 3.3.12.
+- app_version: 3.3.13.
 - nlp_layers.presidio.available: true.
 - nlp_layers.spacy.available: true.
 - nlp_layers.dictionaries: catálogos disponibles y cantidades cargadas.
@@ -82,5 +81,5 @@ COMPLIANCE.md y models/es_core_news_md/LICENSE al compartir el portable.
 ## macOS
 
 Este ZIP contiene un ejecutable Windows y no funciona en macOS. Los paquetes
-anteriores de macOS conservan su propia versión. Una entrega 3.3.12 para Mac
+anteriores de macOS conservan su propia versión. Una entrega 3.3.13 para Mac
 necesita compilarse y verificarse en ese sistema antes de publicarse.

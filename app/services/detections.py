@@ -31,23 +31,15 @@ def add_manual_detection(
     if start < 0 or end > len(text) or end <= start:
         raise ValueError("Rango de texto inválido")
 
-    surface = (original or text[start:end]).strip()
+    # La persona confirma qué ocultar. Los filtros heurísticos se reservan
+    # para el análisis automático; aquí solo validamos el rango y su texto.
+    surface = text[start:end].strip()
     if len(surface) < 2:
         raise ValueError("Selección demasiado corta")
-
-    from app.detection.filters import is_valid_manual_detection
-
-    if not is_valid_manual_detection(cat, surface, text, start):
+    if original is not None and re.sub(r"\s+", " ", original.strip()) != re.sub(r"\s+", " ", surface):
         raise ValueError(
-            "Esa selección no parece un dato personal válido (frase o cita procesal). "
-            "Probá con un nombre, DNI, domicilio, etc."
+            "La selección no coincide con el documento. Volvé a seleccionar el texto."
         )
-
-    if text[start:end].strip().lower() != surface.lower():
-        # Re-sincronizar con el documento
-        chunk = text[start:end].strip()
-        if chunk:
-            surface = chunk
 
     # Todas las ocurrencias iguales (como v1)
     positions = _find_positions(text, surface)
@@ -75,6 +67,10 @@ def add_manual_detection(
         None,
     )
     if existing:
+        existing.enabled = True
+        existing.user_added = True
+        if "manual" not in existing.source_layers:
+            existing.source_layers.append("manual")
         seen = {(p.start, p.end) for p in existing.positions}
         for p in positions:
             if (p.start, p.end) not in seen:
@@ -96,6 +92,7 @@ def add_manual_detection(
         positions=positions,
         mention_ids=[mention.id],
         user_added=True,
+        source_layers=["manual"],
     )
     state.detections.append(det)
     return det
@@ -116,10 +113,8 @@ def add_bulk_detection(
     aplicamos la misma regla de "extender si ya existe una detección con
     misma cat+original" que `add_manual_detection`.
 
-    A diferencia de `add_manual_detection`, no aplica el filtro
-    `is_valid_manual_detection`: cuando la persona escribe explícitamente
-    en el buscador ya declaró intención; ese filtro está pensado para
-    selecciones accidentales con el mouse.
+    Como la selección manual, respeta la categoría elegida por la persona
+    sin volver a aplicar filtros de detección automática.
     """
     text = state.doc_text
     surface = original.strip()
@@ -137,6 +132,8 @@ def add_bulk_detection(
     for p in positions:
         if p.start < 0 or p.end > len(text) or p.end <= p.start:
             raise ValueError(f"Rango de texto inválido: {p.start}-{p.end}")
+        if p.raw and p.raw != text[p.start:p.end]:
+            raise ValueError("La coincidencia no corresponde al documento. Volvé a buscar el texto.")
         key = (p.start, p.end)
         if key in seen:
             continue
@@ -166,6 +163,10 @@ def add_bulk_detection(
         None,
     )
     if existing:
+        existing.enabled = True
+        existing.user_added = True
+        if "manual" not in existing.source_layers:
+            existing.source_layers.append("manual")
         existing_keys = {(p.start, p.end) for p in existing.positions}
         for p in clean_positions:
             if (p.start, p.end) not in existing_keys:
@@ -204,6 +205,7 @@ def add_bulk_detection(
         mention_ids=[mention.id],
         manual_placeholder=manual_ph,
         user_added=True,
+        source_layers=["manual"],
     )
     state.detections.append(det)
     return det

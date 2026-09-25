@@ -44,6 +44,8 @@ function createApp(handler = async () => json({})) {
       runManualDetectionAndMaybeGroup, buildMarkdownExport, assertEditorCurrent,
       assignDetectionToCluster,
       looksSimilarDetection, joinSimilarDetections, ignoreSimilarDetections,
+      toBrowserOffset, toDocumentOffset,
+      setDocument(text) { docText = text; detections = []; },
       setReview(rows, groups) { detections = rows; clusters = groups; },
       init(id = 'A') {
         resetDocumentState(); sessionId = id;
@@ -51,7 +53,11 @@ function createApp(handler = async () => json({})) {
         detections = [{ id: 0, cat: 'PERSONA', original: 'JUAN PEREZ', placeholder: '[PERSONA_1]',
           enabled: true, positions: [{ start: 0, end: 10 }], cluster_id: null }];
       },
-      select() { pendingSelection = { start: 0, end: 10, text: 'JUAN PEREZ' }; $('selCat').value = 'PERSONA'; },
+      select(text = 'JUAN PEREZ', cat = 'PERSONA') {
+        const start = docText.indexOf(text);
+        pendingSelection = { start, end: start + text.length, text };
+        $('selCat').value = cat;
+      },
       edit(patch) { Object.assign(detections[0], patch); scheduleDetectionPatch(0, patch); },
       mode(mode) { viewMode = mode; },
       docText: () => docText,
@@ -318,4 +324,85 @@ test('join similar confirms the proposed identity without absorbing another pers
   assert.equal(calls.filter((url) => url.includes('/confirm')).length, 1);
   assert.equal(calls.some((url) => url.includes('assign-cluster')), false);
   assert.deepEqual([...app.detections()].map((d) => d.placeholder), ['[PERSONA_10]', '[PERSONA_2]', '[PERSONA_10]']);
+});
+
+test('Unicode positions keep preview highlights and replacements aligned', () => {
+  const { app, element } = createApp();
+  app.setDocument('📄 Campana 39. Fin.');
+  app.setReview([{ id: 0, cat: 'DOMICILIO', original: 'Campana 39', placeholder: '[DOMICILIO_1]',
+    enabled: true, positions: [{ start: 2, end: 12 }] }], []);
+  app.mode('orig');
+  app.renderPreviewLocal();
+  assert.match(element('docPreview').innerHTML, /^📄 <span[^>]+>Campana 39<\/span>\. Fin\.$/);
+  app.mode('anon');
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '📄 [DOMICILIO_1]. Fin.');
+});
+
+test('manual selection sends Unicode offsets and refreshes the actual accepted review', async () => {
+  const text = '📄 Campana 39. Fin.';
+  const row = { id: 0, cat: 'DOMICILIO', original: 'Campana 39', placeholder: '[DOMICILIO_1]',
+    enabled: true, positions: [{ start: 2, end: 12 }] };
+  const calls = [];
+  const { app, element } = createApp(async (url, options) => {
+    calls.push(url);
+    if (url === '/api/manual-detection') {
+      const body = JSON.parse(options.body);
+      assert.equal(body.start, 2);
+      assert.equal(body.end, 12);
+      assert.equal(body.original, 'Campana 39');
+      return json({ detection: row, detections: [row] });
+    }
+    return json({ text, highlights: [] });
+  });
+  app.setDocument(text);
+  app.select('Campana 39', 'DOMICILIO');
+  await app.runManualDetectionAndMaybeGroup(false);
+  assert.deepEqual(calls, ['/api/manual-detection', '/api/preview?session_id=A&mode=orig']);
+  assert.equal(app.detections()[0].original, 'Campana 39');
+  app.mode('anon');
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '📄 [DOMICILIO_1]. Fin.');
+});
+
+test('search uses the latest query and Unicode offsets even before its debounce fires', async () => {
+  const bodies = [];
+  const { app, element } = createApp(async (url, options) => {
+    if (url === '/api/search-and-anonymize') {
+      bodies.push(JSON.parse(options.body));
+      return json({ detections: [] });
+    }
+    return json({ text: '📄 Campana 39. Campana 39.', highlights: [] });
+  });
+  app.setDocument('📄 Campana 39. Campana 39.');
+  element('searchInput').value = 'Campana 39';
+  element('searchCat').value = 'DOMICILIO';
+  await element('searchAnonBtn').listeners.click();
+  assert.equal(bodies.length, 1);
+  assert.deepEqual(bodies[0].positions, [
+    { start: 2, end: 12, raw: 'Campana 39' },
+    { start: 14, end: 24, raw: 'Campana 39' },
+  ]);
+});
+
+test('changing document while manual selection waits for a save sends no selection to the new document', async () => {
+  const calls = [];
+  let finish, started;
+  const saving = new Promise((resolve) => { started = resolve; });
+  const { app } = createApp(async (url) => {
+    calls.push(url);
+    if (url === '/api/detections/0') {
+      started();
+      await new Promise((resolve) => { finish = resolve; });
+    }
+    return json({});
+  });
+  app.edit({ placeholder: '[CAMBIO]' });
+  app.select();
+  const pending = app.runManualDetectionAndMaybeGroup(false);
+  await saving;
+  app.init('B');
+  finish();
+  await pending;
+  assert.deepEqual(calls, ['/api/detections/0']);
 });
