@@ -37,12 +37,20 @@ la dirección indicada en PUERTO_ACTUAL.txt dentro de esa carpeta.
 
 Para usarla, consultá el archivo MANUAL_USUARIO.md incluido junto a este manual.
 
-## SmartScreen y antivirus
+## Si Windows bloquea la aplicación
 
-La aplicación no tiene firma comercial. Si Windows muestra **Windows protegió
-tu PC**, verificá el origen de la descarga y su SHA-256; cuando corresponda,
-usá **Más información → Ejecutar de todas formas**. Si hay una política de
-tu organización, consultá a su responsable de sistemas.
+El aviso **«Control Inteligente de Aplicaciones ha bloqueado un archivo»**
+significa que Windows detuvo la ejecución. La versión 3.3.13 del anonimizador
+todavía no tiene firma digital y puede quedar bloqueada en Windows 11. Pulsá
+**De acuerdo** y avisá a quien te compartió el programa; indicá qué archivo
+intentaste abrir. Si es un equipo de trabajo, consultá a sistemas. Descargar
+de nuevo el mismo ZIP no corrige este bloqueo. No desactives la protección
+del equipo para usar esta versión.
+
+Este aviso es distinto de **«Windows protegió tu PC»** (SmartScreen). No hay
+una excepción por aplicación para el Control Inteligente de Aplicaciones.
+El equipo de desarrollo debe publicar una entrega firmada y probarla en
+Windows 11 con esa protección activada.
 
 ## Actualizar o cerrar
 

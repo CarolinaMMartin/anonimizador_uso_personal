@@ -13,6 +13,12 @@ Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 No necesitás una cuenta de GitHub ni conocimientos de programación.
 Funciona en **Windows 10 y 11 de 64 bits**. La descarga puede tardar unos minutos.
 
+**Aviso para algunos equipos con Windows 11:** esta versión todavía no tiene
+firma digital. Si aparece el mensaje **«Control Inteligente de Aplicaciones ha
+bloqueado un archivo»**, Windows impide abrirla. La aplicación necesita una
+entrega firmada para funcionar en esos equipos. No hace falta descargarla de
+nuevo ni desactivar la protección. [Qué hacer si aparece este aviso](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
+
 ## Abrir por primera vez
 
 1. Buscá **AnonimizadorJudicial-Windows.zip** en la carpeta **Descargas**.
@@ -46,6 +52,7 @@ puede omitir datos o marcar algo que quieras conservar.
 | Qué sucede | Qué hacer |
 | --- | --- |
 | No encuentro INICIAR | Asegurate de haber descargado con el enlace de arriba y de haber usado **Extraer todo**. Luego abrí la carpeta que está dentro. |
+| Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
 | Falta ocultar un dato | Seleccionalo en **Original**, elegí su categoría y pulsá **Solo anonimizar**. Comprobá que su fila esté marcada. |

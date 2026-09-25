@@ -2,6 +2,22 @@
 
 La entrega 3.3.13 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
 
+## Bloqueo de Windows 11 pendiente de resolver
+
+La compilación 3.3.13 no está firmada. El Control Inteligente de Aplicaciones
+puede bloquear el ejecutable o el lanzador en algunos equipos. Una prueba
+funcional en Windows sin esa protección no demuestra que el paquete se pueda
+abrir en Windows 11 con la protección activa.
+
+Para una entrega accesible hay que identificar el archivo concreto bloqueado
+en el registro de integridad de código de Windows; obtener una identidad de
+firma válida; reemplazar el inicio mediante BAT/PowerShell por un lanzador
+firmado si estos archivos también se bloquean; firmar los binarios distribuidos
+antes de empaquetar; y probar el ZIP extraído en un Windows 11 con Control
+Inteligente de Aplicaciones activado. Firmar solo el ZIP no firma los archivos
+que se ejecutan dentro. Hasta entonces, informar el bloqueo en el README y
+no presentar el ZIP como compatible con todos los equipos Windows 11.
+
 ## Construcción
 
 Desde la raíz del repositorio, con Python 3.11–3.13:
