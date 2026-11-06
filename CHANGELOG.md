@@ -1,5 +1,71 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.3 — 6 de noviembre de 2026
+
+- Conserva nombres completos en minúsculas y fuera del catálogo cuando
+  ocupan una parte delimitada de carátula. Los separadores `c/` y `s/`
+  permanecen fuera de las entidades.
+- Comparte los límites de las partes entre extracción, limpieza y validación,
+  incluidas carátulas sin materia y presentaciones con `s/` sin demandado.
+- Verifica carátulas con errores de escritura, orden invertido, distintas
+  mayúsculas y saltos de línea, preservando el asunto y la prosa ordinaria.
+- Conserva la categoría de empresas y organismos que sean partes, y excluye
+  títulos de documentos y trámites de las detecciones de personas.
+
+## 3.4.2 — 6 de noviembre de 2026
+
+- Respeta los separadores de partes y materia de las carátulas antes de
+  aceptar detecciones por contexto. Las coincidencias de NLP que atraviesan
+  esos límites no unen al actor con el demandado.
+- Distingue enumeraciones de personas de apellidos unidos por «y», incluidos
+  fragmentos de nombres producidos por los saltos de línea de un PDF.
+- Actualiza las sugerencias después de corregir detecciones, conservando
+  confirmaciones, rechazos, separaciones y reemplazos manuales. La incorporación
+  de una variante a un grupo confirmado requiere una acción explícita.
+- Verifica identidades completas desde la carga de Word/PDF hasta la vista
+  previa y las exportaciones Word, PDF y CSV, con casos ficticios de nombres
+  completos, apellidos compuestos, abreviaciones y variantes de orden.
+
+## 3.4.1 — 5 de noviembre de 2026
+
+- Recupera la tipografía, proporciones, superficies y jerarquía de acciones
+  de la interfaz anterior, con la paleta del manual MPFCABA Identidad 2026 V1.
+- Permite corregir el tipo desde el grupo y unir manualmente entidades de
+  categorías distintas mediante una reclasificación explícita, conservando
+  las posiciones, la revisión y el reemplazo del grupo de destino.
+- Delimita los campos de formularios antes de clasificarlos: una persona
+  bajo «Razón social» sigue siendo persona y no absorbe el campo siguiente.
+- Corrige organismos bajo etiquetas fiscales, códigos administrativos
+  confundidos con patentes y valores de CUIT vacíos o ficticios.
+- Incluye identificadores fiscales etiquetados, como CAE/CAI, números de
+  comprobantes e ingresos brutos, entre los datos sensibles.
+- Conserva los saltos de línea y párrafos del editor al exportar a Word
+  y PDF, sin volver a aplicar la limpieza de líneas de la extracción PDF.
+- Permite construir una copia en otra carpeta de entrega para conservar
+  intactas las versiones abiertas.
+
+## 3.4.0 — 5 de noviembre de 2026
+
+- Detección y validación compartidas para documentos, teléfonos, patentes,
+  expedientes, seguimiento de denuncias, pólizas, chasis, motor y enlaces.
+  Los códigos sin categoría propia se muestran como «Otros» (`DATO`).
+- Domicilios con componentes completos: vías sin prefijo, pisos, unidades,
+  ordinales, barrios, parcelas y entrecalles. Organismos y empresas conservan
+  sus nombres completos y límites frente a la prosa.
+- Nombres detectados desde los catálogos cargados, incluidos compuestos,
+  partículas, iniciales y variantes de escritura. Los catálogos externos
+  complementan los incluidos; un recurso ausente o inválido detiene el análisis
+  y conserva la revisión anterior.
+- Repeticiones documentales de identificadores y razones sociales sin su
+  etiqueta o sufijo. Las coincidencias superpuestas conservan toda su cobertura.
+- Los identificadores distintos dejan de agruparse por semejanza de caracteres;
+  las variantes de formato de DNI, CUIT, teléfono y patente comparten sustitución.
+- Identidad visual MPF en la interfaz: logo íntegro, paleta institucional y
+  tipografía del sistema; controles, estados y resaltados consistentes.
+- Regresiones de detección, categorías, catálogos, revisión y exportación a
+  Word/PDF con datos sintéticos. La entrega local incluye el motor NLP y sus
+  recursos. La descarga publicada en GitHub no se modifica automáticamente.
+
 
 ## 3.3.13 — Correcciones manuales y descarga accesible
 

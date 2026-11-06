@@ -153,15 +153,20 @@ fetch(API + '/health')
     if (badge && nlp) {
       const presidioOk = nlp.presidio?.available;
       const spacyOk = nlp.spacy?.available;
+      const missingCatalogs = ['nombres', 'apellidos', 'regex'].filter(
+        (name) => !nlp.dictionaries?.[name]?.available
+      );
       const presidio = presidioOk ? 'Presidio' : 'Presidio off';
       const spacy = spacyOk ? 'spaCy' : 'spaCy off';
-      badge.textContent = `100% local ${ver} · ${presidio} · ${spacy}`;
+      badge.textContent = `100% local ${ver} · ${presidio} · ${spacy}` +
+        (missingCatalogs.length ? ' · Catálogos incompletos' : ' · Catálogos cargados');
       badge.classList.remove('badge-ok', 'badge-warn', 'badge-error');
-      if (!presidioOk || !spacyOk) {
+      if (!presidioOk || !spacyOk || missingCatalogs.length) {
         badge.classList.add('badge-warn');
         badge.title =
           (nlp.spacy?.error || '') +
           (nlp.presidio?.error ? '\n' + nlp.presidio.error : '') +
+          (missingCatalogs.length ? '\nCatálogos no disponibles: ' + missingCatalogs.join(', ') : '') +
           '\n\nReiniciá la aplicación con INICIAR.bat. Si el problema sigue, volvé a extraer el ZIP completo.';
       } else {
         badge.classList.add('badge-ok');
@@ -385,8 +390,7 @@ function mountGroupPicker(
 
 function selectionGroupItems() {
   const cat = $('selCat')?.value || 'PERSONA';
-  const list = clusters
-    .filter((c) => c.cat === cat)
+  const list = clustersForCategory(cat)
     .map((c) => ({
       value: c.cluster_id,
       label: clusterOption(c).label,
@@ -411,7 +415,19 @@ function initSelectionGroupPicker() {
 }
 
 function clustersForDetection(det) {
-  return clusters.filter((c) => c.cat === det.cat);
+  return clustersForCategory(det.cat).filter((c) => !c.target_cluster_id || c.target_cluster_id !== det.cluster_id);
+}
+
+function clustersForCategory(cat, excludeId) {
+  return clusters
+    .filter((c) => c.cluster_id !== excludeId && (!excludeId || c.target_cluster_id !== excludeId) && c.status !== 'rejected')
+    .sort((a, b) => Number(b.cat === cat) - Number(a.cat === cat));
+}
+
+function confirmCategoryChange(sourceCat, target, subject) {
+  return sourceCat === target.cat || confirm(
+    `${subject} cambiará de ${sourceCat} a ${target.cat} para unirse a «${clusterDisplayLabel(target)}».\n\n¿Cambiar el tipo y unir?`
+  );
 }
 
 function isPlaceholderLike(s) {
@@ -587,17 +603,17 @@ $('analyzeBtn').addEventListener('click', async () => {
 $('cancelProcessBtn')?.addEventListener('click', cancelActiveProcess);
 
 const CAT_COLORS = {
-  PERSONA: '#9f3343',
-  DNI: '#8a4a19',
-  CUIT: '#8a4a19',
-  EMPRESA: '#4a1e78',
-  EMAIL: '#256c5b',
-  TELEFONO: '#24647a',
-  DOMICILIO: '#7a476d',
-  PATENTE: '#5a3d6e',
-  EXPEDIENTE: '#0b2545',
-  ORGANISMO: '#4a1e78',
-  OTRO: '#445a84',
+  PERSONA: '#961310',
+  DNI: '#B45B00',
+  CUIT: '#B45B00',
+  EMPRESA: '#4E1873',
+  EMAIL: '#007A33',
+  TELEFONO: '#005F71',
+  DOMICILIO: '#4E1873',
+  PATENTE: '#4E1873',
+  EXPEDIENTE: '#003C73',
+  ORGANISMO: '#005298',
+  OTRO: '#333F48',
 };
 
 const CATEGORIES = [
@@ -635,8 +651,10 @@ function looksSimilarDetection(a, b) {
   if (!a || !b || a.id === b.id || a.cat !== b.cat) return false;
   // Use the reviewed/backend membership. A second name matcher here would
   // bypass document-wide ambiguity checks and recreate surname bridges.
-  return Boolean(a.cluster_id && a.cluster_id === b.cluster_id &&
-    clusters.some((c) => c.cluster_id === a.cluster_id && c.cat === a.cat && c.status !== 'rejected'));
+  const left = clusters.find((c) => c.cluster_id === a.cluster_id && c.cat === a.cat && c.status !== 'rejected');
+  const right = clusters.find((c) => c.cluster_id === b.cluster_id && c.cat === b.cat && c.status !== 'rejected');
+  return Boolean(left && right &&
+    (left.target_cluster_id || left.cluster_id) === (right.target_cluster_id || right.cluster_id));
 }
 
 function categoryOptions(selected) {
@@ -665,9 +683,9 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
     saveErrors.delete(detId);
     applyReviewData(data);
     renderStatsFromDetections();
+    if (Array.isArray(data.clusters)) renderClusters();
     if (refresh) {
       renderTable();
-      renderClusters();
       await loadPreview();
     }
     if (!quiet) showToast('Cambio guardado', 'success');
@@ -722,7 +740,7 @@ function renderStats(stats) {
   row.innerHTML = '';
   for (const [cat, n] of Object.entries(stats)) {
     if (cat === 'TOTAL') continue;
-    const color = CAT_COLORS[cat] || '#4b5563';
+    const color = CAT_COLORS[cat] || '#333F48';
     row.innerHTML += `
       <div class="stat-card" style="--cat-color:${color}">
         <div class="stat-num">${n}</div>
@@ -730,7 +748,7 @@ function renderStats(stats) {
       </div>`;
   }
   row.innerHTML += `
-    <div class="stat-card" style="--cat-color:#4b5563">
+    <div class="stat-card" style="--cat-color:#333F48">
       <div class="stat-num">${stats.TOTAL || detections.length}</div>
       <div class="stat-label">Total</div>
     </div>`;
@@ -738,8 +756,15 @@ function renderStats(stats) {
 
 async function assignDetectionToCluster(detId, clusterValue) {
   if (!clusterValue || !requireSession()) return;
+  const context = sessionContext();
   try {
     await flushPendingSaves();
+    assertCurrentSession(context);
+    const detection = detections.find((d) => d.id === detId);
+    const target = clusters.find((c) => c.cluster_id === clusterValue);
+    if (!detection || (clusterValue !== '__new__' && !target)) return false;
+    const reclassify = Boolean(target && detection.cat !== target.cat);
+    if (reclassify && !confirmCategoryChange(detection.cat, target, 'La detección')) return false;
     const res = await sessionFetch(API + '/api/assign-cluster', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -747,14 +772,16 @@ async function assignDetectionToCluster(detId, clusterValue) {
         session_id: sessionId,
         detection_id: detId,
         cluster_id: clusterValue,
+        reclassify,
       }),
-    });
+    }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
     applyReviewData(data);
     reviewChanged();
     renderClusters();
     renderTable();
+    renderStatsFromDetections();
     await loadPreview();
     clearTextSelection();
     showToast('Agregado al grupo', 'success');
@@ -878,16 +905,30 @@ function renderTable() {
 async function ensureDetectionCluster(detId) {
   const det = detections.find((d) => d.id === detId);
   if (!det) return '';
-  if (det.cluster_id) return det.cluster_id;
+  if (det.cluster_id) {
+    const cluster = clusters.find((c) => c.cluster_id === det.cluster_id);
+    if (!cluster?.target_cluster_id) return det.cluster_id;
+    if (!(await confirmClusterById(cluster.cluster_id))) return '';
+    return detections.find((d) => d.id === detId)?.cluster_id || '';
+  }
   await assignDetectionToCluster(detId, '__new__');
   const updated = detections.find((d) => d.id === detId);
   return updated?.cluster_id || '';
 }
 
 async function confirmClusterById(clusterId) {
+  const context = sessionContext();
+  await flushPendingSaves();
+  assertCurrentSession(context);
+  const cluster = clusters.find((c) => c.cluster_id === clusterId);
+  if (!cluster) return false;
+  if (cluster.target_cluster_id) {
+    const target = clusters.find((c) => c.cluster_id === cluster.target_cluster_id);
+    if (!target || !confirm(`Las variantes se incorporarán a «${clusterDisplayLabel(target)}» y usarán ${target.placeholder}.\n\n¿Incorporar al grupo confirmado?`)) return false;
+  }
   const res = await sessionFetch(
     API + `/api/clusters/${encodeURIComponent(clusterId)}/confirm?session_id=${encodeURIComponent(sessionId)}`,
-    { method: 'POST' }
+    { method: 'POST' }, context
   );
   if (!res.ok) throw new Error(await parseApiError(res));
   const data = await res.json();
@@ -895,6 +936,7 @@ async function confirmClusterById(clusterId) {
   if (idx >= 0) clusters[idx] = data.cluster;
   applyReviewData(data);
   reviewChanged();
+  return true;
 }
 
 async function joinSimilarDetections(detId) {
@@ -912,7 +954,8 @@ async function joinSimilarDetections(detId) {
     for (const item of similar) {
       if (item.cluster_id !== targetCluster && !(await assignDetectionToCluster(item.id, targetCluster))) return;
     }
-    await confirmClusterById(targetCluster);
+    const target = clusters.find((cluster) => cluster.cluster_id === targetCluster);
+    if (target?.status !== 'confirmed' && !(await confirmClusterById(targetCluster))) return;
   } catch (e) {
     showToast(e.message, 'error');
     return;
@@ -985,6 +1028,13 @@ function renderClusters() {
     btn.addEventListener('click', () => handleClusterAction(btn));
   });
 
+  el.querySelectorAll('.cluster-category-select').forEach((select) => {
+    select.addEventListener('change', async () => {
+      const ok = await changeClusterCategory(select.dataset.clusterId, select.value);
+      if (!ok) renderClusters();
+    });
+  });
+
   el.querySelectorAll('.combo-host-add').forEach((host) => {
     const cid = host.dataset.clusterId;
     const c = clusters.find((x) => x.cluster_id === cid);
@@ -1010,12 +1060,7 @@ function renderClusters() {
     mountGroupPicker(host, {
       triggerLabel: 'Unir con otro grupo…',
       getItems: () =>
-        clusters
-          .filter(
-            (t) =>
-              t.cluster_id !== sourceId &&
-              t.cat === source.cat
-          )
+        clustersForCategory(source.cat, sourceId)
           .map((t) => clusterOption(t)),
       onPick: async (it) => {
         await absorbClusterInto(it.value, sourceId);
@@ -1026,16 +1071,23 @@ function renderClusters() {
 
 async function absorbClusterInto(targetId, sourceId) {
   if (!requireSession() || targetId === sourceId) return;
+  const context = sessionContext();
   try {
     await flushPendingSaves();
+    assertCurrentSession(context);
+    const target = clusters.find((c) => c.cluster_id === targetId);
+    const source = clusters.find((c) => c.cluster_id === sourceId);
+    if (!target || !source) return false;
+    const reclassify = source.cat !== target.cat;
+    if (reclassify && !confirmCategoryChange(source.cat, target, 'El grupo')) return false;
     const res = await sessionFetch(
       API +
         `/api/clusters/${encodeURIComponent(targetId)}/absorb?session_id=${encodeURIComponent(sessionId)}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_cluster_id: sourceId }),
-      }
+        body: JSON.stringify({ source_cluster_id: sourceId, reclassify }),
+      }, context
     );
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
@@ -1043,10 +1095,42 @@ async function absorbClusterInto(targetId, sourceId) {
     reviewChanged();
     renderClusters();
     renderTable();
+    renderStatsFromDetections();
     await loadPreview();
     showToast('Grupos unidos', 'success');
+    return true;
   } catch (e) {
     showToast(e.message, 'error');
+    return false;
+  }
+}
+
+async function changeClusterCategory(clusterId, cat) {
+  if (!requireSession()) return false;
+  const context = sessionContext();
+  try {
+    await flushPendingSaves();
+    assertCurrentSession(context);
+    const cluster = clusters.find((c) => c.cluster_id === clusterId);
+    if (!cluster) return false;
+    if (cluster.cat === cat) return true;
+    const res = await sessionFetch(
+      API + `/api/clusters/${encodeURIComponent(clusterId)}?session_id=${encodeURIComponent(sessionId)}`,
+      { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cat }) },
+      context
+    );
+    if (!res.ok) throw new Error(await parseApiError(res));
+    applyReviewData(await res.json());
+    reviewChanged();
+    renderClusters();
+    renderTable();
+    renderStatsFromDetections();
+    await loadPreview();
+    showToast('Tipo de dato corregido en todo el grupo', 'success');
+    return true;
+  } catch (e) {
+    showToast(e.message, 'error');
+    return false;
   }
 }
 
@@ -1054,20 +1138,28 @@ function detectionsNotInCluster(c) {
   const inCluster = new Set(c.surfaces.map((s) => s.trim().toLowerCase()));
   return detections.filter(
     (d) =>
-      d.cat === c.cat &&
       !inCluster.has(d.original.trim().toLowerCase()) &&
       !d.cluster_id
   );
 }
 
 function clusterCard(c) {
-  const label = c.canonical_label || c.placeholder || `${c.cat} (pendiente)`;
+  const target = c.target_cluster_id ? clusters.find((group) => group.cluster_id === c.target_cluster_id) : null;
+  const label = target ? `Incorporar a ${target.placeholder}` : c.canonical_label || c.placeholder || `${c.cat} (pendiente)`;
   const statusClass = c.status === 'confirmed' ? 'confirmed' : '';
   const available = detectionsNotInCluster(c);
   const searchBlob = [label, c.placeholder, c.cat, ...c.surfaces].join(' ');
   return `
     <div class="cluster-card ${statusClass}" data-cluster-id="${c.cluster_id}" data-search="${escapeHTML(searchBlob)}">
-      <h4>${escapeHTML(label)} <span class="conf-badge conf-${c.confidence}">${c.confidence}</span></h4>
+      <h4>${escapeHTML(label)} <span class="cluster-status ${c.status === 'confirmed' ? 'cluster-status-confirmed' : ''}">${c.status === 'confirmed' ? 'Confirmado' : 'Por revisar'}</span></h4>
+      ${target ? `<p class="cluster-confidence">Destino confirmado: ${escapeHTML(clusterDisplayLabel(target))}. Las variantes todavía conservan su reemplazo actual.</p>` : ''}
+      ${c.status !== 'confirmed' && c.surfaces.length > 1 ? `<p class="cluster-confidence">Coincidencia entre variantes: ${escapeHTML(c.confidence)}</p>` : ''}
+      <label class="cluster-category-row">
+        <span class="cluster-category-label">Tipo de dato</span>
+        <select class="cluster-category-select" data-cluster-id="${escapeHTML(c.cluster_id)}" aria-label="Tipo de dato del grupo ${escapeHTML(label)}">
+          ${categoryOptions(c.cat)}
+        </select>
+      </label>
       <div class="cluster-mentions">
         ${c.surfaces
           .map(
@@ -1094,7 +1186,7 @@ function clusterCard(c) {
       <div class="cluster-actions">
         ${
           c.status !== 'confirmed'
-            ? `<button class="btn btn-sm btn-success" data-action="confirm" data-id="${c.cluster_id}">Confirmar grupo</button>`
+            ? `<button class="btn btn-sm btn-success" data-action="confirm" data-id="${c.cluster_id}">${target ? 'Incorporar al grupo' : 'Confirmar grupo'}</button>`
             : ''
         }
         <button class="btn btn-sm btn-secondary" data-action="edit" data-id="${c.cluster_id}">Editar reemplazo</button>
@@ -1108,17 +1200,7 @@ async function handleClusterAction(btn) {
   const clusterId = btn.dataset.id;
   if (action === 'confirm') {
     try {
-      await flushPendingSaves();
-      const res = await sessionFetch(
-        API + `/api/clusters/${clusterId}/confirm?session_id=${sessionId}`,
-        { method: 'POST' }
-      );
-      if (!res.ok) throw new Error((await res.json()).detail);
-      const data = await res.json();
-      const idx = clusters.findIndex((c) => c.cluster_id === clusterId);
-      if (idx >= 0) clusters[idx] = data.cluster;
-      applyReviewData(data);
-      reviewChanged();
+      if (!(await confirmClusterById(clusterId))) return;
       renderClusters();
       renderTable();
       await loadPreview();
@@ -1245,16 +1327,28 @@ function toDocumentOffset(offset) {
   return low;
 }
 
+function mergeOverlappingRanges(ranges, textLength) {
+  const ordered = [...ranges].sort((a, b) => a.start - b.start || b.end - a.end);
+  const merged = [];
+  for (const range of ordered) {
+    if (!Number.isInteger(range.start) || !Number.isInteger(range.end) ||
+        range.start < 0 || range.end > textLength || range.end <= range.start) {
+      throw new Error('Hay posiciones inválidas. Volvé a analizar el documento.');
+    }
+    const previous = merged[merged.length - 1];
+    if (previous && range.start < previous.end) previous.end = Math.max(previous.end, range.end);
+    else merged.push({ ...range });
+  }
+  return merged;
+}
+
 function renderHighlighted(text, highlights, searchMatches, currentSearchIdx) {
-  const detHls = Array.isArray(highlights) ? [...highlights] : [];
-  detHls.sort((a, b) => a.start - b.start);
-  // Dedup solapamientos entre detecciones (mantiene el primero que aparece).
-  const cleanDet = [];
-  let lastEnd = -1;
-  for (const h of detHls) {
-    if (h.start < lastEnd) continue;
-    cleanDet.push(h);
-    lastEnd = h.end;
+  let cleanDet;
+  try {
+    cleanDet = mergeOverlappingRanges(Array.isArray(highlights) ? highlights : [], text.length);
+  } catch (error) {
+    showToast(error.message, 'error');
+    return;
   }
   const matches = Array.isArray(searchMatches) ? searchMatches : [];
 
@@ -1315,17 +1409,12 @@ function renderPreviewLocal() {
           replacements.push({ start: toBrowserOffset(p.start), end: toBrowserOffset(p.end), value: d.placeholder });
         });
       });
-    replacements.sort((a, b) => a.start - b.start || b.end - a.end);
-    const clean = [];
-    for (const r of replacements) {
-      if (!Number.isInteger(r.start) || !Number.isInteger(r.end) ||
-          r.start < 0 || r.end > docText.length || r.end <= r.start) {
-        showToast('Hay posiciones inválidas. Volvé a analizar el documento.', 'error');
-        return;
-      }
-      const previous = clean[clean.length - 1];
-      if (previous && r.start < previous.end) previous.end = Math.max(previous.end, r.end);
-      else clean.push({ ...r });
+    let clean;
+    try {
+      clean = mergeOverlappingRanges(replacements, docText.length);
+    } catch (error) {
+      showToast(error.message, 'error');
+      return;
     }
     let out = docText;
     clean.reverse().forEach((r) => {
@@ -1715,6 +1804,7 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
 
     clearTextSelection();
     renderTable();
+    renderClusters();
     renderStatsFromDetections();
     await loadPreview();
     if (groupId && det) {
@@ -1980,6 +2070,7 @@ const searchTool = (() => {
       applyReviewData(data);
       reviewChanged();
       renderTable();
+      renderClusters();
       renderStatsFromDetections();
       await loadPreview();
       showToast(`Anonimizadas ${positions.length} coincidencias de "${q}"`, 'success');

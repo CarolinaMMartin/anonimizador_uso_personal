@@ -1,6 +1,8 @@
-# Manual de usuario — Anonimizador Judicial 3.3.13
+# Manual de usuario — Anonimizador Judicial 3.4.3
 
-Herramienta académica de uso personal (IALAB).
+Herramienta académica de uso personal desarrollada por IALAB, con identidad
+visual del Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires
+adaptada a partir de los recursos suministrados para esta entrega.
 
 ---
 
@@ -17,9 +19,13 @@ Detecta automáticamente, entre otros:
 - Personas, DNI y CUIT/CUIL.
 - Emails, teléfonos y domicilios.
 - Empresas y organismos judiciales.
+- Patentes, expedientes, números de seguimiento de denuncias y enlaces.
+- Pólizas de seguro, números de chasis y motor.
 
 Reemplaza cada dato por una etiqueta, por ejemplo `[PERSONA_1]` o
 `[DNI_1]`, y permite exportar Word, PDF, CSV y Markdown.
+Los identificadores sin categoría específica, como seguimiento, póliza,
+chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ---
 
@@ -30,24 +36,24 @@ Reemplaza cada dato por una etiqueta, por ejemplo `[PERSONA_1]` o
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.3.13** en el indicador superior.
+3. Verificá **v3.4.3** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
 
 ### macOS
 
-La entrega 3.3.13 se verifica en Windows. Los paquetes anteriores de macOS
+La entrega 3.4.3 se verifica en Windows. Los paquetes anteriores de macOS
 conservan su propia versión y sus instrucciones. Este ZIP Windows no funciona
 en Mac; una compilación nueva debe probarse en ese sistema antes de publicarse.
 
 El indicador superior debe mostrar algo similar a:
 
 ```text
-100% local vX.Y.Z · Presidio · spaCy
+100% local vX.Y.Z · Presidio · spaCy · Catálogos cargados
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.3.13**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.3**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---
@@ -71,9 +77,15 @@ capa de texto.
 - **Modo genérico:** `[NOMBRE]`, `[DNI]`.
 - **Modo iniciales:** reemplaza nombres por iniciales.
 - Marcá las categorías que querés buscar.
+- Conservá **Otros** activada para incluir seguimiento de denuncias, pólizas,
+  chasis, motor y enlaces.
 - Hacé clic en **Analizar documento**.
 - Seleccioná al menos una categoría. **Detener** solicita la cancelación;
   el motor la atiende al llegar a un punto de control entre sus bloques.
+
+Un catálogo de personas faltante, vacío o inválido detiene el análisis y
+conserva la revisión anterior. Reiniciá la aplicación después de corregir o
+restaurar sus recursos.
 
 ### Paso 3 — Revisar
 
@@ -92,6 +104,16 @@ Si un nombre o apellido corto puede corresponder a varias personas, queda
 separado. Podés asignarlo manualmente después de revisar el contexto.
 El análisis también busca referencias cortas a partir de los nombres completos
 que detectó en ese documento, aunque el apellido no esté en el catálogo.
+También busca repeticiones de identificadores previamente etiquetados y de
+razones sociales completas. No agrupa documentos, teléfonos ni patentes
+distintos por parecerse entre sí.
+En las carátulas judiciales, «c/» separa las partes y «s/» introduce el asunto.
+El nombre anterior no debe absorber a la otra persona ni al asunto. Revisá
+cada parte por separado antes de confirmar sus variantes.
+En esos campos también se detectan nombres escritos en minúsculas y
+apellidos fuera del catálogo, incluso si aparece solo uno de los separadores.
+Las empresas y los organismos conservan su categoría; un título de documento
+o trámite seguido de «s/» no se trata como un nombre de persona.
 Para aplicar esta mejora a una exportación anterior, volvé a cargar y analizar
 el documento original.
 Quitar una variante o rechazar un grupo separa sus reemplazos. Editar la
@@ -109,6 +131,23 @@ Usá **En grupo** únicamente cuando quieras asociar el dato a un grupo.
 Comprobá el resultado en **Anonimizado** y luego en el archivo descargado.
 Cambiar el tipo de una fila se conserva también al exportar.
 
+Si un grupo quedó con el tipo incorrecto, cambialo desde **Tipo de dato**
+en ese mismo grupo. **Unir con otro grupo** permite elegir cualquier
+destino. Cuando los tipos son distintos, se pide confirmar la reclasificación;
+al aceptar, se conserva la categoría y el reemplazo del grupo de destino.
+Las filas que habías desactivado permanecen desactivadas.
+
+Al agregar, eliminar, cambiar el tipo o activar/desactivar una detección,
+se actualizan las sugerencias de identidad. Se conservan los grupos que
+confirmaste, creaste, editaste o separaste manualmente, además de los rechazos,
+las etiquetas personalizadas y las filas desactivadas.
+
+Si una nueva variante puede pertenecer a un grupo confirmado, aparece una
+propuesta, por ejemplo **Incorporar a [PERSONA_1]**. Revisá el contexto y elegí
+**Incorporar al grupo** para usar la etiqueta ya confirmada. La incorporación
+no ocurre automáticamente. También podés rechazar la propuesta o elegir
+otro destino mediante la unión manual.
+
 ### Paso 4 — Verificar y exportar
 
 1. Hacé clic en **Abrir editor y verificar**.
@@ -120,6 +159,7 @@ La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
 interlineado, alineación y márgenes se aplican a ambos formatos. La exportación
 reconstruye el texto y no conserva el diseño original ni sus tablas.
 Las ediciones del editor no cambian la tabla CSV ni se vuelven a analizar.
+
 5. Descargá la tabla CSV de equivalencias si la necesitás.
 
 > **Atención:** al editar manualmente, no restaures datos personales
@@ -175,7 +215,9 @@ ejecuta por detrás.
 1. Cerrá la pestaña del navegador.
 2. Abrí el Administrador de tareas (`Ctrl + Shift + Esc`).
 3. Buscá `AnonimizadorJudicial-NLP.exe`.
-4. Elegí **Finalizar tarea**.
+4. Si hay varias copias, verificá su ruta para elegir la carpeta de la
+   versión que querés cerrar.
+5. Elegí **Finalizar tarea**.
 
 Si el puerto está ocupado, `INICIAR.bat` busca otro puerto libre y conserva la copia anterior.
 Guardá tus exportaciones antes de terminar esa copia y abrir otra.
@@ -207,3 +249,5 @@ Guardá tus exportaciones antes de terminar esa copia y abrir otra.
 - [ ] Leí el texto completo en el editor de verificación.
 - [ ] Exporté el archivo correcto.
 - [ ] Confirmé que no quedaron nombres, DNI, domicilios ni emails visibles.
+- [ ] Revisé teléfonos, seguimiento, enlaces, expedientes, patentes, pólizas,
+  números de chasis y motor.

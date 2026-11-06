@@ -79,7 +79,7 @@ def add_manual_detection(
         existing.mention_ids.append(mention.id)
         if existing.cluster_id:
             from app.services.clusters import add_detections_to_cluster
-            add_detections_to_cluster(state, existing.cluster_id, [existing.id])
+            add_detections_to_cluster(state, existing.cluster_id, [existing.id], manual_assignment=False)
         return existing
 
     new_id = max((d.id for d in state.detections), default=-1) + 1
@@ -175,7 +175,7 @@ def add_bulk_detection(
         existing.mention_ids.append(mention.id)
         if existing.cluster_id:
             from app.services.clusters import add_detections_to_cluster
-            add_detections_to_cluster(state, existing.cluster_id, [existing.id])
+            add_detections_to_cluster(state, existing.cluster_id, [existing.id], manual_assignment=False)
         if placeholder is not None:
             clean = placeholder.strip()
             if not clean:
@@ -239,6 +239,9 @@ def update_detection(
     if cat and cat != det.cat:
         from app.services.clusters import detach_mentions
         detach_mentions(state, set(det.mention_ids))
+        replacement = make_placeholder(
+            cat, det.original, next_placeholder_number(state.detections, cat), state.label_mode,
+        )
         det.cat = cat  # type: ignore[assignment]
         det.cluster_id = None
         det.cluster_confirmed = False
@@ -247,7 +250,7 @@ def update_detection(
             if mention:
                 mention.cat = cat  # type: ignore[assignment]
         if placeholder is None or not det.manual_placeholder:
-            det.placeholder = make_placeholder(cat, det.original, next_placeholder_number(state.detections, cat), state.label_mode)
+            det.placeholder = replacement
             det.manual_placeholder = False
 
     if placeholder is not None:

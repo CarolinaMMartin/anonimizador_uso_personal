@@ -27,13 +27,14 @@ BAD = [
     "negó los hechos",
 ]
 
-GOOD_SUBSTR = [
-    "Marcos Adrián Benítez",
-    "29.882.104",
-    "+54 9 11 5931",
-    "camila.ferreyra",
-    "calle Sauce Viejo",
-]
+EXPECTED = {
+    ("PERSONA", "Marcos Adrián Benítez"),
+    ("PERSONA", "Camila Rocío Ferreyra"),
+    ("DNI", "29.882.104"),
+    ("TELEFONO", "+54 9 11 5931-7720"),
+    ("EMAIL", "camila.ferreyra.test@example.invalid"),
+    ("DOMICILIO", "calle Sauce Viejo 3310"),
+}
 
 
 def main() -> None:
@@ -57,9 +58,9 @@ def main() -> None:
             errors.append(f"Falso positivo detectado: {bad!r}")
 
     missing = []
-    for good in GOOD_SUBSTR:
-        if good.lower() not in low:
-            missing.append(f"No detectado (esperado): {good!r}")
+    actual = {(m.cat, m.surface) for m in mentions}
+    for expected in sorted(EXPECTED - actual):
+        missing.append(f"Falta la detección completa con sus límites exactos: {expected!r}")
 
     print(f"Menciones: {len(mentions)}")
     for m in mentions:

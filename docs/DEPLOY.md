@@ -1,10 +1,15 @@
-# Construcción y distribución — 3.3.13
+# Construcción y distribución — 3.4.3
 
-La entrega 3.3.13 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
+La entrega 3.4.3 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
+
+La versión 3.4.3 se prepara como entrega local. La carpeta de uso es
+`dist/AnonimizadorJudicial-NLP-3.4.3/`; el ZIP de esta entrega es
+`dist/AnonimizadorJudicial-3.4.3-Windows.zip`. Generar estos archivos no
+publica una Release ni modifica las descargas existentes.
 
 ## Bloqueo de Windows 11 pendiente de resolver
 
-La compilación 3.3.13 no está firmada. El Control Inteligente de Aplicaciones
+La compilación 3.4.3 no está firmada. El Control Inteligente de Aplicaciones
 puede bloquear el ejecutable o el lanzador en algunos equipos. Una prueba
 funcional en Windows sin esa protección no demuestra que el paquete se pueda
 abrir en Windows 11 con la protección activa.
@@ -26,13 +31,19 @@ Desde la raíz del repositorio, con Python 3.11–3.13:
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
+$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.3'
 .venv\Scripts\python -m pytest tests -q
 node --test tests/frontend_session.test.cjs
 .venv\Scripts\python scripts\audit_repository.py
-.venv\Scripts\python scripts\build_portable_full.py
+.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.3
 .venv\Scripts\python -m pytest tests -q
-.venv\Scripts\python scripts\portable_smoke.py
-.venv\Scripts\python scripts\package_release.py --output dist/AnonimizadorJudicial-Windows.zip
+.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --keep-running
+$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.3/PUERTO_ACTUAL.txt'
+.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --port $appPort --use-existing --category-cases --all-categories
+.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --port $appPort
+.venv\Scripts\python scripts\check_identity_flow.py --url "http://127.0.0.1:$appPort"
+.venv\Scripts\python scripts\check_identity_flow.py --caption-cases --url "http://127.0.0.1:$appPort"
+.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --output dist/AnonimizadorJudicial-3.4.3-Windows.zip
 ```
 
 La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. Un modelo local válido evita volver a descargarlo. El programa empaquetado funciona sin conexión.
@@ -40,6 +51,12 @@ La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. 
 `build/` contiene archivos temporales de compilación y `dist/` el resultado generado; no son versiones independientes del código. La versión se obtiene de `APP_VERSION` en [config.py](../app/config.py) y figura en `VERSION_APP.txt`, la interfaz y `/health`.
 
 El constructor produce un paquete completo: ejecutable, frontend, diccionarios internos, modelo, lanzadores, manuales y licencias. El empaquetador rechaza un ejecutable con otra versión y genera un ZIP con carpeta interna versionada y un archivo SHA-256.
+
+`--output` acepta únicamente una carpeta nueva dentro de `dist/`. Permite
+construir la actualización sin reemplazar una instalación abierta. Sin esa
+opción se conserva la salida tradicional `dist/AnonimizadorJudicial-NLP/`.
+Si una ruta de compilación resulta demasiado larga en Windows, se puede
+elegir un staging corto mediante `ANON_BUILD_DIR`, por ejemplo `build/p343`.
 
 ## Verificación de la entrega
 

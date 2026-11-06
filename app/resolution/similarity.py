@@ -8,6 +8,7 @@ from app.config import FUZZY_HIGH, FUZZY_MEDIUM
 from app.models.schemas import Mention
 from app.resolution.normalize import normalize_mention
 from app.resolution.person_identity import name_parts
+from app.resolution.identifiers import IDENTIFIER_CATEGORIES, identifier_key
 
 
 def fuzzy_score(a: str, b: str) -> float:
@@ -19,6 +20,10 @@ def fuzzy_score(a: str, b: str) -> float:
 
 def compute_edge(m1: Mention, m2: Mention, text: str) -> tuple[float, str, str] | None:
     if m1.cat != m2.cat:
+        return None
+    if m1.cat in IDENTIFIER_CATEGORIES:
+        if identifier_key(m1.cat, m1.surface) == identifier_key(m2.cat, m2.surface):
+            return 1.0, 'alta', 'exact'
         return None
     n1, n2 = normalize_mention(m1.surface), normalize_mention(m2.surface)
     if n1 == n2:

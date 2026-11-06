@@ -9,6 +9,40 @@ from app.models.schemas import Mention
 logger = logging.getLogger(__name__)
 
 
+def resolve_overlaps(items: list[RawItem], text: str) -> list[RawItem]:
+    """Conserva la cobertura completa de las coincidencias ya validadas."""
+    priority = {cat: index for index, cat in enumerate((
+        "PERSONA", "DNI", "TELEFONO", "PATENTE", "CUIT", "EXPEDIENTE",
+        "OTRO", "EMAIL", "DOMICILIO", "ORGANISMO", "EMPRESA",
+    ))}
+    ordered = sorted(items, key=lambda item: (item.start, -item.end))
+    resolved: list[RawItem] = []
+    group: list[RawItem] = []
+    group_end = -1
+
+    def append_group() -> None:
+        if not group:
+            return
+        representative = max(group, key=lambda item: (
+            item.end - item.start, priority.get(item.cat, -1),
+            item.source_layer not in {"spacy", "presidio"},
+        ))
+        start = group[0].start
+        resolved.append(RawItem(representative.cat, text[start:group_end],
+                                start, group_end, representative.source_layer))
+
+    for item in ordered:
+        if not 0 <= item.start < item.end <= len(text):
+            raise ValueError("Posición de detección inválida")
+        if group and item.start >= group_end:
+            append_group()
+            group = []
+        group.append(item)
+        group_end = max(group_end, item.end)
+    append_group()
+    return resolved
+
+
 def raw_to_mentions(items: list[RawItem]) -> list[Mention]:
     mentions: list[Mention] = []
     for i, it in enumerate(items):
@@ -76,14 +110,4 @@ def run_detection(
             other.start <= item.start and item.end <= other.end for other in protected)]
         items.extend(detect_document_aliases(text, seeds, protected, session_id))
 
-    # Full names must win against shorter candidates at the same offset.
-    # Quality filtering above prevents a narrative tail winning by length.
-    items.sort(key=lambda x: (x.start, -(x.end - x.start)))
-    filtered: list[RawItem] = []
-    last_end = -1
-    for it in items:
-        if it.start >= last_end:
-            filtered.append(it)
-            last_end = it.end
-
-    return raw_to_mentions(filtered)
+    return raw_to_mentions(resolve_overlaps(items, text))

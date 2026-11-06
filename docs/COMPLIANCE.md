@@ -1,10 +1,16 @@
-# Licencias y privacidad — 3.3.13
+# Licencias y privacidad — 3.4.3
 
-Revisión técnica de la distribución: 18 de septiembre de 2026. Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
+Revisión técnica de la distribución: 6 de noviembre de 2026. Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
 
 ## Código, marca y terceros
 
 El código del proyecto se distribuye con [LICENSE](../LICENSE), Apache 2.0. [NOTICE](../NOTICE) contiene avisos de autoría y condiciones de uso de la marca institucional. La licencia del código no concede autorización para usar marcas.
+
+La interfaz utiliza el logo MPF suministrado con la guía `marca-mpf` y la
+paleta del manual «MPFCABA Identidad 2026 V1», aportado posteriormente.
+La interfaz conserva las fuentes y proporciones recuperadas en 3.4.1
+por pedido de la usuaria. Se conserva la autoría IALAB del software; la
+adaptación visual no implica aval institucional del MPF.
 
 [THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt) enumera las dependencias principales fijadas en `requirements.txt`. El portable conserva textos de referencia en `LICENSES/` y copias de avisos originales de las distribuciones instaladas en `LICENSES/third_party/`.
 

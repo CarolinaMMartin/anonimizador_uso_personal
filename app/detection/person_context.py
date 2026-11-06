@@ -3,6 +3,7 @@ import re
 from functools import lru_cache
 
 from app.resolution.normalize import normalize_text
+from app.detection.case_titles import PARTY_SEPARATOR
 
 _WORD = r"[A-ZÁÉÍÓÚÜÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ'’\-]*\.?"
 _PARTICLE = r"(?:de|del|la|las|los|y)"
@@ -12,7 +13,7 @@ _ROLE = r"(?:JUE[ZS]A?|VICEPRESIDENT[EA]|PRESIDENT[EA]|PROSECRETARI[OA]|SECRETAR
 _ROLE_AFTER_RE = re.compile(rf"\s*(?:,\s*|\n\s*){_ROLE}", re.IGNORECASE)
 _FOOTER_RE = re.compile(rf"(?m)^[ \t]*(?P<name>{_NAME})(?=\s*(?:,\s*|\n\s*){_ROLE})", re.IGNORECASE)
 _ACTOR_RE = re.compile(
-    rf"\b(?P<name>{_WORD},?(?:\s+(?:{_WORD},?|{_PARTICLE})){{1,8}})\s+(?i:c\s*\.?/)"
+    rf"\b(?P<name>{_WORD},?(?:\s+(?:{_WORD},?|{_PARTICLE})){{1,8}})\s+(?i:{PARTY_SEPARATOR})"
 )
 _HONOR_BEFORE_RE = re.compile(r"\b(?:sr\.?|sra\.?|srta\.?|dr\.?|dra\.?|se[ñn]or|se[ñn]ora|don|do[ñn]a)\s*$", re.IGNORECASE)
 _PARTICLES = {'de', 'del', 'la', 'las', 'los', 'y'}
@@ -63,6 +64,11 @@ def actor_spans(text: str) -> list[tuple[int, int, str]]:
 
 
 def is_contextual_person(surface: str, text: str, start: int) -> bool:
+    from app.detection.person_names import has_person_context
+
+    if has_person_context(text, start):
+        tokens = name_tokens(surface)
+        return 1 <= len(tokens) <= 8 and not any(token in _NOT_NAMES for token in tokens)
     if name_tokens(surface) in signature_names(text):
         return True
     if not _name_shape(surface, minimum=1):
@@ -70,7 +76,7 @@ def is_contextual_person(surface: str, text: str, start: int) -> bool:
     left = text[max(0, start - 50):start]
     right = text[start + len(surface):start + len(surface) + 100]
     return bool(_HONOR_BEFORE_RE.search(left) or _ROLE_AFTER_RE.match(right) or
-                re.match(r"\s*[.,]?\s*c\s*\.?/", right, re.IGNORECASE))
+                re.match(rf"\s*[.,]?\s*{PARTY_SEPARATOR}", right, re.IGNORECASE))
 
 
 def is_vehicle_name(surface: str, text: str, start: int) -> bool:

@@ -1,38 +1,18 @@
 """Filtros de calidad post-detección."""
 import re
 
-from app.detection.dictionaries import STOPWORDS_FRASE, get_apellidos, get_nombres
-from app.detection.regex_ar import PERSONA_BOUNDARY_WORDS, RawItem
-from app.detection.organizations import is_company_name, is_organism_name
+from app.detection.dictionaries import NAME_PARTICLES, STOPWORDS_FRASE, get_person_anchors
+from app.detection.regex_ar import PERSONA_BOUNDARY_WORDS, RawItem, validate_cuit
+from app.detection.organizations import is_company_name, is_organism_name, is_contextual_company
+from app.detection.addresses import is_address
+from app.detection.identifiers import is_sensitive_identifier
+from app.detection.case_titles import (
+    CASE_CONNECTOR_RE, is_explicit_case_party, overlaps_case_connector,
+)
+from app.detection.form_fields import field_value_end
 from app.detection.person_context import is_contextual_person, is_vehicle_name
+from app.detection.person_names import contains_person_list, is_person_name_candidate
 from app.resolution.normalize import normalize_text
-
-_bad_after_calle_re = re.compile(
-    r"^\s*(?:calle|c\/|av\.?|avda\.?|avenida)\s+"
-    r"(?:que|se|en|un|una|el|la|los|las|del|de|donde|cuando|cual|cuales|"
-    r"quien|quienes|todo|toda|todos|todas|cualquier|cualquiera)\b",
-    re.IGNORECASE,
-)
-
-_DOM_NARRATIVE_BAD = (
-    "territorio",
-    "república",
-    "republica",
-    "se encuentren",
-    "que se encuentren",
-    "en el marco",
-    "de la nacion",
-    "de la nación",
-    "territorio de la",
-    "territorio nacional",
-)
-
-_street_prefix_re = re.compile(
-    r"\b(?:calle|c\/|av\.?|avda\.?|avenida|bv\.?|boulevard|pasaje|pje\.?|"
-    r"plaza|pza\.?|ruta|rt\.?|camino|barrio|b°|manzana|mza\.?|lote|lt\.?|"
-    r"dpto\.?|depto\.?|piso|torre|n[°º]\.?|nro\.?)\b",
-    re.IGNORECASE,
-)
 
 _verbs_re = re.compile(
     r"\b(?:que|manifiesta|declara|considera|solicita|respondió|respondio|"
@@ -42,7 +22,7 @@ _verbs_re = re.compile(
 )
 
 # Frases narrativas completas (denuncias)
-_LEGAL_CITE_RE = re.compile(r"\b(?:c/|s/)\s*$|\b(?:c/|s/)\s+\w", re.IGNORECASE)
+_LEGAL_CITE_RE = CASE_CONNECTOR_RE
 
 _NARRATIVE_PHRASES = (
     "manifiesta que",
@@ -68,6 +48,21 @@ _NARRATIVE_PHRASES = (
     "dispuso correr",
     "requirió a",
 )
+
+_PROCEDURAL_NOUNS = frozenset({
+    'acta', 'actuacion', 'anexo', 'apelacion', 'audiencia', 'cedula',
+    'certificacion', 'certificado', 'citacion', 'comunicacion', 'constancia',
+    'consulta', 'contestacion', 'copia', 'declaracion',
+    'demanda', 'denuncia', 'dictamen', 'diligencia', 'documentacion',
+    'documento', 'elevacion', 'escrito', 'expediente', 'gestion',
+    'habilitacion', 'impugnacion', 'incidente', 'informe', 'inscripcion',
+    'instruccion', 'legalizacion', 'medida', 'memorando', 'nota',
+    'notificacion', 'observacion', 'oficio', 'orden',
+    'pericia', 'peticion', 'presentacion', 'procedimiento', 'providencia',
+    'querella', 'reclamacion', 'reclamo', 'recurso', 'registracion',
+    'registro', 'remision', 'requerimiento', 'resolucion', 'seguimiento',
+    'solicitud', 'tramitacion', 'tramite', 'traslado', 'verificacion', 'vista',
+})
 
 _EXPEDIENTE_KEYWORDS = re.compile(
     r"\b(?:expediente|expte\.?|causa|autos|f\.?\s?s\.?|l\.?\s?e\.?|"
@@ -102,6 +97,7 @@ _PATENTE_LEGAL_PREFIXES = frozenset(
         "ley", "art", "cap", "doc", "inc", "reg", "tit", "cam", "cám",
         "cpc", "cpcc", "ccc", "ccyc", "cpe", "cpp", "ord", "res", "dec",
         "exp", "fs", "lib", "fol", "rol", "iva", "afp", "ans", "afa",
+        "cod", "num", "nro", "tel", "cel", "dni", "cbu", "cvu",
     }
 )
 
@@ -151,18 +147,7 @@ def get_formulas() -> set[str]:
     return _formulas
 
 
-def _is_year(s: str) -> bool:
-    if re.fullmatch(r"\d{4}", s.strip()):
-        return 1900 <= int(s) <= 2100
-    return False
-
-
-def _has_street_context(text: str, start: int, window: int = 120) -> bool:
-    chunk = text[max(0, start - window) : start + 30].lower()
-    return bool(_street_prefix_re.search(chunk))
-
-
-def _looks_like_narrative(surface: str, max_chars: int = 40, max_words: int = 8) -> bool:
+def _looks_like_narrative(surface: str, max_chars: int = 120, max_words: int = 12) -> bool:
     s = surface.strip()
     low = s.lower()
     if len(s) > max_chars:
@@ -172,26 +157,28 @@ def _looks_like_narrative(surface: str, max_chars: int = 40, max_words: int = 8)
     words = s.split()
     if len(words) >= 4 and _verbs_re.search(s):
         return True
-    if len(words) >= max_words:
+    if len(words) > max_words:
         return True
     norm = [normalize_text(w.strip(".,;:")) for w in words]
+    if norm:
+        head = norm[0]
+        head_forms = {head, head[:-1] if head.endswith('s') else head,
+                      head[:-2] if head.endswith('es') else head}
+        if head_forms & _PROCEDURAL_NOUNS and not is_person_name_candidate(s):
+            return True
     if any(w in PERSONA_BOUNDARY_WORDS for w in norm):
         return True
     particles = {"de", "del", "la", "las", "los", "y", "e"}
-    if sum(1 for w in norm if w not in particles and (w in get_formulas() or w in STOPWORDS_FRASE)) >= max(
+    names, surnames = get_person_anchors()
+    anchors = names | surnames
+    if sum(1 for w in norm if w not in particles and w not in anchors
+           and (w in get_formulas() or w in STOPWORDS_FRASE)) >= max(
         1, len(words) // 2
     ):
         return True
     if " que " in low or low.startswith("que "):
         return True
     return False
-
-
-def _has_autos_context(text: str, start: int) -> bool:
-    chunk = text[max(0, start - 90) : start + 140]
-    return bool(re.search(r"(?:\bc\s*\.?/|\bcontra\b)", chunk, re.IGNORECASE)) and bool(
-        re.search(r"(?:\bs\s*\.?/|\bsobre\b)", chunk, re.IGNORECASE)
-    )
 
 
 def _is_valid_persona(surface: str) -> bool:
@@ -229,8 +216,7 @@ def _is_valid_persona(surface: str) -> bool:
     norm = [normalize_text(w.strip(".,;:")) for w in words]
     if any(w in PERSONA_BOUNDARY_WORDS for w in norm):
         return False
-    nombres = get_nombres()
-    apellidos = get_apellidos()
+    nombres, apellidos = get_person_anchors()
     has_name = any(w in nombres for w in norm)
     has_surname = any(w in apellidos for w in norm)
     # Rechazar surfaces que contienen palabras administrativas/procesales y
@@ -250,7 +236,7 @@ def _is_valid_persona(surface: str) -> bool:
         return w in nombres or w in apellidos
     if len(words) >= 2 and not (has_surname or has_name):
         return False
-    if len(words) > 5:
+    if len([w for w in norm if w not in {"de", "del", "la", "las", "los", "y", "e"}]) > 10:
         return False
     return has_surname or (has_name and len(words) >= 2)
 
@@ -271,65 +257,12 @@ def _is_valid_expediente(surface: str) -> bool:
     return bool(re.search(r"\d", s) or "/" in s or "-" in s)
 
 
-def _is_valid_domicilio(surface: str, text: str, start: int) -> bool:
-    s = surface.strip()
-    if _bad_after_calle_re.search(s):
-        return False
-    low = s.lower()
-    if any(bad in low for bad in _DOM_NARRATIVE_BAD):
-        return False
-    if _is_year(s):
-        return False
-    norm = normalize_text(s)
-    apellidos = get_apellidos()
-    nombres = get_nombres()
-    if norm in apellidos or norm in nombres:
-        return False
-    if len(s.split()) == 1 and norm in apellidos:
-        return False
-    low = s.lower()
-    if low in ("cami", "tomi", "sauce viejo") and not _street_prefix_re.search(s):
-        return False
-    if re.fullmatch(r"\d{1,5}", s):
-        return _has_street_context(text, start)
-    if re.fullmatch(r"[A-Z]\d{4}[A-Z]{3}", s, re.IGNORECASE):
-        return True
-
-    # Si contiene un prefijo de domicilio ("Calle", "Piso", "Dpto", etc.),
-    # exigir señal de dirección real (número/CPA/coma) para evitar frases narrativas
-    # tipo "calle y en riesgo..." o "piso que no".
-    has_prefix = bool(_street_prefix_re.search(s))
-    has_digit = bool(re.search(r"\d", s))
-    has_comma = "," in s
-    if has_prefix:
-        if has_digit or has_comma:
-            return True
-        # contexto fuerte + longitud razonable (pero evitando frases típicas de narrativa)
-        if _has_street_context(text, start) and len(s) > 18:
-            if any(
-                bad in low
-                for bad in (
-                    "riesgo",
-                    "situacion de calle",
-                    "situación de calle",
-                    "garantia",
-                    "garantía",
-                    "proteccion",
-                    "protección",
-                    "derechos",
-                )
-            ):
-                return False
-            return True
-        return False
-
-    if _has_street_context(text, start) and len(s) > 18 and (has_digit or has_comma):
-        return True
-    return False
-
-
 def _is_valid_telefono(surface: str) -> bool:
+    if not re.fullmatch(r"\+?\(?\d[\d\s()./-]*\d\)?", surface.strip()):
+        return False
     digits = re.sub(r"\D", "", surface)
+    if not digits.strip("0"):
+        return False
     if len(digits) == 8 and not surface.strip().startswith("+"):
         return False
     if len(digits) >= 8 and digits.startswith("0205"):
@@ -338,6 +271,8 @@ def _is_valid_telefono(surface: str) -> bool:
 
 
 def _is_valid_dni(surface: str, text: str, start: int) -> bool:
+    if not re.fullmatch(r"\d[\d\s.-]*\d", surface.strip()):
+        return False
     digits = re.sub(r"\D", "", surface)
     if not (7 <= len(digits) <= 8):
         return False
@@ -400,27 +335,37 @@ def is_valid_detection(cat: str, surface: str, text: str = "", start: int = 0) -
     s = surface.strip()
     if not s or len(s) < 2:
         return False
+    if cat in {"PERSONA", "EMPRESA", "ORGANISMO"} and field_value_end(s, 0, len(s)) != len(s):
+        return False
+    if cat in {"DNI", "CUIT", "TELEFONO", "PATENTE", "EXPEDIENTE", "OTRO"}:
+        if is_sensitive_identifier(cat, s, text, start):
+            return True
     if cat == "PERSONA":
-        if is_company_name(s) or is_vehicle_name(s, text, start):
+        if overlaps_case_connector(s, text, start) or contains_person_list(s):
+            return False
+        if is_company_name(s) or is_organism_name(s) or is_vehicle_name(s, text, start):
             return False
         if is_contextual_person(s, text, start) and not _looks_like_narrative(s, max_chars=120, max_words=12):
             return True
-        if _has_autos_context(text, start) and not _looks_like_narrative(s):
-            return 2 <= len(s.split()) <= 6 or s.isupper()
+        if is_explicit_case_party(s, text, start) and not _looks_like_narrative(s):
+            components = [word for word in re.findall(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*", s)
+                          if normalize_text(word) not in NAME_PARTICLES]
+            return 1 <= len(components) <= 8
         return _is_valid_persona(s)
     if cat == "EXPEDIENTE":
         return _is_valid_expediente(s)
     if cat == "DOMICILIO":
-        return _is_valid_domicilio(s, text, start)
+        return is_address(s, text, start)
     if cat == "TELEFONO":
         return _is_valid_telefono(s)
     if cat == "DNI":
         return _is_valid_dni(s, text, start)
+    if cat == "CUIT":
+        return validate_cuit(s)
     if cat == "ORGANISMO":
         return is_organism_name(s)
     if cat == "EMPRESA":
-        return is_company_name(s) or bool(re.fullmatch(
-            r"(?:Hotel|Automotores|Local|Comercio|TOTOS)\s+[A-ZÁÉÍÓÚÜÑ][\wÁÉÍÓÚÜÑáéíóúüñ&'’\-. ]{1,45}", s))
+        return is_company_name(s) or is_contextual_company(s, text, start)
     if cat == "PATENTE":
         return _is_valid_patente(s)
     if cat == "OTRO":
@@ -445,6 +390,10 @@ def is_valid_manual_detection(cat: str, surface: str, text: str = "", start: int
 def apply_quality_filters(items: list[RawItem], text: str) -> list[RawItem]:
     out: list[RawItem] = []
     for it in items:
+        if it.source_layer in {"structured", "structured_alias", "company_alias"}:
+            if 0 <= it.start < it.end <= len(text) and text[it.start:it.end] == it.original:
+                out.append(it)
+            continue
         if is_valid_detection(it.cat, it.original, text, it.start):
             out.append(it)
     return out

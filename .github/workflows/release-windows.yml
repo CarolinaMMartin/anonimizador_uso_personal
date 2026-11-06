@@ -58,6 +58,7 @@ jobs:
           python scripts/portable_smoke.py --use-existing --category-cases
           python scripts/check_grouping.py --learned-alias-cases
           python scripts/check_document_parts.py
+          python scripts/check_sensitive_portable.py
       - name: Package reviewed source
         shell: pwsh
         run: |

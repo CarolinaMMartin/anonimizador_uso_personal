@@ -64,6 +64,132 @@ def test_recursive_delete_accepts_only_generated_descendants():
     builder.check_generated_path(ROOT / 'dist/AnonimizadorJudicial-NLP')
     builder.check_generated_path(builder.STAGE_ROOT / 'dist/AnonimizadorJudicial-NLP')
 
+@pytest.mark.parametrize('relative', ['.', 'dist', 'app/new', 'dist/../app/new'])
+def test_explicit_build_output_rejects_paths_outside_dist(tmp_path, monkeypatch, relative):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    with pytest.raises(ValueError, match='dentro de dist'):
+        builder.resolve_output_dir(Path(relative))
+
+
+@pytest.mark.parametrize('kind', ['file', 'directory'])
+def test_explicit_build_output_preserves_existing_destination(tmp_path, monkeypatch, kind):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    destination = tmp_path / 'dist/existing'
+    destination.parent.mkdir()
+    if kind == 'directory':
+        destination.mkdir()
+        original = destination / 'session.db'
+    else:
+        original = destination
+    original.write_bytes(b'existing session')
+    source = tmp_path / 'stage'
+    source.mkdir()
+    (source / 'application.exe').write_bytes(b'new application')
+    with pytest.raises(ValueError, match='ya existe'):
+        builder.copy_delivery(source, destination)
+    assert original.read_bytes() == b'existing session'
+    assert not (destination / 'application.exe').exists()
+
+
+def test_explicit_output_copies_to_new_directory_and_preserves_old_installation(tmp_path, monkeypatch):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    previous = tmp_path / 'dist' / builder.DIST_NAME
+    previous.mkdir(parents=True)
+    (previous / 'session.db').write_bytes(b'active session')
+    source = tmp_path / 'stage'
+    source.mkdir()
+    (source / f'{builder.DIST_NAME}.exe').write_bytes(b'new executable')
+    destination = builder.copy_delivery(source, Path('dist/new-version'))
+    assert destination == (tmp_path / 'dist/new-version').resolve()
+    assert (destination / f'{builder.DIST_NAME}.exe').read_bytes() == b'new executable'
+    assert (previous / 'session.db').read_bytes() == b'active session'
+
+
+def test_explicit_output_rechecks_destination_before_copying(tmp_path, monkeypatch):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    requested = Path('dist/new-version')
+    destination = builder.resolve_output_dir(requested)
+    destination.mkdir(parents=True)
+    (destination / 'session.db').write_bytes(b'newly opened session')
+    with pytest.raises(ValueError, match='ya existe'):
+        builder.copy_delivery(tmp_path / 'stage', requested)
+    assert (destination / 'session.db').read_bytes() == b'newly opened session'
+
+
+@pytest.mark.parametrize('installed_file', [
+    'AnonimizadorJudicial-NLP.exe', 'VERSION_APP.txt',
+    'AnonimizadorJudicial-NLP.app/Contents/MacOS/AnonimizadorJudicial-NLP',
+])
+def test_explicit_output_cannot_be_nested_in_an_existing_installation(tmp_path, monkeypatch, installed_file):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    previous = tmp_path / 'dist/active'
+    marker = previous / installed_file
+    marker.parent.mkdir(parents=True)
+    marker.write_bytes(b'installed application')
+    with pytest.raises(ValueError, match='instalación existente'):
+        builder.copy_delivery(tmp_path / 'stage', Path('dist/active/new-version'))
+    assert marker.read_bytes() == b'installed application'
+    assert not (previous / 'new-version').exists()
+
+
+def test_explicit_output_allows_nested_directory_without_an_installation(tmp_path, monkeypatch):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    (tmp_path / 'dist/releases').mkdir(parents=True)
+    target = builder.resolve_output_dir(Path('dist/releases/new-version'))
+    assert target == (tmp_path / 'dist/releases/new-version').resolve()
+
+
+def test_explicit_output_rejects_dist_resolved_outside_repository(tmp_path, monkeypatch):
+    root = tmp_path / 'repository'
+    dist = root / 'dist'
+    outside = tmp_path / 'outside'
+    resolve = Path.resolve
+
+    def redirected(path, *args, **kwargs):
+        absolute = resolve(path, *args, **kwargs)
+        return outside / absolute.relative_to(dist) if absolute.is_relative_to(dist) else absolute
+
+    monkeypatch.setattr(builder, 'ROOT', root)
+    monkeypatch.setattr(Path, 'resolve', redirected)
+    with pytest.raises(ValueError, match='dentro del repositorio'):
+        builder.resolve_output_dir(Path('dist/new-version'))
+
+
+def test_explicit_output_refuses_directory_alias_outside_dist(tmp_path, monkeypatch):
+    root = tmp_path / 'repository'
+    (root / 'dist').mkdir(parents=True)
+    outside = tmp_path / 'outside'
+    outside.mkdir()
+    alias = root / 'dist/alias'
+    try:
+        alias.symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip('Directory symlinks are unavailable on this host.')
+    monkeypatch.setattr(builder, 'ROOT', root)
+    with pytest.raises(ValueError, match='dentro de dist'):
+        builder.resolve_output_dir(Path('dist/alias/new-version'))
+    assert list(outside.iterdir()) == []
+
+
+def test_default_build_output_keeps_legacy_copy_behavior(tmp_path, monkeypatch):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    copies = []
+    monkeypatch.setattr(builder, 'robust_copytree', lambda src, dst: copies.append((src, dst)))
+    source = tmp_path / 'stage'
+    destination = builder.copy_delivery(source)
+    assert destination == tmp_path / 'dist' / builder.DIST_NAME
+    assert copies == [(source, destination)]
+
+
+def test_invalid_cli_output_fails_before_starting_build(tmp_path, monkeypatch):
+    monkeypatch.setattr(builder, 'ROOT', tmp_path)
+    monkeypatch.setattr(sys, 'argv', ['build_portable_full.py', '--output', 'app/new'])
+    monkeypatch.setattr(builder, 'ensure_nlp', lambda: pytest.fail('Build must not start.'))
+    with pytest.raises(SystemExit) as failure:
+        builder.main()
+    assert failure.value.code == 2
+
+
 def test_missing_packaged_model_cannot_pass_by_loading_development_model(tmp_path):
     with pytest.raises(SystemExit, match='modelo'):
         builder.smoke_test_pkg(tmp_path)
@@ -76,12 +202,24 @@ def test_mac_launchers_use_package_path_and_preserve_other_processes(tmp_path, m
     assert 'lsof' in launcher
     assert (tmp_path / 'VERIFICAR.command').is_file()
 
-def test_portable_manual_links_point_to_delivered_files_or_versioned_source():
+def test_portable_manual_links_use_delivered_files_and_identify_source_references():
     from portable_docs import portable_text
     source = ROOT / 'docs/DEPLOY.md'
     text = portable_text('[license](../LICENSE) [code](../app/config.py)', source, Path('DEPLOY.md'))
     assert '[license](LICENSE)' in text
-    assert f'/blob/v{package.app_version()}/app/config.py)' in text
+    assert 'code (`app/config.py` en el código fuente)' in text
+    assert 'github.com' not in text
+
+
+def test_portable_release_notes_and_dependency_links_stay_local():
+    from portable_docs import portable_text
+    source = ROOT / 'docs/NOTAS_VERSION.md'
+    original = (f'[verification](VERIFICACION_{package.app_version()}.md) '
+                '[notes](NOTAS_VERSION.md) [inventory](dependencies-frozen.txt)')
+    converted = portable_text(original, source, Path('NOTAS_VERSION.md'))
+    assert f'[verification](VERIFICACION_{package.app_version()}.md)' in converted
+    assert '[notes](NOTAS_VERSION.md)' in converted
+    assert '[inventory](DEPENDENCIAS_BUILD.txt)' in converted
 
 def test_wheel_export_template_is_preserved_but_modified_documents_are_excluded(tmp_path):
     from importlib.metadata import distribution

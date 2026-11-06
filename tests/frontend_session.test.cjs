@@ -42,7 +42,7 @@ function createApp(handler = async () => json({})) {
       sessionFetch, flushPendingSaves, scheduleDetectionPatch, openEditorPanel,
       renderPreviewLocal, loadPreview, beginRequest, endRequest, resetDocumentState,
       runManualDetectionAndMaybeGroup, buildMarkdownExport, assertEditorCurrent,
-      assignDetectionToCluster,
+      assignDetectionToCluster, absorbClusterInto, changeClusterCategory, clustersForCategory, clusterCard, confirmClusterById,
       looksSimilarDetection, joinSimilarDetections, ignoreSimilarDetections,
       toBrowserOffset, toDocumentOffset,
       setDocument(text) { docText = text; detections = []; },
@@ -62,6 +62,7 @@ function createApp(handler = async () => json({})) {
       mode(mode) { viewMode = mode; },
       docText: () => docText,
       detections: () => JSON.parse(JSON.stringify(detections)),
+      clusters: () => JSON.parse(JSON.stringify(clusters)),
       busy: () => activeAbort !== null,
       pendingCount: () => pendingPatches.size + pendingSaves.size,
       filename(value) { currentDocName = value; },
@@ -339,6 +340,42 @@ test('Unicode positions keep preview highlights and replacements aligned', () =>
   assert.equal(element('docPreview').textContent, '📄 [DOMICILIO_1]. Fin.');
 });
 
+test('crossing detections highlight and anonymize their complete coverage without changing review positions', () => {
+  const { app, element } = createApp();
+  app.setDocument('📄 Juan Perez Gomez declaró.');
+  app.setReview([
+    { id: 0, cat: 'PERSONA', original: 'Juan Perez', placeholder: '[PERSONA_1]',
+      enabled: true, positions: [{ start: 2, end: 12 }] },
+    { id: 1, cat: 'PERSONA', original: 'Perez Gomez', placeholder: '[PERSONA_2]',
+      enabled: true, positions: [{ start: 7, end: 18 }] },
+  ], []);
+  const before = app.detections();
+  app.mode('orig');
+  app.renderPreviewLocal();
+  assert.match(element('docPreview').innerHTML, /^📄 <span[^>]+>Juan Perez Gomez<\/span> declaró\.$/);
+  app.mode('anon');
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '📄 [PERSONA_1] declaró.');
+  assert.deepEqual(app.detections(), before);
+});
+
+test('contained detections use the same full interval and placeholder in both preview modes', () => {
+  const { app, element } = createApp();
+  app.setDocument('Juan Perez Gomez declaró.');
+  app.setReview([
+    { id: 0, cat: 'PERSONA', original: 'Juan', placeholder: '[PERSONA_1]',
+      enabled: true, positions: [{ start: 0, end: 4 }] },
+    { id: 1, cat: 'PERSONA', original: 'Juan Perez Gomez', placeholder: '[PERSONA_2]',
+      enabled: true, positions: [{ start: 0, end: 16 }] },
+  ], []);
+  app.mode('orig');
+  app.renderPreviewLocal();
+  assert.match(element('docPreview').innerHTML, /^<span[^>]+title="\[PERSONA_2\]">Juan Perez Gomez<\/span> declaró\.$/);
+  app.mode('anon');
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '[PERSONA_2] declaró.');
+});
+
 test('manual selection sends Unicode offsets and refreshes the actual accepted review', async () => {
   const text = '📄 Campana 39. Fin.';
   const row = { id: 0, cat: 'DOMICILIO', original: 'Campana 39', placeholder: '[DOMICILIO_1]',
@@ -405,4 +442,185 @@ test('changing document while manual selection waits for a save sends no selecti
   finish();
   await pending;
   assert.deepEqual(calls, ['/api/detections/0']);
+});
+
+function misclassifiedReview() {
+  const target = { cluster_id: 'person', cat: 'PERSONA', status: 'confirmed',
+    placeholder: '[PERSONA_9]', canonical_label: '[PERSONA_9]', surfaces: ['Eliana Vorst'], confidence: 'alta' };
+  const source = { cluster_id: 'company', cat: 'EMPRESA', status: 'suggested',
+    surfaces: ['ELIANA VORST Fecha de Emisión'], confidence: 'alta' };
+  const rows = [
+    { id: 0, cat: 'PERSONA', original: 'Eliana Vorst', cluster_id: 'person',
+      placeholder: '[PERSONA_9]', enabled: true, positions: [] },
+    { id: 1, cat: 'EMPRESA', original: source.surfaces[0], cluster_id: 'company',
+      placeholder: '[EMPRESA_1]', enabled: true, positions: [] },
+  ];
+  return { rows, target, source };
+}
+
+test('groups show an editable category and offer destinations from other categories', () => {
+  const { app } = createApp();
+  const { rows, target, source } = misclassifiedReview();
+  app.setReview(rows, [source, target]);
+  assert.deepEqual(Array.from(app.clustersForCategory('EMPRESA', 'company'), (c) => c.cluster_id), ['person']);
+  const markup = app.clusterCard(source);
+  assert.match(markup, /cluster-category-select/);
+  assert.match(markup, /value="PERSONA"/);
+  assert.match(markup, /value="EMPRESA" selected/);
+  assert.match(markup, /Por revisar/);
+  assert.doesNotMatch(markup, /conf-badge/);
+});
+
+test('manual merge across categories requires explicit choice and preserves the target replacement', async () => {
+  const requests = [];
+  const { rows, target, source } = misclassifiedReview();
+  const { app, sandbox } = createApp(async (url, options) => {
+    requests.push({ url, body: options.body && JSON.parse(options.body) });
+    if (url.includes('/absorb')) return json({ clusters: [target], detections: rows.map((d) => ({ ...d,
+      cat: 'PERSONA', cluster_id: 'person', placeholder: '[PERSONA_9]', cluster_confirmed: true })) });
+    return json({ text: '', highlights: [] });
+  });
+  app.setReview(rows, [source, target]);
+  sandbox.confirm = () => false;
+  assert.equal(await app.absorbClusterInto('person', 'company'), false);
+  assert.equal(requests.length, 0);
+  assert.equal(app.detections()[1].cat, 'EMPRESA');
+  let explanation = '';
+  sandbox.confirm = (message) => { explanation = message; return true; };
+  assert.equal(await app.absorbClusterInto('person', 'company'), true);
+  assert.match(explanation, /EMPRESA a PERSONA/);
+  assert.deepEqual(requests[0].body, { source_cluster_id: 'company', reclassify: true });
+  assert.equal(app.detections()[1].placeholder, '[PERSONA_9]');
+  assert.equal(app.detections()[1].cat, 'PERSONA');
+});
+
+test('category correction waits for the server and does not alter a failed review', async () => {
+  const { rows, target, source } = misclassifiedReview();
+  const { app } = createApp(async () => json({ detail: 'No se guardó la corrección' }, 500));
+  app.setReview(rows, [source, target]);
+  const before = app.detections();
+  assert.equal(await app.changeClusterCategory('company', 'PERSONA'), false);
+  assert.deepEqual(app.detections(), before);
+  assert.equal(app.clusters()[0].cat, 'EMPRESA');
+});
+
+test('a corrected cluster refreshes detections, category and destination groups together', async () => {
+  const { rows, target, source } = misclassifiedReview();
+  const payloads = [];
+  const { app } = createApp(async (url, options) => {
+    if (options.method === 'PATCH') {
+      payloads.push(JSON.parse(options.body));
+      return json({ clusters: [{ ...source, cat: 'PERSONA' }, target], detections: rows.map((d) => ({ ...d,
+        cat: 'PERSONA', placeholder: d.id === 1 ? '[PERSONA_10]' : d.placeholder })) });
+    }
+    return json({ text: '', highlights: [] });
+  });
+  app.setReview(rows, [source, target]);
+  assert.equal(await app.changeClusterCategory('company', 'PERSONA'), true);
+  assert.deepEqual(payloads, [{ cat: 'PERSONA' }]);
+  assert.equal(app.detections()[1].cat, 'PERSONA');
+  assert.equal(app.clusters()[0].cat, 'PERSONA');
+});
+
+test('single row assignment can explicitly correct its category', async () => {
+  const { rows, target, source } = misclassifiedReview();
+  const calls = [];
+  const { app } = createApp(async (url, options) => {
+    if (url === '/api/assign-cluster') {
+      calls.push(JSON.parse(options.body));
+      return json({ detections: rows.map((d) => ({ ...d, cat: 'PERSONA', cluster_id: 'person',
+        placeholder: '[PERSONA_9]' })), clusters: [target] });
+    }
+    return json({ text: '', highlights: [] });
+  });
+  app.setReview(rows, [source, target]);
+  assert.equal(await app.assignDetectionToCluster(1, 'person'), true);
+  assert.equal(calls[0].reclassify, true);
+  assert.equal(app.detections()[1].cat, 'PERSONA');
+});
+
+test('manual corrections render the new suggestions returned by the server', async () => {
+  const group = { cluster_id: 'fresh', cat: 'PERSONA', status: 'suggested',
+    surfaces: ['Eliana Vorst', 'Eliana'], confidence: 'media' };
+  const rows = [
+    { id: 0, cat: 'PERSONA', original: 'Eliana', placeholder: '[TESTIGO]', manual_placeholder: true,
+      enabled: true, cluster_id: 'fresh', positions: [{ start: 0, end: 6 }] },
+    { id: 1, cat: 'PERSONA', original: 'Eliana Vorst', placeholder: '[PERSONA_2]',
+      enabled: true, cluster_id: 'fresh', positions: [{ start: 8, end: 20 }] },
+  ];
+  const { app, element } = createApp(async (url) => {
+    if (url === '/api/manual-detection') return json({ detection: rows[1], detections: rows, clusters: [group] });
+    return json({ text: 'Eliana. Eliana Vorst.', highlights: [] });
+  });
+  app.setDocument('Eliana. Eliana Vorst.');
+  app.setReview([{ ...rows[0], cluster_id: null }], []);
+  app.select('Eliana Vorst');
+  await app.runManualDetectionAndMaybeGroup(false);
+  assert.equal(app.clusters()[0].cluster_id, 'fresh');
+  assert.match(element('clustersList').innerHTML, /Eliana Vorst/);
+  assert.equal(app.detections()[0].placeholder, '[TESTIGO]');
+  assert.equal(app.detections()[0].manual_placeholder, true);
+});
+
+function incorporationReview() {
+  const { rows, target, source } = misclassifiedReview();
+  source.cat = 'PERSONA';
+  source.target_cluster_id = target.cluster_id;
+  source.surfaces = ['Eliana'];
+  rows[1] = { ...rows[1], cat: 'PERSONA', original: 'Eliana', placeholder: '[PERSONA_10]' };
+  return { rows, target, source };
+}
+
+test('incorporation identifies its confirmed destination and cancellation makes no request', async () => {
+  const calls = [];
+  const { app, sandbox } = createApp(async (url) => { calls.push(url); return json({}); });
+  const { rows, target, source } = incorporationReview();
+  app.setReview(rows, [target, source]);
+  const markup = app.clusterCard(source);
+  assert.match(markup, /Incorporar a \[PERSONA_9\]/);
+  assert.match(markup, /Incorporar al grupo/);
+  assert.match(markup, /conservan su reemplazo actual/);
+  assert.equal(app.looksSimilarDetection(rows[0], rows[1]), true);
+  assert.equal(app.clustersForCategory('PERSONA', 'person').length, 0);
+  sandbox.confirm = () => false;
+  assert.equal(await app.confirmClusterById('company'), false);
+  assert.deepEqual(calls, []);
+  assert.equal(app.detections()[1].placeholder, '[PERSONA_10]');
+  assert.equal(app.clusters().length, 2);
+});
+
+test('incorporation only replaces current labels after successful confirmation', async () => {
+  const { rows, target, source } = incorporationReview();
+  let succeeds = false;
+  const { app } = createApp(async () => succeeds
+    ? json({ cluster: target, clusters: [target], detections: rows.map((row) => ({ ...row,
+      cluster_id: 'person', cluster_confirmed: true, placeholder: '[PERSONA_9]' })) })
+    : json({ detail: 'No se pudo confirmar' }, 500));
+  app.setReview(rows, [target, source]);
+  await assert.rejects(app.confirmClusterById('company'), /No se pudo confirmar/);
+  assert.equal(app.detections()[1].placeholder, '[PERSONA_10]');
+  assert.equal(app.clusters().length, 2);
+  succeeds = true;
+  assert.equal(await app.confirmClusterById('company'), true);
+  assert.deepEqual(Array.from(app.clusters(), (group) => group.cluster_id), ['person']);
+  assert.equal(app.detections()[1].placeholder, '[PERSONA_9]');
+});
+
+test('incorporation response from an old document cannot overwrite a new review', async () => {
+  const { rows, target, source } = incorporationReview();
+  let release, started;
+  const pendingRequest = new Promise((resolve) => { started = resolve; });
+  const { app } = createApp(async () => {
+    started();
+    await new Promise((resolve) => { release = resolve; });
+    return json({ cluster: target, clusters: [target], detections: rows });
+  });
+  app.setReview(rows, [target, source]);
+  const confirmation = app.confirmClusterById('company');
+  await pendingRequest;
+  app.init('new-document');
+  release();
+  await assert.rejects(confirmation, (error) => error.name === 'AbortError');
+  assert.equal(app.clusters().length, 0);
+  assert.equal(app.detections()[0].original, 'JUAN PEREZ');
 });

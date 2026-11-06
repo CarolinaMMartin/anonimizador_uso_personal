@@ -9,7 +9,6 @@ from app.detection.filters import is_valid_detection
 from app.detection.regex_ar import _clean_persona_surface, detect_regex_ar
 from app.detection.regex_catalog import detect_regex_catalog, load_catalog_patterns
 from app.models.schemas import Detection, Position
-from app.services.analyze import _drop_substring_personas
 
 
 @pytest.mark.parametrize('text, expected', [
@@ -49,6 +48,7 @@ def test_loader_normalizes_case_accents_whitespace(tmp_path, monkeypatch):
     folder.mkdir()
     (folder / 'nombres.json').write_text(json.dumps([' JUAN ', 'María', 'MARIA']), encoding='utf-8')
     monkeypatch.setattr(dictionaries, 'RESOURCE_DATA_DIR', tmp_path)
+    monkeypatch.setattr(dictionaries, 'DATA_DIR', tmp_path)
     assert dictionaries._load_json('nombres.json') == {'juan', 'maria'}
 
 
@@ -85,6 +85,4 @@ def test_standalone_surname_occurrence_is_kept():
                      positions=[Position(start=0, end=10, raw='Juan Perez')])
     surname = Detection(id=1, cat='PERSONA', original='Perez', placeholder='[PERSONA_2]',
                         positions=[Position(start=surname_start, end=surname_start + 5, raw='Perez')])
-    kept = _drop_substring_personas([full, surname])
-    assert len(kept) == 2
-    assert 'Perez' not in anonymize_text(text, kept)
+    assert 'Perez' not in anonymize_text(text, [full, surname])

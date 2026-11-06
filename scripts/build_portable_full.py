@@ -3,6 +3,7 @@
 Uso (desde la raíz del proyecto, con venv activo o .venv\\Scripts\\python):
   .venv\\Scripts\\python scripts\\install_nlp.py
   .venv\\Scripts\\python scripts\\build_portable_full.py
+  .venv\\Scripts\\python scripts\\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-VERSION
   .venv\\Scripts\\python scripts\\build_portable_full.py --zip   # incluir ZIP (solo si lo necesitás ya)
 
 Salida:
@@ -87,6 +88,43 @@ def robust_copytree(src: Path, dst: Path, attempts: int = 5) -> None:
             print(f"  Reintento copia ({i + 1}/{attempts}) tras: {exc}")
             time.sleep(3)
     raise SystemExit(f"No se pudo copiar a {dst}: {last_exc}")
+
+
+def resolve_output_dir(output: Path | None = None) -> Path:
+    if output is None:
+        return ROOT / 'dist' / DIST_NAME
+    requested = output.expanduser()
+    if not requested.is_absolute():
+        requested = ROOT / requested
+    target = requested.resolve()
+    repository = ROOT.resolve()
+    dist = (repository / 'dist').resolve()
+    if dist == repository or not dist.is_relative_to(repository):
+        raise ValueError('dist/ debe permanecer dentro del repositorio.')
+    if target == dist or not target.is_relative_to(dist):
+        raise ValueError('--output debe ser una carpeta nueva dentro de dist/.')
+    if os.path.lexists(requested) or target.exists():
+        raise ValueError(f'El destino ya existe; se conserva sin cambios: {requested}')
+    for parent in target.parents:
+        if parent == dist:
+            break
+        markers = (
+            parent / f'{DIST_NAME}.exe', parent / 'VERSION_APP.txt',
+            parent / f'{DIST_NAME}.app' / 'Contents/MacOS' / DIST_NAME,
+            parent / 'Contents/MacOS' / DIST_NAME,
+        )
+        if any(marker.is_file() for marker in markers):
+            raise ValueError(f'El destino queda dentro de una instalación existente: {parent}')
+    return target
+
+
+def copy_delivery(src: Path, output: Path | None = None) -> Path:
+    target = resolve_output_dir(output)
+    if output is None:
+        robust_copytree(src, target)
+    else:
+        shutil.copytree(src, target)
+    return target
 
 
 def ensure_nlp() -> Path:
@@ -400,11 +438,19 @@ def smoke_test_pkg(pkg_dir: Path | None = None) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build portable NLP completo")
     parser.add_argument(
+        '--output', type=Path,
+        help='Carpeta nueva dentro de dist/; las rutas relativas parten de la raíz del repositorio. No sobrescribe destinos existentes.',
+    )
+    parser.add_argument(
         "--zip",
         action="store_true",
         help="Generar ZIP al terminar (por defecto no; usá package_release.py cuando esté listo)",
     )
     args = parser.parse_args()
+    try:
+        final_dir = resolve_output_dir(args.output)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     print("=== Build portable NLP completo ===\n")
     plat = "Windows" if is_windows() else "macOS" if is_mac() else sys.platform
@@ -430,9 +476,8 @@ def main() -> None:
 
     write_launchers(stage_pkg)
 
-    final_dir = ROOT / "dist" / DIST_NAME
     print(f"\nCopiando paquete a {final_dir} …")
-    robust_copytree(stage_pkg, final_dir)
+    final_dir = copy_delivery(stage_pkg, args.output)
 
     sys.path.insert(0, str(ROOT / "scripts"))
     from bundle_compliance import bundle_compliance  # noqa: E402
@@ -454,8 +499,12 @@ def main() -> None:
     else:
         print("  ZIP:     (omitido)")
         print("           Cuando la versión esté lista para compartir:")
-        print("           .venv\\Scripts\\python scripts\\package_release.py")
-    print("\nPara probar cambios de interfaz sin rebuild: scripts\\sync_frontend.py")
+        command = '.venv\\Scripts\\python scripts\\package_release.py'
+        if args.output is not None:
+            command += f' --package "{final_dir}"'
+        print(f'           {command}')
+    if args.output is None:
+        print("\nPara probar cambios de interfaz sin rebuild: scripts\\sync_frontend.py")
 
 
 if __name__ == "__main__":

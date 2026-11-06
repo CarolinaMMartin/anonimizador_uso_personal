@@ -62,10 +62,12 @@ def build_detections_from_mentions(
     mentions: list[Mention], mode: str
 ) -> list[Detection]:
     from app.resolution.normalize import normalize_text
+    from app.resolution.identifiers import IDENTIFIER_CATEGORIES, identifier_key
 
     groups: dict[str, dict] = {}
     for m in mentions:
-        normalized = normalize_text(m.surface)
+        normalized = (identifier_key(m.cat, m.surface) if m.cat in IDENTIFIER_CATEGORIES
+                      else normalize_text(m.surface))
         if m.cat == 'EMPRESA':
             normalized = normalized.replace('.', '')
         key = f"{m.cat}||{normalized}"

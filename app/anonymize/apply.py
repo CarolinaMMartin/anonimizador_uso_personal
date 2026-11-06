@@ -49,11 +49,13 @@ def build_highlights(
                     "cluster_id": d.cluster_id,
                 }
             )
-    ranges.sort(key=lambda x: x["start"])
+    ranges.sort(key=lambda x: (x["start"], -x["end"]))
     filtered = []
-    last_end = -1
     for r in ranges:
-        if r["start"] >= last_end:
+        if not 0 <= r["start"] < r["end"] <= len(text):
+            raise ValueError("Posición de anonimización inválida")
+        if filtered and r["start"] < filtered[-1]["end"]:
+            filtered[-1]["end"] = max(filtered[-1]["end"], r["end"])
+        else:
             filtered.append(r)
-            last_end = r["end"]
     return filtered

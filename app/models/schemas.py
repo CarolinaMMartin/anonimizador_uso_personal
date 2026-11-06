@@ -50,10 +50,12 @@ class Detection(BaseModel):
     cluster_confirmed: bool = False
     manual_placeholder: bool = False
     user_added: bool = False
+    grouping_excluded: bool = False
 
 
 class ClusterAddDetectionsRequest(BaseModel):
     detection_ids: list[int]
+    reclassify: bool = False
 
 
 class ClusterCreateRequest(BaseModel):
@@ -71,6 +73,7 @@ class Cluster(BaseModel):
     confidence: Confidence = "media"
     status: ClusterStatus = "suggested"
     reasons: list[str] = Field(default_factory=list)
+    target_cluster_id: str | None = None
 
 
 class SessionState(BaseModel):
@@ -111,6 +114,7 @@ class AnalyzeResponse(BaseModel):
 
 
 class ClusterUpdateRequest(BaseModel):
+    cat: Category | None = None
     placeholder: str | None = None
     canonical_label: str | None = None
 
@@ -129,6 +133,7 @@ class ClusterMergeRequest(BaseModel):
 
 class ClusterAbsorbRequest(BaseModel):
     source_cluster_id: str
+    reclassify: bool = False
 
 
 class ExportFormatOptions(BaseModel):
@@ -163,6 +168,7 @@ class AnonymizedPreviewResponse(BaseModel):
 class ConfirmResponse(BaseModel):
     cluster: Cluster
     detections: list[Detection]
+    clusters: list[Cluster] = Field(default_factory=list)
 
 
 class SearchAndAnonymizeRequest(BaseModel):

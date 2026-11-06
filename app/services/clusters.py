@@ -2,7 +2,7 @@
 from uuid import uuid4
 
 from app.anonymize.placeholders import make_placeholder, next_placeholder_number
-from app.models.schemas import Cluster, Detection, Mention, SessionState
+from app.models.schemas import Category, Cluster, Detection, Mention, SessionState
 
 
 def _ensure_mentions_for_detection(state: SessionState, det: Detection) -> set[str]:
@@ -77,16 +77,69 @@ def _selected(state: SessionState, detection_ids: list[int], cat: str | None = N
     return selected
 
 
-def add_detections_to_cluster(state: SessionState, cluster_id: str, detection_ids: list[int]) -> Cluster | None:
+def add_detections_to_cluster(
+    state: SessionState, cluster_id: str, detection_ids: list[int], reclassify: bool = False,
+    *, manual_assignment: bool = True,
+) -> Cluster | None:
     cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
-    selected = _selected(state, detection_ids, cluster.cat if cluster else None)
-    if not cluster or not selected:
+    requested = set(detection_ids)
+    selected = [det for det in state.detections if det.id in requested]
+    if not cluster or not selected or len(selected) != len(requested):
         return None
+    if cluster.target_cluster_id and any(det.cluster_id == cluster.target_cluster_id for det in selected):
+        return None
+    if any(det.cat != cluster.cat for det in selected):
+        if not reclassify:
+            return None
+        from app.services.detections import update_detection
+        for det in selected:
+            if det.cat != cluster.cat:
+                update_detection(state, det.id, cat=cluster.cat)
     ids = set().union(*(_ensure_mentions_for_detection(state, det) for det in selected))
     if not ids:
         return None
     detach_mentions(state, ids, except_id=cluster_id)
+    if manual_assignment:
+        for det in selected:
+            det.grouping_excluded = False
+        if 'manual_assignment' not in cluster.reasons:
+            cluster.reasons.append('manual_assignment')
     cluster.mention_ids.extend(sorted(ids - set(cluster.mention_ids)))
+    _rebuild_cluster_surfaces(state, cluster)
+    _sync_cluster_to_detections(state, cluster)
+    return cluster
+
+
+def reclassify_cluster(state: SessionState, cluster_id: str, cat: Category) -> Cluster | None:
+    cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
+    if not cluster or cluster.cat == cat:
+        return cluster
+    ids = set(cluster.mention_ids)
+    members = [det for det in state.detections
+               if det.cluster_id == cluster_id or ids.intersection(det.mention_ids)]
+    if not members:
+        return None
+    placeholder = make_placeholder(
+        cat, members[0].original, next_placeholder_number(state.detections, cat), state.label_mode,
+    ) if cluster.status == 'confirmed' else None
+    for det in members:
+        replacement = placeholder or make_placeholder(
+            cat, det.original, next_placeholder_number(state.detections, cat), state.label_mode,
+        )
+        det.cat = cat
+        det.placeholder = replacement
+        det.manual_placeholder = False
+        ids.update(det.mention_ids)
+    for mention in state.mentions:
+        if mention.id in ids:
+            mention.cat = cat
+    cluster.cat = cat
+    cluster.target_cluster_id = None
+    cluster.placeholder = placeholder
+    cluster.canonical_label = placeholder
+    cluster.mention_ids = sorted(ids)
+    if 'manual_category' not in cluster.reasons:
+        cluster.reasons.append('manual_category')
     _rebuild_cluster_surfaces(state, cluster)
     _sync_cluster_to_detections(state, cluster)
     return cluster
@@ -100,6 +153,8 @@ def create_cluster_from_detections(state: SessionState, detection_ids: list[int]
     if not ids:
         return None
     detach_mentions(state, ids)
+    for det in selected:
+        det.grouping_excluded = False
     cluster = Cluster(
         cluster_id=f'manual_{uuid4().hex}', cat=selected[0].cat,
         mention_ids=sorted(ids), confidence='media', reasons=['manual'],
@@ -114,6 +169,11 @@ def confirm_cluster(state: SessionState, cluster_id: str) -> Cluster | None:
     cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
     if not cluster:
         return None
+    if cluster.target_cluster_id:
+        target = next((c for c in state.clusters if c.cluster_id == cluster.target_cluster_id), None)
+        if not target or target.status != 'confirmed' or target.cat != cluster.cat:
+            return None
+        return absorb_cluster_into(state, target.cluster_id, cluster_id)
     _rebuild_cluster_surfaces(state, cluster)
     if not cluster.mention_ids:
         return None
@@ -133,6 +193,8 @@ def split_cluster(state: SessionState, cluster_id: str, mention_ids: list[str]) 
     ids = set(mention_ids) & set(cluster.mention_ids)
     if not ids:
         return []
+    if 'split' not in cluster.reasons:
+        cluster.reasons.append('split')
     # A table row has one replacement for all its exact occurrences. Split it
     # atomically so later confirmation cannot put that row in two groups.
     for detection in state.detections:
@@ -159,14 +221,24 @@ def remove_surface_from_cluster(state: SessionState, cluster_id: str, surface: s
     return split_cluster(state, cluster_id, ids)
 
 
-def absorb_cluster_into(state: SessionState, target_id: str, source_id: str) -> Cluster | None:
+def absorb_cluster_into(
+    state: SessionState, target_id: str, source_id: str, reclassify: bool = False,
+) -> Cluster | None:
     target = next((c for c in state.clusters if c.cluster_id == target_id), None)
     source = next((c for c in state.clusters if c.cluster_id == source_id), None)
-    if not target or not source or target_id == source_id or target.cat != source.cat:
+    if not target or not source or target_id == source_id or target.target_cluster_id == source_id:
         return None
+    if target.cat != source.cat:
+        if not reclassify or not reclassify_cluster(state, source_id, target.cat):
+            return None
     ids = set(source.mention_ids)
     detach_mentions(state, ids, except_id=target_id)
     target.mention_ids.extend(sorted(ids - set(target.mention_ids)))
+    for detection in state.detections:
+        if ids.intersection(detection.mention_ids):
+            detection.grouping_excluded = False
+    if 'manual_merge' not in target.reasons:
+        target.reasons.append('manual_merge')
     _rebuild_cluster_surfaces(state, target)
     _sync_cluster_to_detections(state, target)
     return target
@@ -186,3 +258,15 @@ def merge_clusters(state: SessionState, cluster_ids: list[str]) -> Cluster | Non
     _rebuild_cluster_surfaces(state, merged)
     _sync_cluster_to_detections(state, merged)
     return merged
+
+
+def reject_cluster(state: SessionState, cluster_id: str) -> bool:
+    cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
+    if not cluster:
+        return False
+    ids = set(cluster.mention_ids)
+    for detection in state.detections:
+        if ids.intersection(detection.mention_ids):
+            detection.grouping_excluded = True
+    detach_mentions(state, ids)
+    return True

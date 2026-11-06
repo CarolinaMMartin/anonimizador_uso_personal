@@ -10,51 +10,6 @@ from app.services.analysis_cancel import check_cancel, clear_cancel
 logger = logging.getLogger(__name__)
 
 
-def _prune_detections(detections, text: str):
-    from app.detection.filters import is_valid_detection
-
-    pruned = []
-    for d in detections:
-        # Export preparation must not mutate the live session or renumber IDs.
-        d = d.model_copy(deep=True)
-        if d.user_added or d.cluster_confirmed or 'document_alias' in d.source_layers:
-            pruned.append(d)
-            continue
-        if is_valid_detection(d.cat, d.original, text, d.positions[0].start if d.positions else 0):
-            pruned.append(d)
-    pruned = _drop_substring_personas(pruned)
-    return pruned
-
-
-def _drop_substring_personas(detections):
-    """Quita únicamente posiciones cubiertas por una mención personal mayor."""
-    personas = [d for d in detections if d.cat == "PERSONA"]
-    otros = [d for d in detections if d.cat != "PERSONA"]
-    personas.sort(key=lambda d: len(d.original), reverse=True)
-    kept: list = []
-    kept_norm: list[str] = []
-    for d in personas:
-        if getattr(d, "user_added", False):
-            kept.append(d)
-            kept_norm.append(d.original.strip().lower())
-            continue
-        low = d.original.strip().lower()
-        if any(low != k and low in k for k in kept_norm):
-            # A surname mentioned elsewhere is still personal data. Drop only
-            # occurrences already covered by another detection, never the row
-            # just because its text is a substring of a longer person's name.
-            positions = [p for p in d.positions if not any(
-                other.start <= p.start and p.end <= other.end
-                for existing in kept for other in existing.positions
-            )]
-            if not positions:
-                continue
-            d.positions = positions
-        kept.append(d)
-        kept_norm.append(low)
-    return otros + kept
-
-
 DEFAULT_CATEGORIES = [
     "PERSONA",
     "DNI",
@@ -94,7 +49,6 @@ def run_full_analysis(state: SessionState) -> AnalyzeResponse:
     )
     state.clusters = clusters
     detections = mentions_to_detections(mentions, state.label_mode, clusters)
-    detections = _prune_detections(detections, state.doc_text)
     state.detections = detections
 
     stats: dict[str, int] = {c: 0 for c in DEFAULT_CATEGORIES}

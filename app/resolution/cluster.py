@@ -7,6 +7,7 @@ from app.resolution.graph import build_graph, connected_components
 from app.resolution.normalize import normalize_mention
 from app.resolution.person_identity import person_edges
 from app.resolution.similarity import compute_edge
+from app.resolution.identifiers import IDENTIFIER_CATEGORIES, identifier_key
 
 
 def _best_confidence(reasons: list[str], scores: list[float]) -> Confidence:
@@ -26,7 +27,8 @@ def _best_confidence(reasons: list[str], scores: list[float]) -> Confidence:
 def _exact_match_groups(mentions: list[Mention]) -> dict[tuple[str, str], list[Mention]]:
     groups: dict[tuple[str, str], list[Mention]] = defaultdict(list)
     for m in mentions:
-        groups[(m.cat, normalize_mention(m.surface))].append(m)
+        key = identifier_key(m.cat, m.surface) if m.cat in IDENTIFIER_CATEGORIES else normalize_mention(m.surface)
+        groups[(m.cat, key)].append(m)
     return groups
 
 
@@ -73,6 +75,8 @@ def build_edges(mentions: list[Mention], text: str) -> list[tuple[str, str, floa
 
     seen: set[tuple[str, str]] = set()
     for cat, cat_reps in by_cat.items():
+        if cat in IDENTIFIER_CATEGORIES:
+            continue
         for i, m1 in enumerate(cat_reps):
             for m2 in cat_reps[i + 1 :]:
                 _try_edge(m1, m2, text, edges, seen)

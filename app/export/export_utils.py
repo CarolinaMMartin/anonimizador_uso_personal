@@ -29,12 +29,8 @@ def resolve_export_text(state: SessionState, req: ExportDocumentRequest) -> str:
 
 
 def text_to_paragraphs(text: str) -> list[str]:
-    """Convierte texto a párrafos para export (respeta doble salto; une líneas sueltas)."""
-    from app.extraction.pdf_cleanup import merge_lines_to_paragraphs
-
-    normalized = merge_lines_to_paragraphs(text.replace("\r\n", "\n"))
-    parts = [p.strip() for p in normalized.split("\n\n") if p.strip()]
-    if parts:
-        return parts
-    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
-    return lines or [text.strip() or "(documento vacío)"]
+    """Separa párrafos sin reinterpretar los saltos del texto revisado."""
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    if not normalized.strip():
+        return ["(documento vacío)"]
+    return normalized.split("\n\n")

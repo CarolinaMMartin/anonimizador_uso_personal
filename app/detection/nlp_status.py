@@ -24,7 +24,7 @@ def get_nlp_layers_status() -> dict:
         except Exception as e:
             status["spacy"]["error"] = str(e)
 
-    from app.detection.dictionaries import get_apellidos, get_nombres
+    from app.detection.dictionaries import catalog_paths, get_apellidos, get_nombres
     from app.detection.regex_catalog import load_catalog_patterns
 
     status["dictionaries"] = {}
@@ -33,6 +33,8 @@ def get_nlp_layers_status() -> dict:
         try:
             values = load()
             status["dictionaries"][name] = {"available": bool(values), "count": len(values)}
+            if name != "regex":
+                status["dictionaries"][name]["sources"] = len(catalog_paths(f"{name}.json"))
         except (OSError, ValueError, TypeError) as exc:
             status["dictionaries"][name] = {"available": False, "error": str(exc)}
 

@@ -6,6 +6,7 @@ from app.models.schemas import Category, SearchAndAnonymizeRequest
 from app.models.store import store
 from app.services.clusters import add_detections_to_cluster, create_cluster_from_detections
 from app.services.detections import add_bulk_detection, add_manual_detection
+from app.services.suggestions import refresh_suggestions
 
 router = APIRouter(prefix="/api", tags=["actions"])
 
@@ -14,6 +15,7 @@ class AssignClusterBody(BaseModel):
     session_id: str
     detection_id: int
     cluster_id: str  # id existente o "__new__"
+    reclassify: bool = False
 
 
 class ManualDetectionBody(BaseModel):
@@ -34,13 +36,14 @@ async def assign_cluster(body: AssignClusterBody):
         cluster = create_cluster_from_detections(state, [body.detection_id])
     else:
         cluster = add_detections_to_cluster(
-            state, body.cluster_id, [body.detection_id]
+            state, body.cluster_id, [body.detection_id], reclassify=body.reclassify,
         )
     if not cluster:
         raise HTTPException(
             400,
             "No se pudo asignar al grupo. Probá crear un grupo nuevo.",
         )
+    refresh_suggestions(state)
     store.save(state)
     return {
         "cluster": cluster,
@@ -62,8 +65,9 @@ async def manual_detection(body: ManualDetectionBody):
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    refresh_suggestions(state)
     store.save(state)
-    return {"detection": det, "detections": state.detections}
+    return {"detection": det, "detections": state.detections, "clusters": state.clusters}
 
 
 @router.post("/search-and-anonymize")
@@ -80,5 +84,6 @@ async def search_and_anonymize(body: SearchAndAnonymizeRequest):
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    refresh_suggestions(state)
     store.save(state)
-    return {"detection": det, "detections": state.detections}
+    return {"detection": det, "detections": state.detections, "clusters": state.clusters}

@@ -166,21 +166,23 @@ def detect_presidio(text: str, session_id: str | None = None) -> list[RawItem]:
             cat = CAT_MAP.get(r.entity_type, "OTRO")
             if r.entity_type == "EXPEDIENTE":
                 cat = "EXPEDIENTE"
-            surface = chunk[r.start : r.end].strip()
+            raw = chunk[r.start:r.end]
+            surface = raw.strip()
+            start = r.start + offset + len(raw) - len(raw.lstrip())
             if len(surface) < 3:
                 continue
             if surface.lower() in SKIP_SURFACES:
                 continue
             from app.detection.filters import is_valid_detection
 
-            if not is_valid_detection(cat, surface, text, r.start + offset):
+            if not is_valid_detection(cat, surface, text, start):
                 continue
             items.append(
                 RawItem(
                     cat=cat,
                     original=surface,
-                    start=r.start + offset,
-                    end=r.end + offset,
+                    start=start,
+                    end=start + len(surface),
                     source_layer="presidio",
                 )
             )

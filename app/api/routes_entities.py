@@ -14,15 +14,17 @@ from app.models.schemas import (
 )
 from app.models.store import store
 from app.services.clusters import (
-    detach_mentions,
     add_detections_to_cluster,
     confirm_cluster,
     create_cluster_from_detections,
     absorb_cluster_into,
     merge_clusters,
     remove_surface_from_cluster,
+    reclassify_cluster,
+    reject_cluster,
     split_cluster,
 )
+from app.services.suggestions import refresh_suggestions
 
 router = APIRouter(prefix="/api", tags=["entities"])
 
@@ -38,6 +40,7 @@ async def create_cluster_endpoint(session_id: str, body: ClusterCreateRequest):
     )
     if not cluster:
         raise HTTPException(400, "No se pudo crear el grupo")
+    refresh_suggestions(state)
     store.save(state)
     return {"cluster": cluster, "clusters": state.clusters, "detections": state.detections}
 
@@ -50,6 +53,7 @@ async def merge_clusters_endpoint(session_id: str, body: ClusterMergeRequest):
     merged = merge_clusters(state, body.cluster_ids)
     if not merged:
         raise HTTPException(400, "Se requieren al menos 2 clusters")
+    refresh_suggestions(state)
     store.save(state)
     return {"cluster": merged, "clusters": state.clusters, "detections": state.detections}
 
@@ -70,8 +74,9 @@ async def confirm_cluster_endpoint(cluster_id: str, session_id: str):
     cluster = confirm_cluster(state, cluster_id)
     if not cluster:
         raise HTTPException(404, "Cluster no encontrado")
+    refresh_suggestions(state)
     store.save(state)
-    return ConfirmResponse(cluster=cluster, detections=state.detections)
+    return ConfirmResponse(cluster=cluster, detections=state.detections, clusters=state.clusters)
 
 
 @router.post("/clusters/{cluster_id}/split")
@@ -82,6 +87,7 @@ async def split_cluster_endpoint(
     if not state:
         raise HTTPException(404, "Sesión no encontrada")
     new_clusters = split_cluster(state, cluster_id, body.mention_ids)
+    refresh_suggestions(state)
     store.save(state)
     return {"clusters": state.clusters, "new_clusters": new_clusters, "detections": state.detections}
 
@@ -91,10 +97,9 @@ async def reject_cluster_endpoint(cluster_id: str, session_id: str):
     state = store.get(session_id)
     if not state:
         raise HTTPException(404, 'Sesión no encontrada')
-    cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
-    if not cluster:
+    if not reject_cluster(state, cluster_id):
         raise HTTPException(404, 'Cluster no encontrado')
-    detach_mentions(state, set(cluster.mention_ids))
+    refresh_suggestions(state)
     store.save(state)
     return {'clusters': state.clusters, 'detections': state.detections}
 
@@ -109,6 +114,7 @@ async def remove_surface_endpoint(
     new_clusters = remove_surface_from_cluster(state, cluster_id, body.surface)
     if not new_clusters:
         raise HTTPException(400, "No se pudo quitar la variante del grupo")
+    refresh_suggestions(state)
     store.save(state)
     return {"clusters": state.clusters, "detections": state.detections}
 
@@ -121,9 +127,10 @@ async def absorb_cluster_endpoint(
     state = store.get(session_id)
     if not state:
         raise HTTPException(404, "Sesión no encontrada")
-    cluster = absorb_cluster_into(state, target_id, body.source_cluster_id)
+    cluster = absorb_cluster_into(state, target_id, body.source_cluster_id, reclassify=body.reclassify)
     if not cluster:
         raise HTTPException(400, "No se pudo unir el grupo")
+    refresh_suggestions(state)
     store.save(state)
     return {
         "cluster": cluster,
@@ -139,9 +146,10 @@ async def add_to_cluster_endpoint(
     state = store.get(session_id)
     if not state:
         raise HTTPException(404, "Sesión no encontrada")
-    cluster = add_detections_to_cluster(state, cluster_id, body.detection_ids)
+    cluster = add_detections_to_cluster(state, cluster_id, body.detection_ids, reclassify=body.reclassify)
     if not cluster:
         raise HTTPException(404, "Cluster no encontrado o detección inválida")
+    refresh_suggestions(state)
     store.save(state)
     return {"cluster": cluster, "clusters": state.clusters, "detections": state.detections}
 
@@ -156,14 +164,27 @@ async def update_cluster(
     cluster = next((c for c in state.clusters if c.cluster_id == cluster_id), None)
     if not cluster:
         raise HTTPException(404, "Cluster no encontrado")
+    if body.placeholder is not None and not body.placeholder.strip():
+        raise HTTPException(400, "La sustitución no puede estar vacía")
+    if body.cat and body.cat != cluster.cat:
+        cluster = reclassify_cluster(state, cluster_id, body.cat)
+        if not cluster:
+            raise HTTPException(400, "No se pudo cambiar el tipo del grupo")
     if body.placeholder:
-        cluster.placeholder = body.placeholder
+        previous_placeholder = cluster.placeholder
+        cluster.placeholder = body.placeholder.strip()
+        if cluster.canonical_label in (None, previous_placeholder):
+            cluster.canonical_label = cluster.placeholder
         if cluster.status == "confirmed":
             for d in state.detections:
                 if d.cluster_id == cluster_id:
-                    d.placeholder = body.placeholder
+                    d.placeholder = cluster.placeholder
     if body.canonical_label:
         cluster.canonical_label = body.canonical_label
+    if body.placeholder is not None or body.canonical_label is not None:
+        if 'manual_edit' not in cluster.reasons:
+            cluster.reasons.append('manual_edit')
+    refresh_suggestions(state)
     store.save(state)
     return {"cluster": cluster, "clusters": state.clusters, "detections": state.detections}
 

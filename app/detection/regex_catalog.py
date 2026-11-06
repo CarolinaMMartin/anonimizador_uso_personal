@@ -9,6 +9,7 @@ from functools import lru_cache
 
 from app.config import DATA_DIR, RESOURCE_DATA_DIR
 from app.detection.regex_ar import RawItem, validate_cuit, validate_dni
+from app.detection.case_titles import split_case_parties
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,10 @@ _SKIP_DESCRIPTION_MARKERS = (
     "domicilios contextuales",
 )
 
-_CARATULA_SPLIT_RE = re.compile(r"\s+(?:c\s*\.?/|contra)\s+", re.IGNORECASE)
-
+_STRUCTURED_ENTITIES = frozenset({
+    "RGX_EXPEDIENTE", "RGX_DNI", "RGX_PASAPORTE", "RGX_CUIL_CUIT",
+    "RGX_TELEFONO", "RGX_PATENTE", "RGX_URL",
+})
 
 @dataclass(frozen=True)
 class CatalogPattern:
@@ -67,6 +70,8 @@ def _catalog_path() -> str | None:
 
 def _should_skip(entry: dict) -> bool:
     if not entry.get("activa", True):
+        return True
+    if entry.get("nombre_entidad") in _STRUCTURED_ENTITIES:
         return True
     desc = (entry.get("descripcion") or "").lower()
     return any(marker in desc for marker in _SKIP_DESCRIPTION_MARKERS)
@@ -133,35 +138,18 @@ def _match_surface(match: re.Match[str]) -> tuple[str, int, int]:
         for i in range(1, match.lastindex + 1):
             val = match.group(i)
             if val and val.strip():
-                start = match.start(i)
-                end = match.end(i)
-                return val.strip(), start, end
-    val = match.group(0).strip()
-    return val, match.start(), match.end()
+                start = match.start(i) + len(val) - len(val.lstrip())
+                surface = val.strip()
+                return surface, start, start + len(surface)
+    raw = match.group(0)
+    start = match.start() + len(raw) - len(raw.lstrip())
+    val = raw.strip()
+    return val, start, start + len(val)
 
 
 def _caratula_parties(match: re.Match[str]) -> list[tuple[str, int, int]]:
     full, base_start, _ = _match_surface(match)
-    split = _CARATULA_SPLIT_RE.search(full)
-    if not split:
-        val = full.strip(" \"'.,;")
-        if len(val) < 3:
-            return []
-        lead = full.find(val)
-        start = base_start + max(lead, 0)
-        return [(val, start, start + len(val))]
-
-    spans: list[tuple[str, int, int]] = []
-    actor_raw = full[: split.start()]
-    demandado_raw = full[split.end() :]
-    for raw, offset in ((actor_raw, 0), (demandado_raw, split.end())):
-        val = raw.strip(" \"'.,;")
-        if len(val) < 3:
-            continue
-        lead = raw.find(val)
-        start = base_start + offset + max(lead, 0)
-        spans.append((val, start, start + len(val)))
-    return spans
+    return split_case_parties(full, base_start)
 
 
 def _normalize_ocr_digits(value: str) -> str:

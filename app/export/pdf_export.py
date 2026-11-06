@@ -8,7 +8,7 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate
+from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer
 
 from app.export.docx_format import DEFAULT_DOCX_FORMAT, DocxExportFormat
 
@@ -48,12 +48,12 @@ def build_pdf_bytes(
         bottomMargin=fmt.margin_top_bottom_cm * cm,
     )
 
-    story: list[Paragraph] = []
+    story: list[Flowable] = []
     for raw in paragraphs:
-        text = raw.strip()
-        if not text:
+        if not raw.strip():
+            story.append(Spacer(1, style.leading * (raw.count("\n") + 1) + style.spaceAfter))
             continue
-        safe = escape(text).replace("\n", "<br/>")
+        safe = escape(raw).replace("\n", "<br/>")
         story.append(Paragraph(safe, style))
 
     if not story:

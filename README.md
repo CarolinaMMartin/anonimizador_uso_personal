@@ -5,13 +5,19 @@ La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros dat
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Descargar para Windows
+## Abrir la versión local 3.4.3
 
-### [⬇ DESCARGAR LA APLICACIÓN PARA WINDOWS](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/latest/download/AnonimizadorJudicial-Windows.zip)
+La entrega local se encuentra en `dist/AnonimizadorJudicial-NLP-3.4.3/`. Abrí esa
+carpeta y hacé doble clic en **INICIAR.bat**. Conservá todos sus archivos.
+No necesitás instalar Python ni otras dependencias.
 
-**Hacé clic en el enlace de arriba. La descarga del ZIP comienza directamente.**
-No necesitás una cuenta de GitHub ni conocimientos de programación.
-Funciona en **Windows 10 y 11 de 64 bits**. La descarga puede tardar unos minutos.
+Para trasladarla a otro equipo, usá el ZIP y su archivo SHA-256 incluidos en
+`dist/`, y seguí los pasos de extracción que figuran debajo. El paquete es para
+**Windows 10 y 11 de 64 bits**.
+
+Esta versión **3.4.3** se prepara como entrega local. Las
+[descargas publicadas en GitHub](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases)
+conservan su propia versión; este trabajo no las actualiza automáticamente.
 
 **Aviso para algunos equipos con Windows 11:** esta versión todavía no tiene
 firma digital. Si aparece el mensaje **«Control Inteligente de Aplicaciones ha
@@ -21,7 +27,7 @@ nuevo ni desactivar la protección. [Qué hacer si aparece este aviso](docs/MANU
 
 ## Abrir por primera vez
 
-1. Buscá **AnonimizadorJudicial-Windows.zip** en la carpeta **Descargas**.
+1. Buscá el ZIP **AnonimizadorJudicial-3.4.3-Windows.zip** recibido con esta entrega.
 2. Hacé clic derecho sobre el archivo y elegí **Extraer todo**. Después, **Extraer**.
 3. Abrí la carpeta que se creó y entrá en la carpeta del anonimizador.
 4. Hacé doble clic en **INICIAR.bat** (puede aparecer como **INICIAR**).
@@ -51,7 +57,7 @@ puede omitir datos o marcar algo que quieras conservar.
 
 | Qué sucede | Qué hacer |
 | --- | --- |
-| No encuentro INICIAR | Asegurate de haber descargado con el enlace de arriba y de haber usado **Extraer todo**. Luego abrí la carpeta que está dentro. |
+| No encuentro INICIAR | Abrí `dist/AnonimizadorJudicial-NLP-3.4.3/` o extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta que está dentro. |
 | Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
@@ -61,14 +67,16 @@ puede omitir datos o marcar algo que quieras conservar.
 
 ## Actualizar una versión anterior
 
-Guardá primero tus resultados. Descargá otra vez desde el enlace de arriba y
-extraé el ZIP **en una carpeta nueva**. Abrí **INICIAR** desde esa carpeta;
+Guardá primero tus resultados y extraé el ZIP de esta entrega **en una carpeta
+nueva**. Abrí **INICIAR** desde esa carpeta;
 los accesos directos anteriores siguen abriendo la versión anterior.
 El número de versión aparece en la parte superior de la aplicación.
 
-Los cambios de esta actualización (**3.3.13**) corrigen el agregado manual,
-la conservación de las correcciones al descargar y las selecciones en textos
-con emojis. [Ver las novedades](docs/NOTAS_VERSION.md).
+La versión **3.4.3** completa la detección de nombres en minúsculas dentro de
+carátulas judiciales, incluidos apellidos que no están en el catálogo.
+Conserva las sugerencias de identidad, las decisiones manuales y la identidad visual del
+Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires.
+[Ver las novedades](docs/NOTAS_VERSION.md).
 
 ## Tus documentos y tu privacidad
 
@@ -88,6 +96,8 @@ Esta descarga es para Windows. **No funciona en Mac ni en celulares.**
 
 Desarrollado por **IALAB — Laboratorio de Innovación e Inteligencia Artificial,
 Facultad de Derecho, Universidad de Buenos Aires**. Uso personal y académico.
+La adaptación visual usa los recursos MPF suministrados para esta entrega;
+no modifica la autoría del software ni supone un aval institucional.
 
 [Información para quienes desarrollan](docs/DESARROLLO.md) ·
 [Licencia de uso](LICENSE) · [Créditos y componentes](THIRD_PARTY_NOTICES.txt) ·

@@ -1,11 +1,12 @@
 """Rutas para detecciones manuales."""
 from fastapi import APIRouter, HTTPException
 
-from app.models.schemas import Category, Detection
+from app.models.schemas import Category, Cluster, Detection
 from app.models.store import store
 from pydantic import BaseModel, Field
 
 from app.services.detections import add_manual_detection, remove_detection, update_detection
+from app.services.suggestions import refresh_suggestions
 
 router = APIRouter(prefix="/api/detections", tags=["detections"])
 
@@ -21,6 +22,7 @@ class ManualDetectionRequest(BaseModel):
 class ManualDetectionResponse(BaseModel):
     detection: Detection
     detections: list[Detection]
+    clusters: list[Cluster]
 
 
 class DetectionPatchRequest(BaseModel):
@@ -43,8 +45,9 @@ async def add_manual(req: ManualDetectionRequest) -> ManualDetectionResponse:
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    refresh_suggestions(state)
     store.save(state)
-    return ManualDetectionResponse(detection=det, detections=state.detections)
+    return ManualDetectionResponse(detection=det, detections=state.detections, clusters=state.clusters)
 
 
 @router.patch("/{detection_id}")
@@ -62,6 +65,8 @@ async def patch_detection(detection_id: int, req: DetectionPatchRequest) -> dict
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    if req.cat is not None or req.enabled is not None:
+        refresh_suggestions(state)
     store.save(state)
     return {"detection": det, "detections": state.detections, "clusters": state.clusters}
 
@@ -75,5 +80,6 @@ async def delete_detection(detection_id: int, session_id: str) -> dict:
         remove_detection(state, detection_id)
     except ValueError as e:
         raise HTTPException(404, str(e)) from e
+    refresh_suggestions(state)
     store.save(state)
     return {"detections": state.detections, "clusters": state.clusters}

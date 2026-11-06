@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from app.anonymize.apply import anonymize_text
 from app.main import app
 from app.models.schemas import Detection, Position
-from app.services.analyze import _prune_detections
 
 
 def test_overlap_masks_union_once():
@@ -19,14 +18,14 @@ def test_overlap_masks_union_once():
     assert anonymize_text(text, [a, b]) == '[PERSONA_1] declaró.'
 
 
-def test_export_pruning_preserves_session_ids_and_positions():
+def test_export_preserves_session_ids_and_positions():
     full = Detection(id=12, cat='PERSONA', original='Juan Perez', placeholder='[PERSONA_1]',
                      positions=[Position(start=0, end=10, raw='Juan Perez')])
     part = Detection(id=42, cat='PERSONA', original='Perez', placeholder='[PERSONA_2]',
                      positions=[Position(start=5, end=10, raw='Perez'), Position(start=12, end=17, raw='Perez')])
-    result = _prune_detections([full, part], 'Juan Perez. Perez declaró.')
-    assert [d.id for d in result] == [12, 42]
-    assert len(result[1].positions) == 1
+    result = anonymize_text('Juan Perez. Perez declaró.', [full, part])
+    assert result == '[PERSONA_1]. [PERSONA_2] declaró.'
+    assert full.id == 12
     assert len(part.positions) == 2
     assert part.id == 42
 

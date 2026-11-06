@@ -1,6 +1,7 @@
 """Análisis de documentos."""
 from fastapi import APIRouter, HTTPException
 
+from app.detection.dictionaries import CatalogLoadError
 from app.models.schemas import AnalyzeRequest, AnalyzeResponse, CancelRequest
 from app.models.store import store
 from app.services.analysis_cancel import AnalysisCancelledError, request_cancel
@@ -28,15 +29,17 @@ def analyze_document(req: AnalyzeRequest):
 
     if req.enabled_categories == []:
         raise HTTPException(400, "Seleccioná al menos una categoría para analizar.")
-    state.label_mode = req.label_mode
-    # None explicitly restores defaults instead of keeping an earlier subset.
-    state.enabled_categories = req.enabled_categories or []
+    analyzed_state = state.model_copy(deep=True)
+    analyzed_state.label_mode = req.label_mode
+    analyzed_state.enabled_categories = req.enabled_categories or []
 
     try:
-        result = run_full_analysis(state)
+        result = run_full_analysis(analyzed_state)
     except AnalysisCancelledError as e:
         raise HTTPException(409, "Análisis cancelado") from e
-    store.save(state)
+    except CatalogLoadError as e:
+        raise HTTPException(503, f"No se pudo cargar el catálogo de personas: {e}") from e
+    store.save(analyzed_state)
     return result
 
 
