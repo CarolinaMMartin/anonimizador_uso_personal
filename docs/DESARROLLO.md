@@ -1,10 +1,10 @@
 # Desarrollo del anonimizador
 
-Python 3.11–3.13. La entrega Windows se valida con Python 3.13.15 de 64 bits.
+Python 3.11–3.13. La entrega Windows 3.4.3 con correcciones EGM se validó con Python 3.12.14 de 64 bits.
 
 ```powershell
-git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
-cd anonimizador_uso_personal
+git clone https://github.com/CarolinaMMartin/anonimizador_mpf.git
+cd anonimizador_mpf
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python.exe scripts\install_nlp.py

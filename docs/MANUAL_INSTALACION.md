@@ -5,12 +5,11 @@ Aplicación portable de uso personal/académico. Esta entrega se verifica en
 Internet para procesar documentos. En general no requiere administrador;
 pueden existir restricciones propias de tu equipo u organización.
 
-## Abrir o extraer la entrega local
+## Descargar y extraer
 
-Si trabajás desde la carpeta del proyecto, abrí
-`dist/AnonimizadorJudicial-NLP-3.4.3/` y ejecutá **INICIAR.bat**. Si recibiste el ZIP:
+[**Descargar para Windows — versión 3.4.3 con las correcciones de revisión**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip).
 
-1. Buscá **AnonimizadorJudicial-3.4.3-Windows.zip**.
+1. Descargá **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**.
 2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
    escritura, por ejemplo Documentos\Anonimizador-3.4.3.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
@@ -19,8 +18,10 @@ Si trabajás desde la carpeta del proyecto, abrí
 El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
 El tamaño y el SHA-256 de la descarga se informan junto a la entrega.
 **Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
-Las descargas de GitHub conservan la versión de su publicación. La entrega
-local 3.4.3 no se publica automáticamente.
+La descarga vigente está en la [Release 3.4.3 de anonimizador_mpf](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3).
+El sufijo `revision-egm` identifica el paquete con las correcciones posteriores
+a la primera entrega local 3.4.3. Si trabajás desde el proyecto, esa copia está
+en `dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/`.
 
 ## Iniciar y verificar
 
@@ -96,6 +97,6 @@ COMPLIANCE.md y models/es_core_news_md/LICENSE al compartir el portable.
 
 ## macOS
 
-Este ZIP contiene un ejecutable Windows y no funciona en macOS. Los paquetes
-anteriores de macOS conservan su propia versión. Una entrega 3.4.3 para Mac
-necesita compilarse y verificarse en ese sistema antes de publicarse.
+Este ZIP contiene un ejecutable Windows y no funciona en macOS. Todavía no
+hay una entrega Mac de esta versión en `anonimizador_mpf`: necesita compilarse
+y verificarse en ese sistema antes de publicarse.

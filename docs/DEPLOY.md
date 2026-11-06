@@ -1,11 +1,14 @@
 # Construcción y distribución — 3.4.3
 
-La entrega 3.4.3 corresponde a Windows x64. Una compilación de macOS debe realizarse y validarse en una Mac antes de publicarse; las descargas anteriores de macOS conservan su versión histórica.
+La entrega 3.4.3 corresponde a Windows x64. Todavía no hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y validarse en una Mac antes de publicarse.
 
-La versión 3.4.3 se prepara como entrega local. La carpeta de uso es
-`dist/AnonimizadorJudicial-NLP-3.4.3/`; el ZIP de esta entrega es
-`dist/AnonimizadorJudicial-3.4.3-Windows.zip`. Generar estos archivos no
-publica una Release ni modifica las descargas existentes.
+La [Release 3.4.3](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3)
+distribuye el paquete con las correcciones de la revisión EGM:
+`AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip` y su SHA-256.
+La carpeta local verificada es `dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/`.
+El ZIP anterior `AnonimizadorJudicial-3.4.3-Windows.zip` no incluye esas
+correcciones y no es el archivo de esta publicación. Generar un ZIP local
+no publica una Release ni modifica las descargas existentes.
 
 ## Bloqueo de Windows 11 pendiente de resolver
 
@@ -31,19 +34,19 @@ Desde la raíz del repositorio, con Python 3.11–3.13:
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
-$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.3'
+$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm'
 .venv\Scripts\python -m pytest tests -q
 node --test tests/frontend_session.test.cjs
 .venv\Scripts\python scripts\audit_repository.py
-.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.3
+.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm
 .venv\Scripts\python -m pytest tests -q
-.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --keep-running
-$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.3/PUERTO_ACTUAL.txt'
-.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --port $appPort --use-existing --category-cases --all-categories
-.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --port $appPort
+.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --keep-running
+$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/PUERTO_ACTUAL.txt'
+.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --port $appPort --use-existing --category-cases --all-categories
+.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --port $appPort
 .venv\Scripts\python scripts\check_identity_flow.py --url "http://127.0.0.1:$appPort"
 .venv\Scripts\python scripts\check_identity_flow.py --caption-cases --url "http://127.0.0.1:$appPort"
-.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.3 --output dist/AnonimizadorJudicial-3.4.3-Windows.zip
+.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --output dist/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip
 ```
 
 La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. Un modelo local válido evita volver a descargarlo. El programa empaquetado funciona sin conexión.

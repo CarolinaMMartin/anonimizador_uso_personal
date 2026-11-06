@@ -1,11 +1,12 @@
 # Anonimizador Judicial 3.4.3
 
-Entrega local para Windows x64, preparada el 6 de noviembre de 2026.
+Entrega para Windows x64, con las correcciones de revisión del 6 de noviembre de 2026.
 
 ## Abrir la aplicación
 
-Desde el proyecto, abrí `dist/AnonimizadorJudicial-NLP-3.4.3/` y ejecutá
-**INICIAR.bat**. Para usar el ZIP **AnonimizadorJudicial-3.4.3-Windows.zip**:
+[**DESCARGAR PARA WINDOWS — 3.4.3**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip)
+
+El archivo es **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**:
 
 1. Elegí **Extraer todo** y conservá la carpeta completa.
 2. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
@@ -13,9 +14,22 @@ Desde el proyecto, abrí `dist/AnonimizadorJudicial-NLP-3.4.3/` y ejecutá
    en la cabecera.
 
 No requiere instalar Python ni descargar modelos. Para actualizar, guardá
-el trabajo abierto y extraé esta entrega en una carpeta nueva. Las versiones
-publicadas en GitHub mantienen sus propios archivos; esta entrega local no
-los reemplaza.
+el trabajo abierto y extraé esta entrega en una carpeta nueva. El sufijo
+`revision-egm` distingue este paquete de la primera entrega local 3.4.3;
+la aplicación muestra **v3.4.3** en ambos casos, por lo que debés usar el ZIP
+enlazado arriba para recibir las correcciones de revisión.
+
+## Correcciones incluidas en esta publicación
+
+- Las selecciones manuales respetan exactamente el texto marcado; las
+  repeticiones usan límites completos salvo que actives coincidencias parciales.
+- Los datos superpuestos se ocultan en toda su extensión y conservan la
+  prioridad de la última decisión manual.
+- Cambiar categorías conserva las etiquetas editadas; unir grupos usa la
+  etiqueta del grupo de destino.
+- Se permite verificar y exportar después del análisis aunque no queden
+  detecciones. Las ediciones del texto, incluida una salida vacía, se respetan.
+- El campo editable conserva el foco y la posición del cursor durante la revisión.
 
 ## Cambios
 
@@ -61,7 +75,9 @@ Se mantienen las mejoras de las versiones anteriores:
 - Procesamiento local, modelo incluido y autoría IALAB del software.
 
 El detalle técnico está en [CHANGELOG.md](../CHANGELOG.md). Los resultados
-de la entrega se registran en [VERIFICACION_3.4.3.md](VERIFICACION_3.4.3.md).
+de la entrega inicial se registran en [VERIFICACION_3.4.3.md](VERIFICACION_3.4.3.md).
+La verificación del paquete con las correcciones posteriores está en
+[correcciones_pendientes.md](revision-egm/correcciones_pendientes.md).
 
 ## Uso y límites
 

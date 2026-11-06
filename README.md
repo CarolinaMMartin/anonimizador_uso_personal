@@ -5,19 +5,22 @@ La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros dat
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Abrir la versión local 3.4.3
+## Descargar para Windows — versión 3.4.3
 
-La entrega local se encuentra en `dist/AnonimizadorJudicial-NLP-3.4.3/`. Abrí esa
-carpeta y hacé doble clic en **INICIAR.bat**. Conservá todos sus archivos.
-No necesitás instalar Python ni otras dependencias.
+[**DESCARGAR PARA WINDOWS · 3.4.3 con las últimas correcciones**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip)
 
-Para trasladarla a otro equipo, usá el ZIP y su archivo SHA-256 incluidos en
-`dist/`, y seguí los pasos de extracción que figuran debajo. El paquete es para
-**Windows 10 y 11 de 64 bits**.
+Para **Windows 10 y 11 de 64 bits**. Descargá el ZIP completo (138,7 MiB),
+extraelo y abrí **INICIAR.bat**. No necesitás instalar Python ni otras dependencias.
 
-Esta versión **3.4.3** se prepara como entrega local. Las
-[descargas publicadas en GitHub](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases)
-conservan su propia versión; este trabajo no las actualiza automáticamente.
+Esta es la entrega **3.4.3 con las correcciones de revisión EGM**.
+El archivo se llama **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**.
+Las descargas de este proyecto se centralizan en **anonimizador_mpf**.
+
+[Detalles de la versión](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3) ·
+[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip.sha256)
+
+**Mac Intel y Apple Silicon:** todavía no hay una descarga de esta versión
+para macOS. El ZIP de Windows no funciona en Mac.
 
 **Aviso para algunos equipos con Windows 11:** esta versión todavía no tiene
 firma digital. Si aparece el mensaje **«Control Inteligente de Aplicaciones ha
@@ -27,7 +30,7 @@ nuevo ni desactivar la protección. [Qué hacer si aparece este aviso](docs/MANU
 
 ## Abrir por primera vez
 
-1. Buscá el ZIP **AnonimizadorJudicial-3.4.3-Windows.zip** recibido con esta entrega.
+1. Descargá **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip** con el enlace de arriba.
 2. Hacé clic derecho sobre el archivo y elegí **Extraer todo**. Después, **Extraer**.
 3. Abrí la carpeta que se creó y entrá en la carpeta del anonimizador.
 4. Hacé doble clic en **INICIAR.bat** (puede aparecer como **INICIAR**).
@@ -75,7 +78,7 @@ respetan al descargar.
 
 | Qué sucede | Qué hacer |
 | --- | --- |
-| No encuentro INICIAR | Abrí `dist/AnonimizadorJudicial-NLP-3.4.3/` o extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta que está dentro. |
+| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.3` que está dentro. |
 | Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
@@ -89,6 +92,10 @@ Guardá primero tus resultados y extraé el ZIP de esta entrega **en una carpeta
 nueva**. Abrí **INICIAR** desde esa carpeta;
 los accesos directos anteriores siguen abriendo la versión anterior.
 El número de versión aparece en la parte superior de la aplicación.
+
+Si ya tenías una entrega local 3.4.3, descargá también este ZIP: la revisión
+EGM incorpora correcciones posteriores y conserva el número 3.4.3 en pantalla.
+Podés distinguirla por **revision-egm** en el nombre del archivo descargado.
 
 La versión **3.4.3** completa la detección de nombres en minúsculas dentro de
 carátulas judiciales, incluidos apellidos que no están en el catálogo.

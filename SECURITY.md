@@ -9,7 +9,7 @@ Para informar una vulnerabilidad, utilizá un canal privado disponible en
 GitHub. Si el repositorio tiene habilitado **"Report a vulnerability"**
 (pestaña *Security*), usá esa opción:
 
-<https://github.com/CarolinaMMartin/anonimizador_uso_personal/security/policy>
+<https://github.com/CarolinaMMartin/anonimizador_mpf/security/policy>
 
 No se garantiza un plazo específico de respuesta.
 
