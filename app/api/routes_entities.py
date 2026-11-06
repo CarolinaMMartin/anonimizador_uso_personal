@@ -14,6 +14,8 @@ from app.models.schemas import (
 )
 from app.models.store import store
 from app.services.clusters import (
+    _cluster_detections,
+    _sync_cluster_to_detections,
     add_detections_to_cluster,
     confirm_cluster,
     create_cluster_from_detections,
@@ -24,6 +26,7 @@ from app.services.clusters import (
     reject_cluster,
     split_cluster,
 )
+from app.services.review_state import manual_action, mark_manual_decision
 from app.services.suggestions import refresh_suggestions
 
 router = APIRouter(prefix="/api", tags=["entities"])
@@ -87,6 +90,8 @@ async def split_cluster_endpoint(
     if not state:
         raise HTTPException(404, "Sesión no encontrada")
     new_clusters = split_cluster(state, cluster_id, body.mention_ids)
+    if not new_clusters:
+        raise HTTPException(400, "No se pudo separar la variante del grupo")
     refresh_suggestions(state)
     store.save(state)
     return {"clusters": state.clusters, "new_clusters": new_clusters, "detections": state.detections}
@@ -166,24 +171,24 @@ async def update_cluster(
         raise HTTPException(404, "Cluster no encontrado")
     if body.placeholder is not None and not body.placeholder.strip():
         raise HTTPException(400, "La sustitución no puede estar vacía")
-    if body.cat and body.cat != cluster.cat:
-        cluster = reclassify_cluster(state, cluster_id, body.cat)
-        if not cluster:
-            raise HTTPException(400, "No se pudo cambiar el tipo del grupo")
-    if body.placeholder:
-        previous_placeholder = cluster.placeholder
-        cluster.placeholder = body.placeholder.strip()
-        if cluster.canonical_label in (None, previous_placeholder):
-            cluster.canonical_label = cluster.placeholder
-        if cluster.status == "confirmed":
-            for d in state.detections:
-                if d.cluster_id == cluster_id:
-                    d.placeholder = cluster.placeholder
-    if body.canonical_label:
-        cluster.canonical_label = body.canonical_label
-    if body.placeholder is not None or body.canonical_label is not None:
-        if 'manual_edit' not in cluster.reasons:
-            cluster.reasons.append('manual_edit')
+    with manual_action(state):
+        if body.cat and body.cat != cluster.cat:
+            cluster = reclassify_cluster(state, cluster_id, body.cat)
+            if not cluster:
+                raise HTTPException(400, "No se pudo cambiar el tipo del grupo")
+        if body.placeholder is not None:
+            previous_placeholder = cluster.placeholder
+            cluster.placeholder = body.placeholder.strip()
+            cluster.manual_placeholder = True
+            if cluster.canonical_label in (None, previous_placeholder):
+                cluster.canonical_label = cluster.placeholder
+            _sync_cluster_to_detections(state, cluster)
+        if body.canonical_label:
+            cluster.canonical_label = body.canonical_label
+        if body.placeholder is not None or body.canonical_label is not None:
+            if 'manual_edit' not in cluster.reasons:
+                cluster.reasons.append('manual_edit')
+        mark_manual_decision(state, _cluster_detections(state, cluster))
     refresh_suggestions(state)
     store.save(state)
     return {"cluster": cluster, "clusters": state.clusters, "detections": state.detections}

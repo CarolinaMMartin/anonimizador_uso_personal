@@ -24,6 +24,7 @@ class ManualDetectionBody(BaseModel):
     start: int = Field(ge=0)
     end: int = Field(ge=1)
     original: str | None = None
+    allow_partial: bool = False
 
 
 @router.post("/assign-cluster")
@@ -61,7 +62,7 @@ async def manual_detection(body: ManualDetectionBody):
         raise HTTPException(400, "No hay documento cargado")
     try:
         det = add_manual_detection(
-            state, body.cat, body.start, body.end, body.original
+            state, body.cat, body.start, body.end, body.original, allow_partial=body.allow_partial
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -80,7 +81,8 @@ async def search_and_anonymize(body: SearchAndAnonymizeRequest):
         raise HTTPException(400, "No hay documento cargado")
     try:
         det = add_bulk_detection(
-            state, body.cat, body.original, body.positions, body.placeholder
+            state, body.cat, body.original, body.positions, body.placeholder,
+            allow_partial=body.allow_partial,
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e

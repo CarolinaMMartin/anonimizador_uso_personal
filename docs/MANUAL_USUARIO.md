@@ -124,18 +124,55 @@ seleccionar manualmente información que no haya sido detectada.
 
 Para agregar un dato, elegí **Original**, seleccioná el texto, indicá su
 categoría y pulsá **Solo anonimizar**. La selección que confirmás se respeta
-aunque el análisis automático no la reconozca. Se ocultan sus repeticiones
-iguales; la lupa permite buscar otras apariciones, incluso sin tildes.
+exactamente, aunque sea una parte de una palabra o el análisis automático no
+la reconozca. También se ocultan sus repeticiones iguales, sin distinguir
+mayúsculas, cuando forman un dato completo.
 Si la fila estaba desmarcada, se vuelve a activar al agregarla manualmente.
 Usá **En grupo** únicamente cuando quieras asociar el dato a un grupo.
 Comprobá el resultado en **Anonimizado** y luego en el archivo descargado.
 Cambiar el tipo de una fila se conserva también al exportar.
+
+La lupa permite buscar otras apariciones sin distinguir mayúsculas ni tildes.
+Por defecto, `Ana` coincide en `Ana,` o `Ana.`, pero no dentro de `Mariana`
+ni de `Ana@example.test`; `123` no coincide dentro de `123-456` o `+123`.
+Los puntos, arrobas, barras, dos puntos, signos más, guiones y apóstrofos
+entre letras o números mantienen unido el dato. Las letras, números, marcas
+de acento y guiones bajos también forman parte de él.
+
+Marcá **Permitir coincidencias parciales** para incluir fragmentos dentro de
+palabras o datos compuestos. En la barra de selección, esta casilla solo
+afecta las repeticiones: el fragmento que elegiste se conserva siempre.
+En la lupa, modifica las coincidencias contadas, resaltadas y anonimizadas.
+La opción vuelve a desactivarse al cargar otro documento; la selección
+también vuelve al valor por defecto cada vez que elegís un fragmento nuevo.
+
+Por ejemplo, en `121212`, si seleccionás los últimos cuatro dígitos, el
+resultado por defecto es `12[DATO_1]`. Al permitir coincidencias parciales,
+también se encuentra el primer `1212`: se cubre todo el número y el resultado
+es `[DATO_1]`.
+
+Si varias detecciones activas se superponen, se oculta toda la zona que
+cubren, incluso si la superposición encadena varios fragmentos. La etiqueta
+y el tipo aplicados corresponden a la última decisión manual sobre esas
+filas, como agregar un dato, editar su etiqueta o confirmar un grupo.
+Las demás apariciones de cada fila conservan su propia etiqueta y los grupos
+no se unen por superponerse. Junto al campo editable se muestran las
+sustituciones efectivamente aplicadas cuando difieren de la etiqueta de la
+fila; una misma fila puede tener distintas sustituciones según la aparición.
+Desactivar o eliminar la fila que prevalece deja decidir a las otras filas
+activas y conserva la protección de los fragmentos que todavía cubren.
 
 Si un grupo quedó con el tipo incorrecto, cambialo desde **Tipo de dato**
 en ese mismo grupo. **Unir con otro grupo** permite elegir cualquier
 destino. Cuando los tipos son distintos, se pide confirmar la reclasificación;
 al aceptar, se conserva la categoría y el reemplazo del grupo de destino.
 Las filas que habías desactivado permanecen desactivadas.
+
+Cambiar el tipo de una fila o de un grupo conserva las etiquetas que
+escribiste manualmente. Las etiquetas automáticas se ajustan al nuevo tipo.
+Si editás la etiqueta de una variante de un grupo confirmado, se aplica a
+todas sus variantes. Asignar una fila a otro grupo usa la etiqueta del
+destino, porque estás eligiendo que pertenezca a esa identidad.
 
 Al agregar, eliminar, cambiar el tipo o activar/desactivar una detección,
 se actualizan las sugerencias de identidad. Se conservan los grupos que
@@ -159,6 +196,19 @@ La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
 interlineado, alineación y márgenes se aplican a ambos formatos. La exportación
 reconstruye el texto y no conserva el diseño original ni sus tablas.
 Las ediciones del editor no cambian la tabla CSV ni se vuelven a analizar.
+
+Un análisis completado habilita el editor y las descargas de Word y PDF
+aunque no encuentre detecciones. También podés usarlos si después de una
+revisión manual eliminaste la última fila o desactivaste todas. Un documento
+recién cargado, todavía sin analizar ni revisar, no está listo para exportar.
+Si el análisis falla o lo cancelás, se conserva el estado de la revisión
+anterior.
+
+Si cambiás las detecciones después de abrir el editor, volvé a **Abrir editor
+y verificar** para regenerar el resultado. Las correcciones que hagas en el
+editor se usan en la descarga; si borrás todo su contenido, se exporta un
+documento vacío. La tabla CSV requiere detecciones y conserva los datos de
+la tabla de revisión.
 
 5. Descargá la tabla CSV de equivalencias si la necesitás.
 

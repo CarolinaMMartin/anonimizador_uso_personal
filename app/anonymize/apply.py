@@ -1,61 +1,50 @@
-"""Aplicación de reemplazos al texto."""
+"""Apply review decisions consistently to text and original-text highlights."""
 from app.models.schemas import Detection
 
 
-def anonymize_text(text: str, detections: list[Detection], confirmed_only: bool = False) -> str:
-    replacements: list[tuple[int, int, str]] = []
-    for d in detections:
-        if not d.enabled:
-            continue
-        if confirmed_only and not d.cluster_confirmed:
-            # En modo confirmed_only, solo reemplazos con cluster confirmado
-            # o detecciones marcadas manualmente
-            if not (d.user_added or getattr(d, "_force_apply", False)):
-                continue
-        for p in d.positions:
-            replacements.append((p.start, p.end, d.placeholder))
+def resolve_intervals(text: str, detections: list[Detection], confirmed_only: bool = False) -> list[dict]:
+    """Keep overlap coverage, taking metadata from the latest manual decision.
 
-    replacements.sort(key=lambda x: (x[0], -x[1]))
-    merged: list[tuple[int, int, str]] = []
-    for start, end, value in replacements:
-        if start < 0 or end > len(text) or end <= start:
-            raise ValueError("Posición de anonimización inválida")
-        if merged and start < merged[-1][1]:
-            old_start, old_end, old_value = merged[-1]
-            merged[-1] = (old_start, max(old_end, end), old_value)
+    Stable sorting retains historical ties: earliest start, longest interval,
+    then detection/position list order. Adjacent intervals stay separate.
+    Input positions and identity memberships are never edited.
+    """
+    ranges = []
+    for detection in detections:
+        if not detection.enabled:
+            continue
+        if confirmed_only and not (detection.cluster_confirmed or detection.user_added
+                                   or getattr(detection, '_force_apply', False)):
+            continue
+        for position in detection.positions:
+            if not 0 <= position.start < position.end <= len(text):
+                raise ValueError('Posición de anonimización inválida')
+            ranges.append({
+                'start': position.start, 'end': position.end,
+                'cat': detection.cat, 'placeholder': detection.placeholder,
+                'cluster_id': detection.cluster_id, 'manual_order': detection.manual_order,
+            })
+    ranges.sort(key=lambda item: (item['start'], -item['end']))
+    resolved = []
+    for item in ranges:
+        if resolved and item['start'] < resolved[-1]['end']:
+            component = resolved[-1]
+            component['end'] = max(component['end'], item['end'])
+            if item['manual_order'] > component['manual_order']:
+                for key in ('cat', 'placeholder', 'cluster_id', 'manual_order'):
+                    component[key] = item[key]
         else:
-            merged.append((start, end, value))
+            resolved.append(item.copy())
+    return resolved
+
+
+def anonymize_text(text: str, detections: list[Detection], confirmed_only: bool = False) -> str:
     out = text
-    for start, end, value in reversed(merged):
-        out = out[:start] + value + out[end:]
+    for interval in reversed(resolve_intervals(text, detections, confirmed_only)):
+        out = out[:interval['start']] + interval['placeholder'] + out[interval['end']:]
     return out
 
 
-def build_highlights(
-    text: str, detections: list[Detection]
-) -> list[dict]:
-    """Genera rangos para highlights en frontend."""
-    ranges = []
-    for d in detections:
-        if not d.enabled:
-            continue
-        for p in d.positions:
-            ranges.append(
-                {
-                    "start": p.start,
-                    "end": p.end,
-                    "cat": d.cat,
-                    "placeholder": d.placeholder,
-                    "cluster_id": d.cluster_id,
-                }
-            )
-    ranges.sort(key=lambda x: (x["start"], -x["end"]))
-    filtered = []
-    for r in ranges:
-        if not 0 <= r["start"] < r["end"] <= len(text):
-            raise ValueError("Posición de anonimización inválida")
-        if filtered and r["start"] < filtered[-1]["end"]:
-            filtered[-1]["end"] = max(filtered[-1]["end"], r["end"])
-        else:
-            filtered.append(r)
-    return filtered
+def build_highlights(text: str, detections: list[Detection]) -> list[dict]:
+    """Return the same resolved components used by anonymization."""
+    return resolve_intervals(text, detections)

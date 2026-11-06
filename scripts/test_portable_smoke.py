@@ -63,7 +63,7 @@ def test_export_utf8_filename():
             cat="CUIT",
             original="20-12345678-9",
             placeholder="[CUIT_1]",
-            positions=[Position(start=5, end=20)],
+            positions=[Position(start=5, end=len(state.doc_text))],
         )
     ]
     store.save(state)

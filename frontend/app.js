@@ -7,6 +7,8 @@ let mutationTail = Promise.resolve();
 let reviewRevision = 0;
 let editorSnapshot = null;
 let previewSequence = 0;
+let localDecisionSequence = 0;
+const localDecisionTokens = new Map();
 
 function sessionContext() {
   return { id: sessionId, generation: sessionGeneration };
@@ -54,9 +56,37 @@ function reviewChanged() {
 function applyReviewData(data) {
   if (Array.isArray(data.detections)) {
     detections = data.detections;
-    detections.forEach((d) => Object.assign(d, localEdits.get(d.id) || {}));
   }
   if (Array.isArray(data.clusters)) clusters = data.clusters;
+  // The session counter may exceed every visible row (for example after deletion).
+  // Keep pending actions newer than the acknowledged server snapshot, in their order.
+  let order = detections.reduce((highest, detection) => Math.max(highest, detection.manual_order || 0), 0);
+  for (const token of [...localDecisionTokens.values()].sort((a, b) => a.order - b.order)) {
+    token.order = Math.max(token.order, order + 1);
+    order = token.order;
+  }
+  localDecisionSequence = Math.max(localDecisionSequence, order);
+  projectLocalEdits();
+}
+
+function projectLocalEdits() {
+  const edits = [...localEdits].sort((a, b) =>
+    (localDecisionTokens.get(a[0])?.order || 0) - (localDecisionTokens.get(b[0])?.order || 0));
+  for (const [id, patch] of edits) {
+    const detection = detections.find((d) => d.id === id);
+    if (!detection) continue;
+    Object.assign(detection, patch);
+    const order = localDecisionTokens.get(id)?.order || detection.manual_order || 0;
+    if (patch.placeholder !== undefined || patch.enabled === true) detection.manual_order = order;
+    if (patch.placeholder !== undefined && detection.cluster_confirmed && detection.cluster_id) {
+      for (const member of detections.filter((d) => d.cluster_id === detection.cluster_id)) {
+        member.placeholder = patch.placeholder;
+        member.manual_order = order;
+      }
+      const group = clusters.find((c) => c.cluster_id === detection.cluster_id);
+      if (group) group.placeholder = group.canonical_label = patch.placeholder;
+    }
+  }
 }
 
 function resetDocumentState() {
@@ -68,6 +98,8 @@ function resetDocumentState() {
   saveTimers.clear();
   pendingPatches.clear();
   localEdits.clear();
+  localDecisionTokens.clear();
+  localDecisionSequence = 0;
   pendingSaves.clear();
   saveErrors.clear();
   mutationTail = Promise.resolve();
@@ -93,6 +125,8 @@ function resetDocumentState() {
     window.searchTool.refresh();
   }
   hideSelectionToolbar();
+  if ($('searchPartial')) $('searchPartial').checked = false;
+  if ($('selPartial')) $('selPartial').checked = false;
   setProcessBusy(false);
   setActiveStep(1);
 }
@@ -663,9 +697,34 @@ function categoryOptions(selected) {
   ).join('');
 }
 
+function syncDetectionLabels() {
+  const applied = appliedReplacements();
+  // Keep the inputs mounted: a delayed save must not interrupt ongoing typing.
+  $('detBody').querySelectorAll('tr[data-id]').forEach((row) => {
+    const detection = detections.find((d) => d.id === Number(row.dataset.id));
+    if (!detection) return;
+    const input = row.querySelector('.placeholder-input');
+    if (input && input.value !== detection.placeholder) {
+      const selection = document.activeElement === input
+        ? [input.selectionStart, input.selectionEnd, input.selectionDirection] : null;
+      input.value = detection.placeholder;
+      if (selection) input.setSelectionRange(
+        Math.min(selection[0], input.value.length),
+        Math.min(selection[1], input.value.length), selection[2]
+      );
+    }
+    const badge = row.querySelector('.cluster-in-badge');
+    const cluster = clusters.find((c) => c.cluster_id === detection.cluster_id);
+    if (badge && cluster) badge.textContent = `● ${clusterDisplayLabel(cluster)}`;
+    const note = row.querySelector('.effective-replacement');
+    if (note) note.textContent = effectiveReplacementNote(detection, applied);
+  });
+}
+
 async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true } = {}) {
   if (!requireSession()) return false;
   const context = sessionContext();
+  const savedToken = localDecisionTokens.get(detId);
   try {
     const res = await sessionFetch(API + `/api/detections/${detId}`, {
       method: 'PATCH',
@@ -674,12 +733,10 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
     }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
-    const edits = localEdits.get(detId) || {};
-    for (const [key, value] of Object.entries(patch)) {
-      if (edits[key] === value) delete edits[key];
+    if (localDecisionTokens.get(detId) === savedToken) {
+      localEdits.delete(detId);
+      localDecisionTokens.delete(detId);
     }
-    if (Object.keys(edits).length) localEdits.set(detId, edits);
-    else localEdits.delete(detId);
     saveErrors.delete(detId);
     applyReviewData(data);
     renderStatsFromDetections();
@@ -687,6 +744,10 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
     if (refresh) {
       renderTable();
       await loadPreview();
+    } else {
+      syncDetectionLabels();
+      renderPreviewLocal();
+      if (window.searchTool) window.searchTool.refresh();
     }
     if (!quiet) showToast('Cambio guardado', 'success');
     return true;
@@ -702,8 +763,12 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
 
 function scheduleDetectionPatch(detId, patch) {
   reviewChanged();
+  localDecisionSequence = detections.reduce((highest, d) => Math.max(highest, d.manual_order || 0), localDecisionSequence) + 1;
+  localDecisionTokens.set(detId, { order: localDecisionSequence });
   localEdits.set(detId, { ...(localEdits.get(detId) || {}), ...patch });
+  pendingPatches.delete(detId);
   pendingPatches.set(detId, { ...localEdits.get(detId) });
+  projectLocalEdits();
   clearTimeout(saveTimers.get(detId));
   saveTimers.set(
     detId,
@@ -794,10 +859,11 @@ async function assignDetectionToCluster(detId, clusterValue) {
 
 function renderTable() {
   const tbody = $('detBody');
+  const applied = appliedReplacements();
   updateReviewTabBadges();
   if (!detections.length) {
     tbody.innerHTML =
-      '<tr><td colspan="6" class="empty-state">Sin detecciones</td></tr>';
+      '<tr><td colspan="6" class="empty-state">Sin detecciones. Podés revisar el texto en el editor y exportarlo.</td></tr>';
     return;
   }
   tbody.innerHTML = detections
@@ -824,7 +890,7 @@ function renderTable() {
           <button type="button" class="link-action ignore-similar">Ignorar similares</button>
         </div>
       </td>
-      <td><input class="placeholder-input" value="${escapeHTML(d.placeholder)}"></td>
+      <td><input class="placeholder-input" aria-label="Sustitución elegida" value="${escapeHTML(d.placeholder)}"><small class="effective-replacement">${escapeHTML(effectiveReplacementNote(d, applied))}</small></td>
       <td><div class="combo-host" data-det-id="${d.id}"></div></td>
       <td><button class="delete-btn" title="Eliminar" type="button">✕</button></td>
     </tr>`;
@@ -1336,8 +1402,13 @@ function mergeOverlappingRanges(ranges, textLength) {
       throw new Error('Hay posiciones inválidas. Volvé a analizar el documento.');
     }
     const previous = merged[merged.length - 1];
-    if (previous && range.start < previous.end) previous.end = Math.max(previous.end, range.end);
-    else merged.push({ ...range });
+    if (previous && range.start < previous.end) {
+      const start = previous.start;
+      const end = Math.max(previous.end, range.end);
+      if ((range.manual_order || 0) > (previous.manual_order || 0)) Object.assign(previous, range);
+      previous.start = start;
+      previous.end = end;
+    } else merged.push({ ...range });
   }
   return merged;
 }
@@ -1399,35 +1470,37 @@ function renderRangeWithSearch(text, start, end, matches, currentSearchIdx) {
   return out;
 }
 
+function appliedReplacements() {
+  if (!docText) return [];
+  const ranges = detections.filter((d) => d.enabled).flatMap((d) =>
+    d.positions.map((p) => ({ start: toBrowserOffset(p.start), end: toBrowserOffset(p.end),
+      value: d.placeholder, placeholder: d.placeholder, cat: d.cat, manual_order: d.manual_order || 0 })));
+  return mergeOverlappingRanges(ranges, docText.length);
+}
+
+function effectiveReplacementNote(detection, applied) {
+  if (!docText || !detection.enabled) return '';
+  const labels = detection.positions.map((p) => applied.find((r) =>
+    r.start < toBrowserOffset(p.end) && toBrowserOffset(p.start) < r.end)?.placeholder);
+  if (labels.every((label) => label === detection.placeholder)) return '';
+  return 'Aplicado por aparición: ' + labels.map((label, i) => `${i + 1}: ${label || 'sin reemplazo'}`).join('; ');
+}
+
 function renderPreviewLocal() {
+  let clean;
+  try { clean = appliedReplacements(); }
+  catch (error) { showToast(error.message, 'error'); return; }
   if (viewMode === 'anon') {
-    const replacements = [];
-    detections
-      .filter((d) => d.enabled)
-      .forEach((d) => {
-        d.positions.forEach((p) => {
-          replacements.push({ start: toBrowserOffset(p.start), end: toBrowserOffset(p.end), value: d.placeholder });
-        });
-      });
-    let clean;
-    try {
-      clean = mergeOverlappingRanges(replacements, docText.length);
-    } catch (error) {
-      showToast(error.message, 'error');
-      return;
-    }
     let out = docText;
     clean.reverse().forEach((r) => {
       out = out.substring(0, r.start) + r.value + out.substring(r.end);
     });
     $('docPreview').textContent = out;
   } else {
-    lastPreviewHighlights = detections.filter((d) => d.enabled).flatMap((d) =>
-      d.positions.map((p) => ({ ...p, start: toBrowserOffset(p.start), end: toBrowserOffset(p.end),
-        cat: d.cat, placeholder: d.placeholder }))
-    );
+    lastPreviewHighlights = clean;
     renderHighlighted(docText, lastPreviewHighlights);
   }
+  syncDetectionLabels();
 }
 
 $('viewOrig').addEventListener('click', () => {
@@ -1708,33 +1781,16 @@ function getSelectionInPreview() {
   const start = pre.toString().length;
   pre.setEnd(range.endContainer, range.endOffset);
   const end = pre.toString().length;
-  const text = sel.toString().replace(/\s+/g, ' ').trim();
-  if (text.length < 2) return null;
-
-  let useStart = start;
-  let useEnd = end;
-  let useText = docText.slice(useStart, useEnd).trim();
-  if (!useText || useText.length < 2) {
-    useText = text;
-    const idx = docText.toLowerCase().indexOf(useText.toLowerCase(), Math.max(0, start - 40));
-    if (idx >= 0) {
-      useStart = idx;
-      useEnd = idx + useText.length;
-    }
-  } else if (useText !== text && text.length >= 2) {
-    const idx = docText.toLowerCase().indexOf(text.toLowerCase(), Math.max(0, useStart - 40));
-    if (idx >= 0) {
-      useStart = idx;
-      useEnd = idx + text.length;
-      useText = docText.slice(useStart, useEnd).trim();
-    }
-  }
-  if (useEnd <= useStart) useEnd = useStart + Math.max(useText.length, 2);
-  return { start: useStart, end: useEnd, text: useText };
+  const text = docText.slice(start, end);
+  // The DOM range is authoritative. Whitespace normalization must never move
+  // the selection to a different occurrence; reject a stale preview instead.
+  if (text.trim().length < 2 || range.toString() !== text) return null;
+  return { start, end, text };
 }
 
 function showSelectionToolbar(sel) {
   pendingSelection = sel;
+  if ($('selPartial')) $('selPartial').checked = false;
   const bar = $('selectionToolbar');
   const prev = $('selPreview');
   if (!bar || !prev) return;
@@ -1794,6 +1850,7 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
         start: toDocumentOffset(sel.start),
         end: toDocumentOffset(sel.end),
         original: sel.text,
+        allow_partial: Boolean($('selPartial')?.checked),
       }),
     }, context);
     if (!res.ok) throw new Error(await parseApiError(res));
@@ -1874,7 +1931,22 @@ const searchTool = (() => {
   const CAT_KEY = 'anon.searchCat';
 
   function normalizeForSearch(s) {
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  }
+
+  function isCompleteMatch(text, start, end) {
+    const previous = (index) => index > 1 && /[\uDC00-\uDFFF]/.test(text[index - 1]) ? index - 2 : index - 1;
+    const char = (index) => index < 0 || index >= text.length ? '' : String.fromCodePoint(text.codePointAt(index));
+    const word = (value) => /[\p{L}\p{N}\p{M}_]/u.test(value);
+    function token(index) {
+      const value = char(index);
+      if (word(value)) return true;
+      const before = char(previous(index)), after = char(index + value.length);
+      return (".@/:+-'".includes(value) && value !== '' && word(before) && word(after)) ||
+        (value === '+' && /\p{Nd}/u.test(after));
+    }
+    const split = (index) => index > 0 && index < text.length && token(previous(index)) && token(index);
+    return !split(start) && !split(end);
   }
 
   // Mapea índices del texto normalizado (NFD sin marcas) a índices del texto original.
@@ -1884,14 +1956,19 @@ const searchTool = (() => {
     let normText = '';
     const mapStart = [];
     const mapEnd = [];
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const normCh = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    let i = 0, previousGroup = 0;
+    for (const ch of text) {
+      const normCh = normalizeForSearch(ch);
+      if (normCh) previousGroup = mapEnd.length;
+      else if (/\p{M}/u.test(ch)) {
+        for (let j = previousGroup; j < mapEnd.length; j++) mapEnd[j] = i + ch.length;
+      }
       for (let j = 0; j < normCh.length; j++) {
         mapStart.push(i);
-        mapEnd.push(i + 1);
+        mapEnd.push(i + ch.length);
       }
       normText += normCh;
+      i += ch.length;
     }
     return { normText, mapStart, mapEnd };
   }
@@ -1919,10 +1996,11 @@ const searchTool = (() => {
       if (endIdx >= mapStart.length) break;
       const startOrig = mapStart[idx];
       const endOrig = mapEnd[endIdx];
-      if (endOrig > startOrig && (out.length === 0 || out[out.length - 1].start !== startOrig)) {
+      const accepted = endOrig > startOrig && ($('searchPartial')?.checked || isCompleteMatch(docText, startOrig, endOrig));
+      if (accepted && (out.length === 0 || out[out.length - 1].start !== startOrig)) {
         out.push({ start: startOrig, end: endOrig });
       }
-      from = idx + Math.max(1, normQ.length);
+      from = idx + (accepted ? normQ.length : normText.codePointAt(idx) > 0xffff ? 2 : 1);
     }
     matches = out;
     if (matches.length === 0) {
@@ -2063,6 +2141,7 @@ const searchTool = (() => {
           cat,
           original: q,
           positions,
+          allow_partial: Boolean($('searchPartial')?.checked),
         }),
       }, context);
       if (!res.ok) throw new Error(await parseApiError(res));
@@ -2110,6 +2189,7 @@ const searchTool = (() => {
     $('searchClose')?.addEventListener('click', close);
     $('openSearch')?.addEventListener('click', toggle);
     $('searchAnonBtn')?.addEventListener('click', anonymizeAll);
+    $('searchPartial')?.addEventListener('change', () => { currentIdx = 0; refresh(); });
 
     const cat = catEl();
     if (cat) {

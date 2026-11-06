@@ -51,6 +51,7 @@ class Detection(BaseModel):
     manual_placeholder: bool = False
     user_added: bool = False
     grouping_excluded: bool = False
+    manual_order: int = 0
 
 
 class ClusterAddDetectionsRequest(BaseModel):
@@ -74,6 +75,7 @@ class Cluster(BaseModel):
     status: ClusterStatus = "suggested"
     reasons: list[str] = Field(default_factory=list)
     target_cluster_id: str | None = None
+    manual_placeholder: bool = False
 
 
 class SessionState(BaseModel):
@@ -86,6 +88,8 @@ class SessionState(BaseModel):
     clusters: list[Cluster] = Field(default_factory=list)
     label_mode: LabelMode = "cat"
     enabled_categories: list[Category] = Field(default_factory=list)
+    review_sequence: int = 0
+    has_review: bool = False
 
 
 class UploadResponse(BaseModel):
@@ -184,3 +188,4 @@ class SearchAndAnonymizeRequest(BaseModel):
     original: str
     positions: list[Position]
     placeholder: str | None = None
+    allow_partial: bool = False

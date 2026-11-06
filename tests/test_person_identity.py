@@ -159,7 +159,8 @@ def test_move_and_merge_have_no_stale_owners():
 
 def test_cross_category_group_rejected_without_mutating_state():
     state = make_state(['Eliana Vorst', 'Vorst'])
-    other = add_bulk_detection(state, 'OTRO', 'Eliana', [state.detections[0].positions[0]])
+    position = state.detections[0].positions[0]
+    other = add_bulk_detection(state, 'OTRO', position.raw, [position])
     before = state.model_dump()
     assert add_detections_to_cluster(state, state.clusters[0].cluster_id, [other.id]) is None
     assert create_cluster_from_detections(state, [state.detections[0].id, other.id]) is None
@@ -205,7 +206,8 @@ def test_manual_accent_variant_keeps_existing_group_and_members():
 def test_new_manual_label_does_not_reuse_confirmed_labels():
     state = make_state(['Eliana Vorst', 'Vorst'])
     cluster = confirm_cluster(state, state.clusters[0].cluster_id)
-    det = add_bulk_detection(state, 'OTRO', 'Eliana', [state.detections[0].positions[0]])
+    position = state.detections[0].positions[0]
+    det = add_bulk_detection(state, 'OTRO', position.raw, [position])
     update_detection(state, det.id, cat='PERSONA')
     assert det.placeholder != cluster.placeholder
 
@@ -213,10 +215,11 @@ def test_new_manual_label_does_not_reuse_confirmed_labels():
 def test_manual_mentions_do_not_reuse_ids_after_deletion():
     state = make_state(['Eliana Vorst', 'Vorst'])
     position = state.detections[0].positions[0]
-    first = add_bulk_detection(state, 'OTRO', 'Eliana', [position])
-    second = add_bulk_detection(state, 'OTRO', 'Vorst', [position])
+    second_position = state.detections[1].positions[0]
+    first = add_bulk_detection(state, 'OTRO', position.raw, [position])
+    second = add_bulk_detection(state, 'OTRO', second_position.raw, [second_position])
     remove_detection(state, first.id)
-    add_bulk_detection(state, 'OTRO', 'Eliana', [position])
+    add_bulk_detection(state, 'OTRO', position.raw, [position])
     ids = [mention.id for mention in state.mentions]
     assert len(ids) == len(set(ids))
     assert set(second.mention_ids) <= set(ids)

@@ -46,12 +46,30 @@ No hace falta instalar otros programas.
    que lo reemplazará. Desmarcá lo que quieras conservar.
 4. **Agregá lo que falte:** en la vista **Original**, seleccioná el texto,
    elegí su categoría y hacé clic en **Solo anonimizar**. Esto también oculta
-   sus repeticiones iguales. Para buscar otras apariciones, usá la lupa.
+   sus repeticiones iguales que formen un dato completo. Para buscar otras
+   apariciones, usá la lupa.
 5. **Comprobá el resultado** en la vista **Anonimizado**. Después, hacé clic
    en **Abrir editor y verificar**, revisá el texto y descargá el Word o PDF.
 
 **Revisá siempre el archivo descargado antes de compartirlo.** La detección
 puede omitir datos o marcar algo que quieras conservar.
+
+La selección que hacés se respeta exactamente, incluso dentro de una palabra.
+La casilla **Permitir coincidencias parciales** de la selección afecta sus
+repeticiones; la misma opción en la lupa permite buscar dentro de palabras o
+datos compuestos. Está desactivada por defecto: buscar `Ana` no incluye
+`Mariana` ni `Ana@example.test`. La lupa ignora mayúsculas y tildes.
+
+Si dos datos activos se superponen, se oculta toda la zona cubierta y se usa
+la etiqueta de la última decisión manual. Las demás apariciones conservan sus
+etiquetas. Cuando hay diferencias, junto al campo editable se muestran las
+sustituciones aplicadas. Cambiar el tipo de dato conserva las etiquetas que
+escribiste; asignarlo a otro grupo usa la etiqueta de ese grupo.
+
+Después de analizar, podés abrir el editor y descargar Word o PDF aunque no
+haya detecciones o hayas eliminado todas. Cargar un archivo por sí solo no
+completa la revisión. Las correcciones del editor, incluso dejarlo vacío, se
+respetan al descargar.
 
 ## Si algo no funciona
 

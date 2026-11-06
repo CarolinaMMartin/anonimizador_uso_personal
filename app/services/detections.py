@@ -5,26 +5,38 @@ from uuid import uuid4
 from app.anonymize.placeholders import make_placeholder, next_placeholder_number
 from app.models.schemas import Category, Detection, Mention, Position, SessionState
 from app.resolution.normalize import normalize_text
+from app.services.matching import is_complete_match, normalize_for_search
+from app.services.review_state import manual_decision, mark_manual_decision
 
 
 def _next_mention_id(state: SessionState) -> str:
     return f"m_manual_{uuid4().hex}"
 
 
-def _find_positions(text: str, surface: str) -> list[Position]:
+def _find_positions(text: str, surface: str, allow_partial: bool = False) -> list[Position]:
     escaped = re.escape(surface.strip())
     positions: list[Position] = []
-    for m in re.finditer(escaped, text, re.IGNORECASE):
-        positions.append(Position(start=m.start(), end=m.end(), raw=text[m.start() : m.end()]))
+    if not escaped:
+        return positions
+    pattern = re.compile(escaped, re.IGNORECASE)
+    cursor = 0
+    while match := pattern.search(text, cursor):
+        if allow_partial or is_complete_match(text, match.start(), match.end()):
+            positions.append(Position(start=match.start(), end=match.end(), raw=text[match.start():match.end()]))
+            cursor = match.end()
+        else:
+            cursor = match.start() + 1
     return positions
 
 
+@manual_decision
 def add_manual_detection(
     state: SessionState,
     cat: str,
     start: int,
     end: int,
     original: str | None = None,
+    allow_partial: bool = False,
 ) -> Detection:
     """Agrega una detección manual (p. ej. texto seleccionado en vista previa)."""
     text = state.doc_text
@@ -42,9 +54,10 @@ def add_manual_detection(
         )
 
     # Todas las ocurrencias iguales (como v1)
-    positions = _find_positions(text, surface)
-    if not positions:
-        positions = [Position(start=start, end=end, raw=text[start:end])]
+    positions = _find_positions(text, surface, allow_partial=allow_partial)
+    # La búsqueda no solapada puede omitir el rango confirmado por la persona.
+    if not any(p.start == start and p.end == end for p in positions):
+        positions.append(Position(start=start, end=end, raw=text[start:end]))
 
     mention = Mention(
         id=_next_mention_id(state),
@@ -80,6 +93,7 @@ def add_manual_detection(
         if existing.cluster_id:
             from app.services.clusters import add_detections_to_cluster
             add_detections_to_cluster(state, existing.cluster_id, [existing.id], manual_assignment=False)
+        mark_manual_decision(state, [existing])
         return existing
 
     new_id = max((d.id for d in state.detections), default=-1) + 1
@@ -95,15 +109,18 @@ def add_manual_detection(
         source_layers=["manual"],
     )
     state.detections.append(det)
+    mark_manual_decision(state, [det])
     return det
 
 
+@manual_decision
 def add_bulk_detection(
     state: SessionState,
     cat: Category,
     original: str,
     positions: list[Position],
     placeholder: str | None = None,
+    allow_partial: bool = False,
 ) -> Detection:
     """Crea (o extiende) una detección a partir de posiciones ya calculadas.
 
@@ -134,6 +151,10 @@ def add_bulk_detection(
             raise ValueError(f"Rango de texto inválido: {p.start}-{p.end}")
         if p.raw and p.raw != text[p.start:p.end]:
             raise ValueError("La coincidencia no corresponde al documento. Volvé a buscar el texto.")
+        if normalize_for_search(text[p.start:p.end]) != normalize_for_search(surface):
+            raise ValueError('La coincidencia no corresponde a la búsqueda. Volvé a buscar el texto.')
+        if not allow_partial and not is_complete_match(text, p.start, p.end):
+            raise ValueError('La coincidencia es parcial. Activá la opción de coincidencias parciales.')
         key = (p.start, p.end)
         if key in seen:
             continue
@@ -181,6 +202,7 @@ def add_bulk_detection(
             if not clean:
                 raise ValueError("La sustitución no puede estar vacía")
             update_detection(state, existing.id, placeholder=clean)
+        mark_manual_decision(state, [existing])
         return existing
 
     new_id = max((d.id for d in state.detections), default=-1) + 1
@@ -208,9 +230,11 @@ def add_bulk_detection(
         source_layers=["manual"],
     )
     state.detections.append(det)
+    mark_manual_decision(state, [det])
     return det
 
 
+@manual_decision
 def remove_detection(state: SessionState, detection_id: int) -> None:
     det = next((d for d in state.detections if d.id == detection_id), None)
     if not det:
@@ -220,8 +244,10 @@ def remove_detection(state: SessionState, detection_id: int) -> None:
     detach_mentions(state, mids)
     state.mentions = [m for m in state.mentions if m.id not in mids]
     state.detections = [d for d in state.detections if d.id != detection_id]
+    mark_manual_decision(state)
 
 
+@manual_decision
 def update_detection(
     state: SessionState,
     detection_id: int,
@@ -238,6 +264,7 @@ def update_detection(
 
     if cat and cat != det.cat:
         from app.services.clusters import detach_mentions
+        previous_placeholder, was_manual = det.placeholder, det.manual_placeholder
         detach_mentions(state, set(det.mention_ids))
         replacement = make_placeholder(
             cat, det.original, next_placeholder_number(state.detections, cat), state.label_mode,
@@ -249,9 +276,8 @@ def update_detection(
             mention = next((m for m in state.mentions if m.id == mid), None)
             if mention:
                 mention.cat = cat  # type: ignore[assignment]
-        if placeholder is None or not det.manual_placeholder:
-            det.placeholder = replacement
-            det.manual_placeholder = False
+        det.placeholder = previous_placeholder if was_manual else replacement
+        det.manual_placeholder = was_manual
 
     if placeholder is not None:
         clean = placeholder.strip()
@@ -265,9 +291,13 @@ def update_detection(
             if cluster:
                 cluster.placeholder = clean
                 cluster.canonical_label = clean
+                cluster.manual_placeholder = True
                 _sync_cluster_to_detections(state, cluster)
+                mark_manual_decision(state, [member for member in state.detections
+                                             if member.cluster_id == cluster.cluster_id])
 
     if enabled is not None:
         det.enabled = enabled
 
+    mark_manual_decision(state, [det])
     return det

@@ -58,6 +58,52 @@ def test_manual_category_is_accepted_and_exported(review, endpoint, category, su
         assert 'Inicio:' in text and 'Fin.' in text
 
 
+@pytest.mark.parametrize('endpoint', ['/api/manual-detection', '/api/detections/manual'])
+@pytest.mark.parametrize('existing', [False, True])
+@pytest.mark.parametrize('allow_partial', [False, True])
+def test_manual_overlapping_repetition_covers_selected_interval(review, endpoint, existing, allow_partial):
+    client, state = review
+    state.doc_text = '121212'
+    payload = {'session_id': state.session_id, 'cat': 'OTRO', 'original': '1212', 'allow_partial': allow_partial}
+    if existing:
+        first = client.post(endpoint, json={**payload, 'start': 0, 'end': 4})
+        assert first.status_code == 200, first.text
+
+    for _ in range(2):
+        response = client.post(endpoint, json={**payload, 'start': 2, 'end': 6})
+        assert response.status_code == 200, response.text
+
+    results = {
+        extension: exported_text(client, state.session_id, extension)
+        for extension in ('preview', 'docx', 'pdf')
+    }
+    expected = '[DATO_1]' if existing or allow_partial else '12[DATO_1]'
+    assert results == dict.fromkeys(('preview', 'docx', 'pdf'), expected)
+    assert len(state.detections) == 1
+    positions = state.detections[0].positions
+    covered = {index for position in positions for index in range(position.start, position.end)}
+    assert set(range(2, 6)) <= covered
+    assert len(positions) == len({(position.start, position.end) for position in positions})
+    assert all(position.raw == state.doc_text[position.start:position.end] for position in positions)
+
+
+@pytest.mark.parametrize('selected', [' alias azul', 'alias azul ', ' \talias azul\n '])
+def test_manual_selection_keeps_outer_whitespace_in_selected_interval(review, selected):
+    client, state = review
+    state.doc_text = f'{selected}; alias azul.'
+    response = client.post('/api/manual-detection', json={
+        'session_id': state.session_id, 'cat': 'OTRO',
+        'start': 0, 'end': len(selected), 'original': selected.strip(),
+    })
+    assert response.status_code == 200, response.text
+    positions = state.detections[0].positions
+    covered = {index for position in positions for index in range(position.start, position.end)}
+    assert set(range(len(selected))) <= covered
+    assert state.detections[0].original == 'alias azul'
+    for extension in ('preview', 'docx', 'pdf'):
+        assert exported_text(client, state.session_id, extension) == '[DATO_1]; [DATO_1].'
+
+
 @pytest.mark.parametrize('bulk', [False, True])
 def test_manual_reselection_reactivates_existing_row(review, bulk):
     client, state = review

@@ -39,6 +39,7 @@ def analyze_document(req: AnalyzeRequest):
         raise HTTPException(409, "Análisis cancelado") from e
     except CatalogLoadError as e:
         raise HTTPException(503, f"No se pudo cargar el catálogo de personas: {e}") from e
+    analyzed_state.has_review = True
     store.save(analyzed_state)
     return result
 
@@ -54,4 +55,5 @@ async def get_session(session_id: str):
         "char_count": len(state.doc_text),
         "detections_count": len(state.detections),
         "clusters_count": len(state.clusters),
+        "has_review": state.has_review or bool(state.detections),
     }

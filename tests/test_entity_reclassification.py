@@ -10,6 +10,7 @@ from app.main import app
 from app.models.schemas import Mention
 from app.models.store import store
 from app.services.clusters import confirm_cluster, create_cluster_from_detections
+from app.services.detections import update_detection
 
 
 @pytest.fixture
@@ -133,7 +134,54 @@ def test_invalid_group_patch_and_batch_add_are_atomic(review):
         params={'session_id': state.session_id}, json={'cat': 'PERSONA', 'placeholder': ' '})
     assert response.status_code == 400
     assert state.model_dump() == before
+
     response = client.post(f'/api/clusters/{target.cluster_id}/add',
         params={'session_id': state.session_id}, json={'detection_ids': [1, 999], 'reclassify': True})
     assert response.status_code == 404
     assert state.model_dump() == before
+
+
+@pytest.mark.parametrize('confirmed', [False, True])
+def test_row_category_change_preserves_manual_label_before_detach(review, confirmed):
+    client, state, source, target = review
+    if confirmed:
+        confirm_cluster(state, source.cluster_id)
+    update_detection(state, 1, placeholder='[CUSTOM]', enabled=False)
+    update_detection(state, 1, cat='PERSONA')
+    row = state.detections[1]
+    assert row.placeholder == '[CUSTOM]' and row.manual_placeholder
+    assert row.cat == 'PERSONA' and row.cluster_id is None
+    assert not row.enabled
+
+
+@pytest.mark.parametrize('confirmed', [False, True])
+def test_group_category_change_preserves_manual_origin_and_explicit_label_wins(review, confirmed):
+    client, state, source, target = review
+    if confirmed:
+        confirm_cluster(state, source.cluster_id)
+    update_detection(state, 1, placeholder='[CUSTOM]', enabled=False)
+    response = client.patch(f'/api/clusters/{source.cluster_id}', params={'session_id': state.session_id},
+                            json={'cat': 'PERSONA'})
+    assert response.status_code == 200, response.text
+    assert state.detections[1].placeholder == '[CUSTOM]' and state.detections[1].manual_placeholder
+    assert not state.detections[1].enabled
+    if confirmed:
+        assert source.placeholder == '[CUSTOM]' and source.manual_placeholder
+        assert state.detections[2].placeholder == '[CUSTOM]' and state.detections[2].manual_placeholder
+        response = client.patch(f'/api/clusters/{source.cluster_id}', params={'session_id': state.session_id},
+                                json={'cat': 'OTRO', 'placeholder': '[EXPLICIT]'})
+        assert response.status_code == 200, response.text
+        assert all(det.placeholder == '[EXPLICIT]' and det.manual_placeholder for det in state.detections[1:])
+    else:
+        assert state.detections[2].placeholder.startswith('[PERSONA_')
+        assert not state.detections[2].manual_placeholder
+
+
+def test_independent_category_change_preserves_custom_but_regenerates_automatic(review):
+    client, state, source, target = review
+    update_detection(state, 1, cat='OTRO', placeholder='[CUSTOM]')
+    update_detection(state, 1, cat='PERSONA')
+    assert state.detections[1].placeholder == '[CUSTOM]' and state.detections[1].manual_placeholder
+    update_detection(state, 2, cat='OTRO')
+    assert state.detections[2].placeholder.startswith('[DATO_')
+    assert not state.detections[2].manual_placeholder

@@ -59,6 +59,7 @@ function createApp(handler = async () => json({})) {
         $('selCat').value = cat;
       },
       edit(patch) { Object.assign(detections[0], patch); scheduleDetectionPatch(0, patch); },
+      editRow(id, patch) { Object.assign(detections.find(d => d.id === id), patch); scheduleDetectionPatch(id, patch); },
       mode(mode) { viewMode = mode; },
       docText: () => docText,
       detections: () => JSON.parse(JSON.stringify(detections)),
@@ -110,6 +111,161 @@ test('field changes are combined and editor waits for a slow PATCH', async () =>
   assert.deepEqual(calls, ['/api/detections/0', '/api/export/preview']);
   assert.equal(element('editorText').value, 'texto verificado');
   assert.equal(app.pendingCount(), 0);
+});
+
+test('saved group labels update every visible occurrence without switching preview mode', async () => {
+  const text = 'Ana Ruiz declaró. A. Ruiz volvió.';
+  const rows = [
+    { id: 0, cat: 'PERSONA', original: 'Ana Ruiz', placeholder: '[PERSONA_1]',
+      enabled: true, positions: [{ start: 0, end: 8 }] },
+    { id: 1, cat: 'PERSONA', original: 'A. Ruiz', placeholder: '[PERSONA_1]',
+      enabled: true, positions: [{ start: 18, end: 25 }] },
+  ];
+  const { app, element } = createApp(async (_url, options) => {
+    const { placeholder } = JSON.parse(options.body);
+    return json({ detections: rows.map((row) => ({ ...row, placeholder })), clusters: [] });
+  });
+  app.setDocument(text);
+  app.setReview(rows, []);
+  app.mode('anon');
+  app.edit({ placeholder: '[TESTIGO]' });
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '[TESTIGO] declaró. [PERSONA_1] volvió.');
+  await app.flushPendingSaves();
+  assert.equal(element('docPreview').textContent, '[TESTIGO] declaró. [TESTIGO] volvió.');
+});
+
+test('latest manual choice covers the overlap without changing an unrelated occurrence', () => {
+  const { app, element } = createApp();
+  app.setDocument('abcdefg abcde');
+  app.setReview([
+    { id: 0, cat: 'PERSONA', placeholder: '[OLD]', enabled: true, manual_order: 0,
+      positions: [{ start: 0, end: 5 }, { start: 8, end: 13 }] },
+    { id: 1, cat: 'OTRO', placeholder: '[NEW]', enabled: true, manual_order: 2,
+      positions: [{ start: 2, end: 7 }] },
+  ], []);
+  app.mode('anon');
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '[NEW] [OLD]');
+});
+
+test('flush dispatches the latest actions in B then A order after A B A edits', async () => {
+  const calls = [];
+  const { app } = createApp(async (url) => { calls.push(url); return json({}); });
+  app.setReview([0, 1].map(id => ({ id, cat: 'PERSONA', placeholder: '[OLD]', enabled: true,
+    positions: [{ start: 0, end: 4 }] })), []);
+  app.editRow(0, { placeholder: '[A]' });
+  app.editRow(1, { placeholder: '[B]' });
+  app.editRow(0, { placeholder: '[A2]' });
+  await app.flushPendingSaves();
+  assert.deepEqual(calls, ['/api/detections/1', '/api/detections/0']);
+});
+
+test('an older response with identical text keeps the later group decision pending', async () => {
+  const rows = [0, 1].map(id => ({ id, cat: 'PERSONA', original: id ? 'Ann' : 'Ana', placeholder: '[OLD]', enabled: true,
+    cluster_id: 'g', cluster_confirmed: true, positions: [{ start: id * 4, end: id * 4 + 3 }] }));
+  const releases = [];
+  const bodies = [];
+  const { app, element } = createApp(async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    await new Promise(resolve => releases.push(resolve));
+    return json({ detections: rows.map(row => ({ ...row, placeholder: '[SAME]', manual_order: bodies.length })),
+      clusters: [{ cluster_id: 'g', cat: 'PERSONA', status: 'confirmed', placeholder: '[SAME]', surfaces: ['Ana', 'Ann'] }] });
+  });
+  app.setDocument('Ana Ann');
+  app.setReview(rows, [{ cluster_id: 'g', cat: 'PERSONA', status: 'confirmed' }]);
+  app.mode('anon');
+  app.editRow(0, { placeholder: '[SAME]' });
+  const saving = app.flushPendingSaves();
+  while (!releases.length) await delay(1);
+  app.editRow(0, { placeholder: '[DIFFERENT]' });
+  app.editRow(0, { placeholder: '[SAME]' });
+  releases[0]();
+  while (releases.length < 2) await delay(1);
+  app.renderPreviewLocal();
+  assert.equal(element('docPreview').textContent, '[SAME] [SAME]');
+  assert.ok(app.detections().every(row => row.manual_order >= 3));
+  releases[1]();
+  await saving;
+  assert.equal(bodies.length, 2);
+  assert.equal(app.pendingCount(), 0);
+});
+
+test('pending choices remain newer when the server has advanced beyond visible orders', async () => {
+  const rows = [0, 1].map(id => ({ id, cat: 'OTRO', original: 'Ana', placeholder: '[OLD]',
+    enabled: true, manual_order: 0, positions: [{ start: 0, end: 3 }] }));
+  const releases = [];
+  let calls = 0;
+  const { app, element } = createApp(async (_url, options) => {
+    const call = calls++, body = JSON.parse(options.body);
+    await new Promise(resolve => releases.push(resolve));
+    rows[call] = { ...rows[call], placeholder: body.placeholder, manual_order: 100 + call };
+    return json({ detections: rows, clusters: [] });
+  });
+  app.setDocument('Ana'); app.setReview(rows, []); app.mode('anon');
+  app.editRow(0, { placeholder: '[A]' });
+  const saving = app.flushPendingSaves();
+  while (!releases.length) await delay(1);
+  app.editRow(1, { placeholder: '[B]' });
+  releases[0]();
+  while (releases.length < 2) await delay(1);
+  app.renderPreviewLocal();
+  const previewWhilePending = element('docPreview').textContent;
+  releases[1](); await saving;
+  assert.equal(previewWhilePending, '[B]');
+  assert.equal(element('docPreview').textContent, '[B]');
+});
+
+for (const [text, query, expected] of [
+  ['Ana Ana; xAna Ana Ana', 'Ana Ana', [[0, 7], [14, 21]]],
+  ['📄 Jose\u0301; José.', 'jose', [[2, 7], [9, 13]]],
+  ['+١٢٣ ١٢٣ +² ²', '١٢٣', [[5, 8]]],
+  ['123-456; 123.', '123', [[9, 12]]],
+]) {
+  test(`complete search posts exact Unicode boundaries: ${text}`, async () => {
+    let body;
+    const { app, element } = createApp(async (url, options) => {
+      if (url === '/api/search-and-anonymize') { body = JSON.parse(options.body); return json({ detections: [] }); }
+      return json({ text, highlights: [] });
+    });
+    app.setDocument(text);
+    element('searchInput').value = query;
+    await element('searchAnonBtn').listeners.click();
+    assert.deepEqual(body.positions.map(p => [p.start, p.end]), expected);
+  });
+}
+
+for (const partial of [false, true]) {
+  test(`whole search and explicit partial option (${partial}) agree with posted positions`, async () => {
+    const bodies = [];
+    const text = 'Ana y Mariana; Ana@example.test; Ana.';
+    const { app, element } = createApp(async (url, options) => {
+      if (url === '/api/search-and-anonymize') {
+        bodies.push(JSON.parse(options.body));
+        return json({ detections: [] });
+      }
+      return json({ text, highlights: [] });
+    });
+    app.setDocument(text);
+    element('searchInput').value = 'Ana';
+    element('searchPartial').checked = partial;
+    await element('searchAnonBtn').listeners.click();
+    assert.equal(bodies[0].positions.length, partial ? 4 : 2);
+    assert.equal(bodies[0].allow_partial, partial);
+  });
+}
+
+test('normalized search includes trailing combining marks in the original range', async () => {
+  const bodies = [];
+  const text = 'Jose\u0301';
+  const { app, element } = createApp(async (url, options) => {
+    if (url === '/api/search-and-anonymize') { bodies.push(JSON.parse(options.body)); return json({ detections: [] }); }
+    return json({ text, highlights: [] });
+  });
+  app.setDocument(text);
+  element('searchInput').value = 'José';
+  await element('searchAnonBtn').listeners.click();
+  assert.deepEqual(bodies[0].positions, [{ start: 0, end: 5, raw: text }]);
 });
 
 test('flush waits for an already started PATCH even after its debounce timer fired', async () => {

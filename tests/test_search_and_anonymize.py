@@ -13,6 +13,12 @@ DOC = (
     "Más adelante, García ratificó su declaración. "
     "La testigo mencionó también a García."
 )
+# Coordenadas del texto sintético; la búsqueda valida también su contenido.
+GARCIA_RANGES = [(7, 13), (54, 60), (116, 122)]
+
+
+def test_coordenadas_sinteticas_corresponden_a_la_consulta():
+    assert [DOC[start:end] for start, end in GARCIA_RANGES] == ["García"] * 3
 
 
 def _new_session_with_doc(text: str = DOC) -> str:
@@ -32,8 +38,8 @@ def test_add_bulk_detection_crea_una_deteccion_con_todas_las_positions():
 
     positions = [
         Position(start=7, end=13),
-        Position(start=57, end=63),
-        Position(start=113, end=119),
+        Position(start=54, end=60),
+        Position(start=116, end=122),
     ]
     det = add_bulk_detection(state, "PERSONA", "García", positions)
 
@@ -41,7 +47,7 @@ def test_add_bulk_detection_crea_una_deteccion_con_todas_las_positions():
     assert det.original == "García"
     assert det.user_added is True
     assert len(det.positions) == 3
-    assert {(p.start, p.end) for p in det.positions} == {(7, 13), (57, 63), (113, 119)}
+    assert {(p.start, p.end) for p in det.positions} == set(GARCIA_RANGES)
     assert det.placeholder.startswith("[PERSONA")
 
 
@@ -53,7 +59,7 @@ def test_add_bulk_detection_deduplica_positions_repetidas():
     positions = [
         Position(start=7, end=13),
         Position(start=7, end=13),
-        Position(start=57, end=63),
+        Position(start=54, end=60),
     ]
     det = add_bulk_detection(state, "PERSONA", "García", positions)
     assert len(det.positions) == 2
@@ -73,12 +79,12 @@ def test_add_bulk_detection_extiende_si_ya_existe_misma_cat_original():
         state,
         "PERSONA",
         "García",
-        [Position(start=7, end=13), Position(start=57, end=63)],
+        [Position(start=7, end=13), Position(start=54, end=60)],
     )
 
     assert len(state.detections) == total_detecciones_antes
     assert second.id == first.id
-    assert {(p.start, p.end) for p in second.positions} == {(7, 13), (57, 63)}
+    assert {(p.start, p.end) for p in second.positions} == {(7, 13), (54, 60)}
 
 
 def test_add_bulk_detection_rechaza_positions_fuera_del_documento():
@@ -144,8 +150,8 @@ def test_endpoint_search_and_anonymize_shape_igual_a_manual_detection():
             "original": "García",
             "positions": [
                 {"start": 7, "end": 13},
-                {"start": 57, "end": 63},
-                {"start": 113, "end": 119},
+                {"start": 54, "end": 60},
+                {"start": 116, "end": 122},
             ],
         },
     )

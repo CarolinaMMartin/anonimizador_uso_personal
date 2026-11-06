@@ -31,6 +31,4 @@ def resolve_export_text(state: SessionState, req: ExportDocumentRequest) -> str:
 def text_to_paragraphs(text: str) -> list[str]:
     """Separa párrafos sin reinterpretar los saltos del texto revisado."""
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    if not normalized.strip():
-        return ["(documento vacío)"]
     return normalized.split("\n\n")

@@ -17,6 +17,7 @@ class ManualDetectionRequest(BaseModel):
     start: int = Field(ge=0)
     end: int = Field(ge=1)
     original: str | None = None
+    allow_partial: bool = False
 
 
 class ManualDetectionResponse(BaseModel):
@@ -41,7 +42,7 @@ async def add_manual(req: ManualDetectionRequest) -> ManualDetectionResponse:
         raise HTTPException(400, "No hay documento cargado")
     try:
         det = add_manual_detection(
-            state, req.cat, req.start, req.end, req.original
+            state, req.cat, req.start, req.end, req.original, allow_partial=req.allow_partial
         )
     except ValueError as e:
         raise HTTPException(400, str(e)) from e

@@ -25,6 +25,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["export"])
 
 
+def _reviewed_document(session_id: str):
+    state = store.get(session_id)
+    if not state:
+        raise HTTPException(404, "Sesión no encontrada")
+    if not state.doc_text:
+        raise HTTPException(400, "No hay documento cargado")
+    if not (state.has_review or state.detections):
+        raise HTTPException(400, "El documento todavía no fue revisado. Analizalo o agregá una selección manual primero.")
+    return state
+
+
 def _anonymized_preview_text(state, use_confirmed_only: bool = False) -> str:
     # Exportar exactamente la revisión actual, sin reclasificarla en silencio.
     detections = state.detections
@@ -35,11 +46,7 @@ def _anonymized_preview_text(state, use_confirmed_only: bool = False) -> str:
 
 @router.post("/export/preview", response_model=AnonymizedPreviewResponse)
 async def export_preview(req: ExportRequest):
-    state = store.get(req.session_id)
-    if not state:
-        raise HTTPException(404, "Sesión no encontrada")
-    if not state.detections:
-        raise HTTPException(400, "No hay detecciones. Analizá el documento primero.")
+    state = _reviewed_document(req.session_id)
     try:
         text = _anonymized_preview_text(state, req.use_confirmed_only)
         return AnonymizedPreviewResponse(
@@ -56,11 +63,7 @@ async def export_preview(req: ExportRequest):
 
 @router.post("/export/docx")
 async def export_docx(req: ExportDocumentRequest):
-    state = store.get(req.session_id)
-    if not state:
-        raise HTTPException(404, "Sesión no encontrada")
-    if not state.detections:
-        raise HTTPException(400, "No hay detecciones. Analizá el documento primero.")
+    state = _reviewed_document(req.session_id)
 
     try:
         anon = resolve_export_text(state, req)
@@ -83,11 +86,7 @@ async def export_docx(req: ExportDocumentRequest):
 
 @router.post("/export/pdf")
 async def export_pdf(req: ExportDocumentRequest):
-    state = store.get(req.session_id)
-    if not state:
-        raise HTTPException(404, "Sesión no encontrada")
-    if not state.detections:
-        raise HTTPException(400, "No hay detecciones. Analizá el documento primero.")
+    state = _reviewed_document(req.session_id)
 
     try:
         anon = resolve_export_text(state, req)
