@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
-import shutil
 import sys
 import zipfile
 from importlib.metadata import distributions
@@ -47,6 +46,7 @@ REQUIRED_MODEL_FILES = (
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from bundle_compliance import bundle_compliance  # noqa: E402
+from build_provenance import verify_build_provenance
 from portable_docs import portable_text
 
 
@@ -168,22 +168,19 @@ def bundle_docs(pkg_dir: Path) -> None:
         (root / name).write_text(text, encoding="utf-8")
         (root / name.replace(".md", ".txt")).write_text(text, encoding="utf-8")
         print(f"  Manual -> {root / name}")
-    for source, name in ((ROOT / 'CHANGELOG.md', 'CHANGELOG.md'),
-                         (docs_dir / 'dependencies-frozen.txt', 'DEPENDENCIAS_BUILD.txt')):
-        if source.is_file():
-            if source.suffix == '.md':
-                text = portable_text(source.read_text(encoding='utf-8'), source, Path(name))
-                (root / name).write_text(text, encoding='utf-8')
-            else:
-                shutil.copyfile(source, root / name)
+    source = ROOT / 'CHANGELOG.md'
+    if source.is_file():
+        text = portable_text(source.read_text(encoding='utf-8'), source, Path(source.name))
+        (root / source.name).write_text(text, encoding='utf-8')
 
 
 def write_release_zip(root: Path, output: Path) -> None:
     """Package the application resources without sessions or personal exports."""
+    verify_build_provenance(root)
     files = set(COMMON_REQUIRED_FILES) | set(required_launchers()) | {
         f'{DIST_NAME}.exe', DIST_NAME, 'COMPLIANCE.txt',
         'MANUAL_USUARIO.txt', 'MANUAL_INSTALACION.txt', 'DEPLOY.md', 'DEPLOY.txt',
-        'DEPENDENCIAS_BUILD.txt', 'SOURCE_COMMIT.txt', 'SOURCE_TREE.txt',
+        'DEPENDENCIAS_BUILD.txt', 'BUILD_PROVENANCE.json', 'SOURCE_COMMIT.txt', 'SOURCE_TREE.txt',
         'NOTAS_VERSION.md', 'NOTAS_VERSION.txt',
         f'VERIFICACION_{app_version()}.md', f'VERIFICACION_{app_version()}.txt',
     }
@@ -246,6 +243,7 @@ def main() -> None:
     pkg_dir = find_pkg_dir(args.package)
     root = delivery_root(pkg_dir)
     verify_package(pkg_dir)
+    verify_build_provenance(root)
 
     print("Copiando manuales al paquete…")
     bundle_docs(pkg_dir)

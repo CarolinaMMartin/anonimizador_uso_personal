@@ -1,7 +1,7 @@
 # Verificación de 3.4.2
 
 > Registro histórico de esa entrega. Para instalar la versión vigente,
-> consultar el [README](../README.md); estos resultados no validan otra versión.
+> consultar el [README](../../README.md); estos resultados no validan otra versión.
 
 Entrega local para Windows x64, 6 de noviembre de 2026.
 

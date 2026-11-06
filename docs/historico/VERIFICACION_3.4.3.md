@@ -1,7 +1,7 @@
 # Verificación de 3.4.3
 
 > Registro histórico de la primera entrega local 3.4.3, anterior a las
-> correcciones EGM. La descarga vigente está en el [README](../README.md) y
+> correcciones EGM. La descarga vigente está en el [README](../../README.md) y
 > la validación posterior en [el cierre EGM](revision-egm/correcciones_pendientes.md).
 
 Entrega local para Windows x64, 6 de noviembre de 2026.

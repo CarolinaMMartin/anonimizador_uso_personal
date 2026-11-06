@@ -34,7 +34,7 @@ hiddenimports = [
     "uvicorn.lifespan.on",
 ]
 
-for pkg in ("spacy", "presidio_analyzer", "presidio_anonymizer", "thinc"):
+for pkg in ("spacy", "presidio_analyzer", "thinc"):
     pkg_datas, pkg_binaries, pkg_hidden = collect_all(
         pkg, include_py_files=False,
         filter_submodules=lambda name: not name.startswith((f'{pkg}.tests', f'{pkg}.benchmarks')),

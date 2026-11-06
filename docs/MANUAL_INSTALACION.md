@@ -1,4 +1,4 @@
-# Instalación — Anonimizador Judicial 3.4.3
+# Instalación — Anonimizador Judicial 3.4.4
 
 Aplicación portable de uso personal/académico. Esta entrega se verifica en
 **Windows 10/11 de 64 bits**. No requiere instalar Python ni conectarse a
@@ -7,28 +7,28 @@ pueden existir restricciones propias de tu equipo u organización.
 
 ## Descargar y extraer
 
-[**Descargar para Windows — versión 3.4.3 con las correcciones de revisión**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip).
+[**Descargar para Windows — versión 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip).
 
-1. Descargá **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**.
+1. Descargá **AnonimizadorJudicial-3.4.4-Windows.zip**.
 2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
-   escritura, por ejemplo Documentos\Anonimizador-3.4.3.
+   escritura, por ejemplo Documentos\Anonimizador-3.4.4.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
    mezcles archivos _internal de versiones distintas.
 
 El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
 El tamaño y el SHA-256 de la descarga se informan junto a la entrega.
 **Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
-La descarga vigente está en la [Release 3.4.3 de anonimizador_mpf](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3).
-El sufijo `revision-egm` identifica el paquete con las correcciones posteriores
-a la primera entrega local 3.4.3. Si trabajás desde el proyecto, esa copia está
-en `dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/`.
+La descarga vigente está en la [Release 3.4.4 de anonimizador_mpf](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4).
+Si trabajás desde el proyecto, la copia de esta entrega está en
+`dist/AnonimizadorJudicial-NLP-3.4.4/`. Para actualizar desde 3.4.3 o una
+versión anterior, usá esta carpeta nueva y conservá los archivos juntos.
 
 ## Iniciar y verificar
 
 1. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
 2. El navegador abre la dirección indicada al iniciar. Usa 127.0.0.1:8787
    o un puerto libre entre **8788 y 8796** si otra copia ocupa el primero.
-3. La cabecera debe indicar **v3.4.3**, el estado de Presidio/spaCy y
+3. La cabecera debe indicar **v3.4.4**, el estado de Presidio/spaCy y
    **Catálogos cargados**.
 
 Repetir INICIAR.bat vuelve a la instancia de esa misma carpeta. Las otras
@@ -38,7 +38,7 @@ el número de puerto: si dice `8789`, abrí <http://127.0.0.1:8789>.
 
 **VERIFICAR.bat** comprueba esa instancia, aunque use otro puerto. En /health:
 
-- app_version: 3.4.3.
+- app_version: 3.4.4.
 - nlp_layers.presidio.available: true.
 - nlp_layers.spacy.available: true.
 - nlp_layers.dictionaries: catálogos disponibles y cantidades cargadas.
@@ -48,7 +48,7 @@ Para usarla, consultá el archivo MANUAL_USUARIO.md incluido junto a este manual
 ## Si Windows bloquea la aplicación
 
 El aviso **«Control Inteligente de Aplicaciones ha bloqueado un archivo»**
-significa que Windows detuvo la ejecución. La versión 3.4.3 del anonimizador
+significa que Windows detuvo la ejecución. La versión 3.4.4 del anonimizador
 todavía no tiene firma digital y puede quedar bloqueada en Windows 11. Pulsá
 **De acuerdo** y avisá a quien te compartió el programa; indicá qué archivo
 intentaste abrir. Si es un equipo de trabajo, consultá a sistemas. Descargar

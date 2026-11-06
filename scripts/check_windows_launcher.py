@@ -19,7 +19,8 @@ PACKAGE = ROOT / 'dist/AnonimizadorJudicial-NLP'
 
 
 def listeners():
-    output = subprocess.check_output(['netstat', '-ano', '-p', 'tcp'], text=True)
+    output = subprocess.check_output(['netstat', '-ano', '-p', 'tcp'],
+                                     text=True, encoding='oem', errors='replace')
     return {int(port): int(pid) for port, pid in re.findall(
         r'^\s*TCP\s+127\.0\.0\.1:(878[7-9]|879[0-6])\s+\S+\s+LISTENING\s+(\d+)\s*$',
         output, re.M)}
@@ -29,6 +30,7 @@ def launcher(*flags):
     return subprocess.Popen(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass',
                              '-File', str(PACKAGE / 'iniciar.ps1'), '-NoBrowser', *flags],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                            encoding='oem', errors='replace',
                             creationflags=subprocess.CREATE_NO_WINDOW)
 
 

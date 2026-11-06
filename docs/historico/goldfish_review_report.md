@@ -1,8 +1,8 @@
 # Goldfish Annotated Review Report
 
 > Registro histórico de la revisión del plan de correcciones. La implementación
-> y su validación posterior están en [el cierre EGM](docs/revision-egm/correcciones_pendientes.md).
-> Para la descarga vigente, consultar el [README](README.md).
+> y su validación posterior están en [el cierre EGM](revision-egm/correcciones_pendientes.md).
+> Para la descarga vigente, consultar el [README](../../README.md).
 
 Status: resolved — una ronda autorizada; fase de revisión cerrada y entrega a implementación. No equivale a convergencia de dos rondas.
 

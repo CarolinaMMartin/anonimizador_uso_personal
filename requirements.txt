@@ -1,17 +1,15 @@
 # Dependencias de runtime, fijadas a las versiones del build verificado
 # (ver docs/dependencies-frozen.txt para el árbol completo de transitivas).
-fastapi==0.136.1
-uvicorn[standard]==0.47.0
-python-multipart==0.0.29
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+python-multipart==0.0.33
 python-docx==1.2.0
-pdfplumber==0.11.9
-reportlab==4.5.1
-rapidfuzz==3.14.5
-networkx==3.6.1
-pydantic==2.13.4
-aiofiles==25.1.0
+pdfplumber==0.11.10
+reportlab==5.1.0
+rapidfuzz==3.14.6
+networkx==3.7
+pydantic==2.14.3
 
 # NLP local (Presidio + spaCy)
-presidio-analyzer==2.2.362
-presidio-anonymizer==2.2.362
-spacy==3.8.14
+presidio-analyzer==2.2.366
+spacy==3.8.18

@@ -1,6 +1,7 @@
 """Regression checks for privacy and guarded release tooling."""
 import hashlib
 import importlib
+import runpy
 import sys
 import zipfile
 from pathlib import Path
@@ -10,8 +11,21 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 package = importlib.import_module('package_release')
 builder = importlib.import_module('build_portable_full')
+provenance = importlib.import_module('build_provenance')
 
-def test_release_zip_excludes_user_data_and_keeps_runtime_resources(tmp_path, monkeypatch):
+
+@pytest.fixture
+def record_build(monkeypatch, tmp_path):
+    # These archive fixtures have no installed dependency licenses. Wheel
+    # resource verification still uses the actual environment in package_release.
+    monkeypatch.setattr(provenance, 'distributions', lambda: ())
+    source = tmp_path / 'source'
+    source.mkdir()
+    monkeypatch.setattr(provenance, 'ROOT', source)
+    return lambda root: provenance.write_build_inventory(root, provenance.capture_build_snapshot())
+
+
+def test_release_zip_excludes_user_data_and_keeps_runtime_resources(tmp_path, monkeypatch, record_build):
     # Verify a Windows delivery on every CI host; the archive's launchers
     # depend on its destination platform, not on the platform running pytest.
     monkeypatch.setattr(package, 'required_launchers', lambda: ('INICIAR.bat', 'VERSION_APP.txt'))
@@ -39,12 +53,15 @@ def test_release_zip_excludes_user_data_and_keeps_runtime_resources(tmp_path, mo
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding='utf-8')
     output = tmp_path / 'release.zip'
+    record_build(root)
     package.write_release_zip(root, output)
     prefix = f'AnonimizadorJudicial-NLP-{package.app_version()}/'
     with zipfile.ZipFile(output) as archive:
         assert archive.testzip() is None
         names = {name.removeprefix(prefix) for name in archive.namelist()}
-    assert names == set(list(files)[:7])
+    assert names == set(list(files)[:7]) | {
+        'BUILD_PROVENANCE.json', 'DEPENDENCIAS_BUILD.txt', 'LICENSES/INVENTARIO_BUILD.json',
+    }
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     assert output.with_name('release.zip.sha256').read_text().strip() == f'{digest}  release.zip'
 
@@ -194,6 +211,39 @@ def test_missing_packaged_model_cannot_pass_by_loading_development_model(tmp_pat
     with pytest.raises(SystemExit, match='modelo'):
         builder.smoke_test_pkg(tmp_path)
 
+
+@pytest.mark.parametrize('field,value', [
+    ('version', '3.7.0'), ('name', 'other_model'), ('spacy_version', '>=3.7,<3.8'),
+])
+def test_build_requires_the_expected_model_and_compatible_spacy(field, value):
+    metadata = {'lang': 'es', 'name': 'core_news_md', 'version': '3.8.0', 'spacy_version': '>=3.8,<3.9'}
+    builder.verify_model_metadata(metadata, '3.8.14')
+    metadata[field] = value
+    with pytest.raises(SystemExit, match='modelo'):
+        builder.verify_model_metadata(metadata, '3.8.14')
+
+
+def test_local_model_override_must_match_the_verified_installed_model(tmp_path):
+    installed, override = tmp_path / 'installed', tmp_path / 'override'
+    for path in (installed, override):
+        path.mkdir()
+        (path / 'config.cfg').write_bytes(b'config')
+        (path / 'vocab').write_bytes(b'verified model')
+    builder.verify_model_override(override, installed)
+    (override / 'vocab').write_bytes(b'older model')
+    with pytest.raises(SystemExit, match='modelo local'):
+        builder.verify_model_override(override, installed)
+
+
+def test_presidio_hook_keeps_runtime_configuration_without_long_source_paths():
+    collected = runpy.run_path(str(ROOT / 'scripts/pyinstaller_hooks/hook-presidio_analyzer.py'))
+    resources = [Path(source) for source, _ in collected['datas']]
+    assert resources and not any(path.suffix == '.py' for path in resources)
+    assert any(path.name == 'default_recognizers.yaml' for path in resources)
+    assert ('presidio_analyzer.predefined_recognizers.country_specific.south_africa.'
+            'za_traffic_register_number_recognizer') in collected['hiddenimports']
+
+
 def test_mac_launchers_use_package_path_and_preserve_other_processes(tmp_path, monkeypatch):
     monkeypatch.setattr(builder.sys, 'platform', 'darwin')
     builder.write_launchers(tmp_path)
@@ -242,13 +292,15 @@ def test_bundled_changelog_links_resolve_inside_the_delivery(tmp_path, monkeypat
     assert '[download](README.md)' not in changelog
     assert 'README.md' in changelog
 
-def test_wheel_export_template_is_preserved_but_modified_documents_are_excluded(tmp_path):
+def test_wheel_export_template_is_preserved_but_modified_documents_are_excluded(tmp_path, record_build):
     from importlib.metadata import distribution
     original = Path(distribution('python-docx').locate_file('docx/templates/default.docx'))
     root = tmp_path / 'portable'
     template = root / '_internal/docx/templates/default.docx'
     template.parent.mkdir(parents=True)
     template.write_bytes(original.read_bytes())
+    (root / 'AnonimizadorJudicial-NLP.exe').write_bytes(b'binary')
+    record_build(root)
     output = tmp_path / 'release.zip'
     package.write_release_zip(root, output)
     with zipfile.ZipFile(output) as archive:
@@ -260,4 +312,4 @@ def test_wheel_export_template_is_preserved_but_modified_documents_are_excluded(
     template.write_bytes(b'private document')
     package.write_release_zip(root, output)
     with zipfile.ZipFile(output) as archive:
-        assert archive.namelist() == []
+        assert not any(name.endswith('.docx') for name in archive.namelist())

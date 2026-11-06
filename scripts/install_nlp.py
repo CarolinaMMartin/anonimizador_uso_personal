@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SPACY_MODEL = 'es_core_news_md'
 MODEL_VERSION = '3.8.0'
 MODEL_URL = ('https://github.com/explosion/spacy-models/releases/download/'
-             f'{SPACY_MODEL}-{MODEL_VERSION}/{SPACY_MODEL}-{MODEL_VERSION}-py3-none-any.whl')
+             f'{SPACY_MODEL}-{MODEL_VERSION}/{SPACY_MODEL}-{MODEL_VERSION}-py3-none-any.whl'
+             '#sha256=478b8bb3f3e8eb149192f7d80e7cd64f990b7e9bccbc5329df41a57e86326be2')
 
 
 def main() -> None:

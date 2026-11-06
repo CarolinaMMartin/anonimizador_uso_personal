@@ -5,7 +5,7 @@ Los textos de esta carpeta acompañan la distribución. Los avisos originales de
 | Archivo | Referencia |
 |---------|------------|
 | MIT.txt | Componentes bajo MIT, incluidos FastAPI, Presidio y la librería spaCy |
-| Apache-2.0.txt | python-multipart y aiofiles |
+| Apache-2.0.txt | python-multipart y otros componentes Apache-2.0 |
 | BSD-3-Clause.txt | Componentes BSD; consultar también los avisos particulares |
 | GPL-3.0.txt | Referencia de la licencia del modelo spaCy |
 

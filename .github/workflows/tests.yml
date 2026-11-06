@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - name: Checkout
@@ -32,6 +32,15 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: |
+          python -m venv .venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            source .venv/Scripts/activate
+            echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
+          else
+            source .venv/bin/activate
+            echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+          fi
+          python -m pip install --upgrade pip==26.3 setuptools==84.2.1
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip check
 

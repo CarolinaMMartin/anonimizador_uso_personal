@@ -41,16 +41,17 @@ El listado completo de bibliotecas y modelos de terceros con sus
 respectivas licencias se encuentra en:
 
   * THIRD_PARTY_NOTICES.txt
-  * LICENSES/ (textos completos de Apache 2.0, BSD-3-Clause, MIT, GPL-3.0)
+  * LICENSES/ (referencias a Apache 2.0, BSD-3-Clause, MIT y GPL-3.0;
+    en el portable, avisos originales en LICENSES/third_party/)
   * docs/COMPLIANCE.md (informe ejecutivo para IT / despliegue)
 
 Componentes destacados:
 
   * `es_core_news_md` (modelo spaCy para español) — licencia GPL-3.0.
     Se distribuye únicamente con el paquete portable (no con el código
-    fuente). Texto completo: LICENSES/GPL-3.0.txt.
+    fuente). Texto completo en el portable: models/es_core_news_md/LICENSE.
   * FastAPI, Uvicorn, Pydantic, Presidio, python-docx, pdfplumber,
-    ReportLab, RapidFuzz, NetworkX, aiofiles — licencias permisivas
+    ReportLab, RapidFuzz, NetworkX — licencias permisivas
     (MIT / BSD / Apache 2.0).
 
 ================================================================================

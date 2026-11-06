@@ -1,9 +1,27 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.4 — 6 de noviembre de 2026
+
+La [descarga vigente](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4)
+usa un único paquete Windows identificado como 3.4.4.
+
+- Actualiza las dependencias compatibles y retira `aiofiles` y
+  `presidio-anonymizer`, que el código no utiliza.
+- Genera los inventarios de dependencias desde el entorno de compilación.
+  Comprueba la procedencia del ejecutable antes de volver a empaquetarlo,
+  para evitar mezclar archivos o inventarios de distintos builds.
+- Alinea la versión de la aplicación, la interfaz, los manuales, los enlaces
+  de descarga y el paquete. Conserva las correcciones funcionales de 3.4.3.
+- Separa los informes de entregas anteriores en `docs/historico/`; esos
+  informes no forman parte del portable vigente.
+- El entorno de desarrollo requiere Python 3.12–3.13.
+
+Las comprobaciones de esta entrega se registran en
+[VERIFICACION_3.4.4.md](docs/VERIFICACION_3.4.4.md).
+
 ## 3.4.3 — 6 de noviembre de 2026
 
-La [descarga vigente](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3)
-incluye las correcciones de la revisión EGM:
+La entrega 3.4.3 incorporó las correcciones de la revisión EGM:
 
 - Respeta exactamente la selección manual, incluso dentro de una palabra.
   Sus repeticiones y la lupa usan límites completos por defecto; el usuario

@@ -1,22 +1,20 @@
 THIRD-PARTY SOFTWARE NOTICES
 Anonimizador Judicial — IALAB
-Version 3.4.3; runtime version also available as app_version in /health.
+Version 3.4.4; runtime version also available as app_version in /health.
 
 PRIMARY RUNTIME DEPENDENCIES
 Component                 Pinned version    License
-FastAPI                   0.136.1           MIT
-Uvicorn                   0.47.0            BSD-3-Clause
-python-multipart          0.0.29            Apache-2.0
+FastAPI                   0.162.0           MIT
+Uvicorn                   0.54.0            BSD-3-Clause
+python-multipart          0.0.33            Apache-2.0
 python-docx               1.2.0             MIT
-pdfplumber                0.11.9            MIT
-ReportLab                 4.5.1             BSD-style (see original license)
-RapidFuzz                 3.14.5            MIT
-NetworkX                  3.6.1             BSD-3-Clause
-Pydantic                  2.13.4            MIT
-aiofiles                  25.1.0            Apache-2.0
-presidio-analyzer         2.2.362           MIT
-presidio-anonymizer       2.2.362           MIT
-spaCy (library)           3.8.14            MIT
+pdfplumber                0.11.10           MIT
+ReportLab                 5.1.0             BSD-style (see original license)
+RapidFuzz                 3.14.6            MIT
+NetworkX                  3.7               BSD-3-Clause
+Pydantic                  2.14.3            MIT
+presidio-analyzer         2.2.366           MIT
+spaCy (library)           3.8.18            MIT
 
 MODEL AND BUILD TOOL
 es_core_news_md           3.8.0             GPL-3.0
@@ -24,7 +22,7 @@ Model original license: models/es_core_news_md/LICENSE
 Model metadata and configuration accompany the bundled model.
 The model license is separate from the spaCy library license.
 
-PyInstaller               6.20.0            GPL with bootloader exception
+PyInstaller               6.22.3            GPL with bootloader exception
 Used for compilation. Consult its original notices.
 
 LICENSE COPIES AND BUILD INVENTORY
@@ -33,8 +31,10 @@ LICENSES/third_party/ contains original notices copied from installed wheels.
 LICENSES/INVENTARIO_BUILD.json lists installed distributions and notices found
 during compilation, including development tools. It is an environment inventory,
 not a declaration that every listed tool is a runtime dependency.
-DEPENDENCIAS_BUILD.txt in the portable and docs/dependencies-frozen.txt in the
-repository document the validated environment, including transitive packages.
+DEPENDENCIAS_BUILD.txt and LICENSES/INVENTARIO_BUILD.json in the portable
+come from the same build snapshot, including transitive packages.
+BUILD_PROVENANCE.json records that environment, source hashes and executable.
+docs/dependencies-frozen.txt records the validated local release environment.
 Preserve component-specific copyright and license notices when redistributing.
 
 PROJECT RESOURCES AND MARKS

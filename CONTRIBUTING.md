@@ -4,7 +4,7 @@ El proyecto procesa documentos localmente con regex, Presidio y spaCy. Mantener 
 
 ## Entorno
 
-Python 3.11–3.13. La entrega Windows 3.4.3 con las correcciones EGM se construyó y verificó con Python 3.12.14 de 64 bits. Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
+Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Las verificaciones de la entrega están en [VERIFICACION_3.4.4.md](docs/VERIFICACION_3.4.4.md). Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
 
 ```powershell
 python -m venv .venv
@@ -14,6 +14,10 @@ python -m venv .venv
 ```
 
 En macOS/Linux usar `.venv/bin/python`. El instalador utiliza el modelo fijo 3.8.0; el inicio busca un puerto disponible e informa la dirección. En `/health`, las capas se consultan en `nlp_layers.presidio.available` y `nlp_layers.spacy.available`.
+
+El entorno debe ser aislado: no usar `--system-site-packages`. Las pruebas
+reales de navegador usan el conjunto opcional `requirements-browser.txt`
+y Microsoft Edge instalado; consultar [DESARROLLO.md](docs/DESARROLLO.md).
 
 ## Verificación
 
@@ -38,4 +42,4 @@ Para cambios grandes, abrir un Issue con el problema y alcance; para correccione
 
 Mantener versiones fijadas, avisos de terceros y manuales consistentes con el comportamiento. Las contribuciones se distribuyen bajo Apache 2.0 conforme a [LICENSE](LICENSE); el uso del logo y marca se rige por [NOTICE](NOTICE).
 
-La función de personas conocidas es una [propuesta pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md) y no se incluye en 3.4.3.
+La función de personas conocidas es una [propuesta pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md) y no se incluye en la versión vigente. Los informes de entregas anteriores están en [el archivo histórico](docs/historico/README.md).

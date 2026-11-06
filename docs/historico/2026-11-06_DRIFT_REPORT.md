@@ -2,8 +2,8 @@
 
 > Informe histórico anterior a las correcciones EGM. Sus hallazgos y pruebas
 > pendientes describen el estado revisado, no el de la descarga vigente.
-> Ver [el cierre de correcciones](docs/revision-egm/correcciones_pendientes.md)
-> y el [README](README.md).
+> Ver [el cierre de correcciones](revision-egm/correcciones_pendientes.md)
+> y el [README](../../README.md).
 
 Fecha: 2026-11-06. Referencia del repositorio: `628913f6803eb6677fefdd0fbd3a35a28f4709cf`.
 

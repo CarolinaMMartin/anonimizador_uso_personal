@@ -1,5 +1,9 @@
 # Plan breve: C2, C3, C4 y C5
 
+> Registro histórico del plan y su cierre para 3.4.3. Las restricciones,
+> rutas y estados siguientes corresponden a esa revisión. La entrega vigente
+> se documenta en el [README actual](../../../README.md).
+
 Rama: `revision-egm`. Base: código local con C1, D1 y C6 ya corregidos y `2026-11-06_DRIFT_REPORT.md`. No habrá commits, push, publicaciones ni cambios de dependencias. Datos y descargas de prueba serán sintéticos. Se autoriza una única ronda EGM con `codebase_details` e `implementation_readiness`, ambos contra `implementation-readiness-standard`, sobre este archivo completo; incorporar observaciones justificadas y continuar implementando sin otra ronda ni aprobaciones rutinarias.
 
 ## 1. Estado actual y límites

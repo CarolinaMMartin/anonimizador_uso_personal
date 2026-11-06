@@ -5,21 +5,22 @@ La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros dat
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Descargar para Windows — versión 3.4.3
+## Descargar para Windows — versión 3.4.4
 
-[**DESCARGAR PARA WINDOWS · 3.4.3 con las últimas correcciones**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip)
+[**DESCARGAR PARA WINDOWS · 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip)
 
-Para **Windows 10 y 11 de 64 bits**. Descargá el ZIP completo (138,7 MiB),
+Para **Windows 10 y 11 de 64 bits**. Descargá el ZIP completo,
 extraelo y abrí **INICIAR.bat**. No necesitás instalar Python ni otras dependencias.
 
-Esta es la entrega **3.4.3 con las correcciones de revisión EGM**.
-El archivo se llama **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**.
+Esta es la entrega **3.4.4**, con dependencias actualizadas y documentación
+coherente con los archivos incluidos.
+El archivo se llama **AnonimizadorJudicial-3.4.4-Windows.zip**.
 Las descargas de este proyecto se centralizan en **anonimizador_mpf**.
 
-[Detalles de la versión](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3) ·
-[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip.sha256)
+[Detalles de la versión](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4) ·
+[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
 
-[Verificación de la descarga y su documentación](docs/VERIFICACION_PUBLICACION_3.4.3.md).
+[Verificación de la entrega](docs/VERIFICACION_3.4.4.md).
 
 **Mac Intel y Apple Silicon:** todavía no hay una descarga de esta versión
 para macOS. El ZIP de Windows no funciona en Mac.
@@ -32,7 +33,7 @@ nuevo ni desactivar la protección. [Qué hacer si aparece este aviso](docs/MANU
 
 ## Abrir por primera vez
 
-1. Descargá **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip** con el enlace de arriba.
+1. Descargá **AnonimizadorJudicial-3.4.4-Windows.zip** con el enlace de arriba.
 2. Hacé clic derecho sobre el archivo y elegí **Extraer todo**. Después, **Extraer**.
 3. Abrí la carpeta que se creó y entrá en la carpeta del anonimizador.
 4. Hacé doble clic en **INICIAR.bat** (puede aparecer como **INICIAR**).
@@ -80,7 +81,7 @@ respetan al descargar.
 
 | Qué sucede | Qué hacer |
 | --- | --- |
-| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.3` que está dentro. |
+| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.4` que está dentro. |
 | Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
@@ -95,14 +96,11 @@ nueva**. Abrí **INICIAR** desde esa carpeta;
 los accesos directos anteriores siguen abriendo la versión anterior.
 El número de versión aparece en la parte superior de la aplicación.
 
-Si ya tenías una entrega local 3.4.3, descargá también este ZIP: la revisión
-EGM incorpora correcciones posteriores y conserva el número 3.4.3 en pantalla.
-Podés distinguirla por **revision-egm** en el nombre del archivo descargado.
-
-La versión **3.4.3** completa la detección de nombres en minúsculas dentro de
-carátulas judiciales, incluidos apellidos que no están en el catálogo.
-Conserva las sugerencias de identidad, las decisiones manuales y la identidad visual del
-Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires.
+Si usabas 3.4.3 o una versión anterior, verificá que la nueva copia indique
+**v3.4.4**. Esta actualización conserva la detección de nombres en carátulas,
+las sugerencias de identidad y las decisiones manuales. También mantiene
+la identidad visual del Ministerio Público Fiscal de la Ciudad Autónoma de
+Buenos Aires.
 [Ver las novedades](docs/NOTAS_VERSION.md).
 
 ## Tus documentos y tu privacidad

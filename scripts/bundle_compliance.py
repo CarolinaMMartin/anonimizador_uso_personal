@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import shutil
-import json
-from importlib.metadata import distributions
 from pathlib import Path
 from portable_docs import portable_text
+from build_provenance import (
+    BuildSnapshot, verify_build_provenance, write_build_inventory,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,8 +26,12 @@ COMPLIANCE_DOCS = (
 )
 
 
-def bundle_compliance(pkg_dir: Path) -> None:
+def bundle_compliance(pkg_dir: Path, *, build_snapshot: BuildSnapshot | None = None) -> None:
     """Incluye licencias y avisos en la carpeta de entrega (junto al .exe)."""
+    if build_snapshot is None:
+        verify_build_provenance(pkg_dir)
+    else:
+        write_build_inventory(pkg_dir, build_snapshot)
     for name in COMPLIANCE_FILES:
         src = ROOT / name
         if src.is_file():
@@ -40,6 +45,8 @@ def bundle_compliance(pkg_dir: Path) -> None:
             dest.mkdir(parents=True, exist_ok=True)
             for item in src.rglob("*"):
                 rel = item.relative_to(src)
+                if rel.parts[0] == 'third_party' or rel.name == 'INVENTARIO_BUILD.json':
+                    continue
                 target = dest / rel
                 if item.is_dir():
                     target.mkdir(parents=True, exist_ok=True)
@@ -61,30 +68,6 @@ def bundle_compliance(pkg_dir: Path) -> None:
             dest_txt = pkg_dir / f"{src.stem}.txt"
             dest_txt.write_text(text, encoding="utf-8")
             print(f"  Legal -> {dest_md}")
-
-    inventory = []
-    for distribution in sorted(distributions(), key=lambda item: (item.metadata.get('Name') or '').lower()):
-        name = distribution.metadata.get('Name') or 'unknown'
-        copied = []
-        for item in distribution.files or ():
-            if not (any(part.lower() in {'licenses', 'licences'} for part in item.parts)
-                    or item.name.upper().startswith(('LICENSE', 'LICENCE', 'COPYING', 'NOTICE'))):
-                continue
-            source = Path(distribution.locate_file(item))
-            if not source.is_file():
-                continue
-            destination = pkg_dir / 'LICENSES' / 'third_party' / name / str(item)
-            if not destination.resolve().is_relative_to((pkg_dir / 'LICENSES/third_party').resolve()):
-                continue
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, destination)
-            copied.append(destination.relative_to(pkg_dir).as_posix())
-        inventory.append({'name': name, 'version': distribution.version,
-                          'license_expression': distribution.metadata.get('License-Expression'),
-                          'license_files': copied})
-    (pkg_dir / 'LICENSES/INVENTARIO_BUILD.json').write_text(
-        json.dumps(inventory, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-
 
 if __name__ == "__main__":
     import sys

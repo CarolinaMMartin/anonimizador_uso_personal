@@ -1,18 +1,18 @@
-# Construcción y distribución — 3.4.3
+# Construcción y distribución — 3.4.4
 
-La entrega 3.4.3 corresponde a Windows x64. Todavía no hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y validarse en una Mac antes de publicarse.
+La entrega 3.4.4 corresponde a Windows x64. Todavía no hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y validarse en una Mac antes de publicarse.
 
-La [Release 3.4.3](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3)
-distribuye el paquete con las correcciones de la revisión EGM:
-`AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip` y su SHA-256.
-La carpeta local verificada es `dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/`.
-La primera entrega local con el mismo número no incluye esas
-correcciones y no es el archivo de esta publicación. Generar un ZIP local
-no publica una Release ni modifica las descargas existentes.
+La [Release 3.4.4](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4)
+distribuye el paquete de esta versión:
+`AnonimizadorJudicial-3.4.4-Windows.zip` y su SHA-256.
+La carpeta local de entrega es `dist/AnonimizadorJudicial-NLP-3.4.4/`.
+Generar un ZIP local no publica una Release ni modifica las descargas
+existentes. Los resultados de las verificaciones están en
+[VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md).
 
 ## Bloqueo de Windows 11 pendiente de resolver
 
-La compilación 3.4.3 no está firmada. El Control Inteligente de Aplicaciones
+La compilación 3.4.4 no está firmada. El Control Inteligente de Aplicaciones
 puede bloquear el ejecutable o el lanzador en algunos equipos. Una prueba
 funcional en Windows sin esa protección no demuestra que el paquete se pueda
 abrir en Windows 11 con la protección activa.
@@ -28,25 +28,28 @@ no presentar el ZIP como compatible con todos los equipos Windows 11.
 
 ## Construcción
 
-Desde la raíz del repositorio, con Python 3.11–3.13:
+Desde la raíz del repositorio, con Python 3.12–3.13:
+
+Usar un entorno virtual aislado, sin `--system-site-packages`; no reutilizar
+dependencias heredadas de otra instalación de Python.
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
-$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm'
+$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.4'
 .venv\Scripts\python -m pytest tests -q
 node --test tests/frontend_session.test.cjs
 .venv\Scripts\python scripts\audit_repository.py
-.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm
+.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.4
 .venv\Scripts\python -m pytest tests -q
-.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --keep-running
-$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/PUERTO_ACTUAL.txt'
-.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --port $appPort --use-existing --category-cases --all-categories
-.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --port $appPort
+.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.4 --keep-running
+$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.4/PUERTO_ACTUAL.txt'
+.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.4 --port $appPort --use-existing --category-cases --all-categories
+.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.4 --port $appPort
 .venv\Scripts\python scripts\check_identity_flow.py --url "http://127.0.0.1:$appPort"
 .venv\Scripts\python scripts\check_identity_flow.py --caption-cases --url "http://127.0.0.1:$appPort"
-.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm --output dist/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip
+.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.4 --output dist/AnonimizadorJudicial-3.4.4-Windows.zip
 ```
 
 La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. Un modelo local válido evita volver a descargarlo. El programa empaquetado funciona sin conexión.
@@ -59,7 +62,26 @@ El constructor produce un paquete completo: ejecutable, frontend, diccionarios i
 construir la actualización sin reemplazar una instalación abierta. Sin esa
 opción se conserva la salida tradicional `dist/AnonimizadorJudicial-NLP/`.
 Si una ruta de compilación resulta demasiado larga en Windows, se puede
-elegir un staging corto mediante `ANON_BUILD_DIR`, por ejemplo `build/p343`.
+elegir un staging corto mediante `ANON_BUILD_DIR`, por ejemplo `build/p344`.
+
+## Procedencia e inventarios
+
+El constructor registra el entorno instalado antes de compilar y comprueba
+que se conserve durante la construcción. Genera juntos
+`DEPENDENCIAS_BUILD.txt` y `LICENSES/INVENTARIO_BUILD.json`; ambos describen
+ese entorno e incluyen las herramientas de desarrollo utilizadas.
+
+`BUILD_PROVENANCE.json` registra Python, plataforma, distribuciones,
+procedencia de instalaciones directas, huellas SHA-256 de los fuentes que
+intervienen en la compilación y huella del ejecutable. Al volver a empaquetar,
+se exige que coincidan el entorno, esos fuentes y el binario. Una diferencia
+detiene el proceso antes de actualizar documentación o licencias: construir
+una nueva entrega si cambió alguno de esos componentes.
+
+El empaquetado conserva los inventarios y avisos de terceros generados por
+el build. Para actualizar la referencia del repositorio, copiar
+`DEPENDENCIAS_BUILD.txt` del paquete final a `docs/dependencies-frozen.txt`.
+Ese archivo del repositorio no se usa para crear el inventario del portable.
 
 ## Verificación de la entrega
 
@@ -68,6 +90,10 @@ Probar el ZIP extraído en una carpeta nueva. Ejecutar `INICIAR.bat`; el lanzado
 Las pruebas de estructura del paquete se omiten antes de construirlo; después de construirlo deben ejecutarse sin omisiones. Para verificar otra carpeta, establecer `ANON_PKG_DIR`.
 
 No distribuir documentos reales, equivalencias de usuarios, sesiones, bases de datos, registros, credenciales ni archivos de configuración personales. Los resultados de validación permanecen en `build/validation/`, fuera de Git y de la entrega.
+
+Los informes de versiones anteriores están en [el archivo histórico](historico/README.md)
+y no se distribuyen en el portable. Las copias locales anteriores se conservan
+aparte de la entrega vigente, en `_archivo/releases/`, fuera de Git.
 
 ## Publicación y actualización
 

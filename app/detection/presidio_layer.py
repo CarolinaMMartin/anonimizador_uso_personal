@@ -1,7 +1,7 @@
 """Capa Presidio: analyzer con NLP en español y recognizers AR.
 
 Requiere (ver https://microsoft.github.io/presidio/installation/):
-  pip install presidio-analyzer presidio-anonymizer spacy
+  pip install -r requirements.txt
   python -m spacy download es_core_news_md
 """
 import logging

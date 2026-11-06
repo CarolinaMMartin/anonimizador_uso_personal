@@ -25,11 +25,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
           cache: pip
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Create isolated build environment
+        shell: bash
+        run: |
+          python -m venv .venv
+          echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
       - name: Validate download metadata
         id: version
         shell: pwsh
@@ -42,6 +47,7 @@ jobs:
       - name: Install pinned dependencies and local model
         shell: bash
         run: |
+          python -m pip install --upgrade pip==26.3 setuptools==84.2.1
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python scripts/install_nlp.py
           python -m pip check

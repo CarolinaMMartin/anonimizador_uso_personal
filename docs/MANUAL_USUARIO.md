@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador Judicial 3.4.3
+# Manual de usuario — Anonimizador Judicial 3.4.4
 
 Herramienta académica de uso personal desarrollada por IALAB, con identidad
 visual del Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires
@@ -34,13 +34,13 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 ### Windows
 
 Descargá y extraé el paquete vigente enlazado en el [README](../README.md).
-La entrega con las correcciones EGM se identifica por `revision-egm` en el
-nombre del ZIP; la cabecera muestra **v3.4.3**.
+El archivo es `AnonimizadorJudicial-3.4.4-Windows.zip`; la cabecera muestra
+**v3.4.4**.
 
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.4.3** en el indicador superior.
+3. Verificá **v3.4.4** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
@@ -57,7 +57,7 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy · Catálogos cargados
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.3**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.4**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---

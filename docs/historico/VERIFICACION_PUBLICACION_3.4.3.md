@@ -1,5 +1,10 @@
 # Verificación de la publicación 3.4.3
 
+> Registro histórico de la publicación 3.4.3. La descarga y verificación
+> vigentes están en el [README actual](../../README.md). Una auditoría
+> posterior encontró discrepancias en los inventarios de dependencias de
+> este paquete; esta revisión documental no comprobó esas versiones.
+
 Revisión del 6 de noviembre de 2026 sobre el repositorio `CarolinaMMartin/anonimizador_mpf`, sus instrucciones de descarga y el ZIP Windows.
 
 ## Entrega vigente

@@ -15,16 +15,19 @@ from __future__ import annotations
 import argparse
 import ast
 import importlib.util
+from importlib.metadata import PackageNotFoundError, version as distribution_version
 import os
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
+from build_provenance import capture_build_snapshot, digest_file, verify_build_snapshot
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST_NAME = "AnonimizadorJudicial-NLP"
 SPACY_MODEL = "es_core_news_md"
+MODEL_VERSION = '3.8.0'
 
 
 def is_windows() -> bool:
@@ -127,6 +130,31 @@ def copy_delivery(src: Path, output: Path | None = None) -> Path:
     return target
 
 
+def verify_model_metadata(metadata: dict, spacy_version: str) -> None:
+    from packaging.specifiers import InvalidSpecifier, SpecifierSet
+
+    if (metadata.get('version') != MODEL_VERSION
+            or f"{metadata.get('lang')}_{metadata.get('name')}" != SPACY_MODEL):
+        raise SystemExit(f'El modelo debe ser {SPACY_MODEL} {MODEL_VERSION}. Ejecutá scripts/install_nlp.py.')
+    try:
+        compatible = bool(metadata.get('spacy_version')) and SpecifierSet(metadata['spacy_version']).contains(spacy_version)
+    except InvalidSpecifier:
+        compatible = False
+    if not compatible:
+        raise SystemExit(f'El modelo {SPACY_MODEL} no es compatible con spaCy {spacy_version}.')
+
+
+def verify_model_override(override: Path, installed: Path) -> None:
+    def files(root):
+        return {path.relative_to(root).as_posix(): path for path in root.rglob('*')
+                if path.is_file() and '__pycache__' not in path.parts and path.suffix not in {'.pyc', '.pyo'}}
+
+    expected, local = files(installed), files(override)
+    if expected.keys() != local.keys() or any(digest_file(path) != digest_file(local[name])
+                                             for name, path in expected.items()):
+        raise SystemExit('El modelo local en models/ difiere del modelo instalado verificado. Conservá esa copia fuera de models/ antes de compilar.')
+
+
 def ensure_nlp() -> Path:
     """Verifica Presidio/spaCy y devuelve ruta del modelo."""
     if importlib.util.find_spec("spacy") is None:
@@ -138,13 +166,17 @@ def ensure_nlp() -> Path:
     sys.path.insert(0, str(ROOT))
     from app.runtime_paths import spacy_model_dir
 
-    model = spacy_model_dir() or SPACY_MODEL
     try:
-        nlp = spacy.load(model)
-    except OSError:
-        run([sys.executable, 'scripts/install_nlp.py'])
-        nlp = spacy.load(spacy_model_dir() or SPACY_MODEL)
+        if distribution_version(SPACY_MODEL) != MODEL_VERSION:
+            raise SystemExit(f'Instalá {SPACY_MODEL} {MODEL_VERSION} con scripts/install_nlp.py antes de compilar.')
+        nlp = spacy.load(SPACY_MODEL)
+    except (OSError, PackageNotFoundError):
+        raise SystemExit('El modelo verificado no está instalado. Ejecutá scripts/install_nlp.py antes de compilar.')
+    verify_model_metadata(nlp.meta, spacy.__version__)
     model_path = Path(nlp._path).resolve()
+    override = spacy_model_dir()
+    if override is not None and override.resolve() != model_path:
+        verify_model_override(override, model_path)
     if not (model_path / "config.cfg").exists():
         raise SystemExit(
             f"Modelo incompleto en {model_path}. Reinstalá: "
@@ -185,7 +217,7 @@ def build_onedir() -> Path:
     try:
         import PyInstaller  # noqa: F401
     except ImportError:
-        run([sys.executable, "-m", "pip", "install", "pyinstaller"])
+        raise SystemExit('PyInstaller no instalado. Instalá requirements-dev.txt antes de compilar.')
 
     stage_dist = STAGE_ROOT / "dist"
     stage_work = STAGE_ROOT / "build"
@@ -215,10 +247,6 @@ def build_onedir() -> Path:
         f"--specpath={STAGE_ROOT}",
         '--additional-hooks-dir',
         str(ROOT / 'scripts/pyinstaller_hooks'),
-        "--collect-all",
-        "presidio_analyzer",
-        "--collect-all",
-        "presidio_anonymizer",
         "--collect-data",
         "tldextract",
         # Excluir módulos de tests/benchmarks que no se usan en runtime y
@@ -461,7 +489,9 @@ def main() -> None:
     print("Verificando NLP en venv…")
     model_src = ensure_nlp()
     print(f"Modelo fuente: {model_src}")
+    build_snapshot = capture_build_snapshot()
     stage_pkg = build_onedir()
+    verify_build_snapshot(build_snapshot)
     copy_model(stage_pkg, model_src)
     copy_frontend_overlay(stage_pkg)
     smoke_test_pkg(stage_pkg)
@@ -487,7 +517,7 @@ def main() -> None:
     print('Copiando manuales e inventario de dependencias…')
     bundle_docs(final_dir)
     print("Copiando avisos legales y licencias…")
-    bundle_compliance(final_dir)
+    bundle_compliance(final_dir, build_snapshot=build_snapshot)
     verify_portable_compliance(final_dir)
 
     print(f"\nListo:")

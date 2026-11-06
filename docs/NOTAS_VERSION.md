@@ -1,25 +1,33 @@
-# Anonimizador Judicial 3.4.3
+# Anonimizador Judicial 3.4.4
 
-Entrega para Windows x64, con las correcciones de revisión del 6 de noviembre de 2026.
+Entrega para Windows x64 del 6 de noviembre de 2026.
 
 ## Abrir la aplicación
 
-[**DESCARGAR PARA WINDOWS — 3.4.3**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip)
+[**DESCARGAR PARA WINDOWS — 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip)
 
-El archivo es **AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip**:
+El archivo es **AnonimizadorJudicial-3.4.4-Windows.zip**:
 
 1. Elegí **Extraer todo** y conservá la carpeta completa.
 2. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
-3. Esperá a que abra el navegador. Verificá **v3.4.3** y **Catálogos cargados**
+3. Esperá a que abra el navegador. Verificá **v3.4.4** y **Catálogos cargados**
    en la cabecera.
 
 No requiere instalar Python ni descargar modelos. Para actualizar, guardá
-el trabajo abierto y extraé esta entrega en una carpeta nueva. El sufijo
-`revision-egm` distingue este paquete de la primera entrega local 3.4.3;
-la aplicación muestra **v3.4.3** en ambos casos, por lo que debés usar el ZIP
-enlazado arriba para recibir las correcciones de revisión.
+el trabajo abierto y extraé esta entrega en una carpeta nueva. Si usabas
+3.4.3 o una versión anterior, comprobá que la nueva copia indique **v3.4.4**.
 
-## Correcciones incluidas en esta publicación
+## Novedades de 3.4.4
+
+- Actualización de las dependencias compatibles y retirada de dos librerías
+  que el programa no utiliza.
+- Inventarios de dependencias generados desde el entorno de compilación y
+  comprobación de la procedencia del ejecutable al preparar la descarga.
+- Versión, enlaces de descarga, manuales y archivos del paquete alineados.
+  Los informes de entregas anteriores se conservan en el archivo histórico
+  del repositorio y no se incluyen en este portable.
+
+## Funciones conservadas
 
 - Las selecciones manuales respetan exactamente el texto marcado; las
   repeticiones usan límites completos salvo que actives coincidencias parciales.
@@ -31,7 +39,7 @@ enlazado arriba para recibir las correcciones de revisión.
   detecciones. Las ediciones del texto, incluida una salida vacía, se respetan.
 - El campo editable conserva el foco y la posición del cursor durante la revisión.
 
-## Cambios
+### Detección de nombres y carátulas
 
 - Las partes de una carátula se detectan completas también cuando están
   escritas en minúsculas y contienen nombres o apellidos fuera del catálogo.
@@ -75,9 +83,7 @@ Se mantienen las mejoras de las versiones anteriores:
 - Procesamiento local, modelo incluido y autoría IALAB del software.
 
 El detalle técnico está en [CHANGELOG.md](../CHANGELOG.md). Los resultados
-de la entrega inicial se registran en [VERIFICACION_3.4.3.md](VERIFICACION_3.4.3.md).
-La verificación del paquete con las correcciones posteriores está en
-[correcciones_pendientes.md](revision-egm/correcciones_pendientes.md).
+de esta entrega se registran en [VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md).
 
 ## Uso y límites
 
