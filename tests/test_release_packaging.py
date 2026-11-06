@@ -221,6 +221,27 @@ def test_portable_release_notes_and_dependency_links_stay_local():
     assert '[notes](NOTAS_VERSION.md)' in converted
     assert '[inventory](DEPENDENCIAS_BUILD.txt)' in converted
 
+
+def test_bundled_changelog_links_resolve_inside_the_delivery(tmp_path, monkeypatch):
+    import portable_docs
+    repository = tmp_path / 'repository'
+    (repository / 'docs').mkdir(parents=True)
+    (repository / 'CHANGELOG.md').write_text(
+        '[manual](docs/MANUAL_USUARIO.md) [download](README.md)', encoding='utf-8')
+    (repository / 'docs/MANUAL_USUARIO.md').write_text('Manual', encoding='utf-8')
+    (repository / 'README.md').write_text('Download instructions', encoding='utf-8')
+    delivery = tmp_path / 'delivery'
+    delivery.mkdir()
+    monkeypatch.setattr(package, 'ROOT', repository)
+    monkeypatch.setattr(portable_docs, 'ROOT', repository)
+    monkeypatch.setattr(package, 'app_version', lambda: '9.0.0')
+    package.bundle_docs(delivery)
+    changelog = (delivery / 'CHANGELOG.md').read_text(encoding='utf-8')
+    assert '[manual](MANUAL_USUARIO.md)' in changelog
+    assert (delivery / 'MANUAL_USUARIO.md').is_file()
+    assert '[download](README.md)' not in changelog
+    assert 'README.md' in changelog
+
 def test_wheel_export_template_is_preserved_but_modified_documents_are_excluded(tmp_path):
     from importlib.metadata import distribution
     original = Path(distribution('python-docx').locate_file('docx/templates/default.docx'))

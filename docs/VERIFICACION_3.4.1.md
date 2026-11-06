@@ -1,5 +1,8 @@
 # Verificación de 3.4.1
 
+> Registro histórico de esa entrega. Para instalar la versión vigente,
+> consultar el [README](../README.md); estos resultados no validan otra versión.
+
 Entrega local para Windows x64, 5 de noviembre de 2026. Se utilizan
 documentos sintéticos; los archivos privados aportados para diagnosticar
 el problema no se incorporan al código ni al paquete.

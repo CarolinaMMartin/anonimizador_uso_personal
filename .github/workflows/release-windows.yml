@@ -20,6 +20,7 @@ jobs:
     runs-on: windows-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      asset_name: ${{ steps.version.outputs.asset_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,12 +30,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Read source version
+      - name: Validate download metadata
         id: version
         shell: pwsh
         run: |
-          $version = python -c "import sys; sys.path.insert(0, 'scripts'); from package_release import app_version; print(app_version())"
-          "version=$version" >> $env:GITHUB_OUTPUT
+          $metadataJson = python -c "import json, sys; sys.path.insert(0, 'scripts'); from audit_repository import release_download_info; print(json.dumps(release_download_info()))"
+          if ($LASTEXITCODE -ne 0) { throw 'Los enlaces de descarga no coinciden con la version del codigo.' }
+          $metadata = $metadataJson | ConvertFrom-Json
+          "version=$($metadata.version)" >> $env:GITHUB_OUTPUT
+          "asset_name=$($metadata.asset_name)" >> $env:GITHUB_OUTPUT
       - name: Install pinned dependencies and local model
         shell: bash
         run: |
@@ -60,16 +64,18 @@ jobs:
           python scripts/check_document_parts.py
           python scripts/check_sensitive_portable.py
       - name: Package reviewed source
+        env:
+          RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
         shell: pwsh
         run: |
           Set-Content dist/AnonimizadorJudicial-NLP/SOURCE_COMMIT.txt $env:GITHUB_SHA -Encoding ascii
-          python scripts/package_release.py --output dist/AnonimizadorJudicial-Windows.zip
+          python scripts/package_release.py --output "dist/$env:RELEASE_ASSET"
       - uses: actions/upload-artifact@v4
         with:
           name: anonimizador-windows-${{ steps.version.outputs.version }}
           path: |
-            dist/AnonimizadorJudicial-Windows.zip
-            dist/AnonimizadorJudicial-Windows.zip.sha256
+            dist/${{ steps.version.outputs.asset_name }}
+            dist/${{ steps.version.outputs.asset_name }}.sha256
           if-no-files-found: error
           retention-days: 30
   publish:
@@ -88,5 +94,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_ASSET: ${{ needs.build.outputs.asset_name }}
         run: |
-          gh release create "v$RELEASE_VERSION" --target "$GITHUB_SHA" --title "Anonimizador Judicial $RELEASE_VERSION" --notes-file docs/NOTAS_VERSION.md release-files/AnonimizadorJudicial-Windows.zip release-files/AnonimizadorJudicial-Windows.zip.sha256
+          python scripts/release_notes.py --commit "$GITHUB_SHA" --output release-files/NOTAS_VERSION.md
+          gh release create "v$RELEASE_VERSION" --target "$GITHUB_SHA" --title "Anonimizador Judicial $RELEASE_VERSION" --notes-file release-files/NOTAS_VERSION.md "release-files/$RELEASE_ASSET" "release-files/$RELEASE_ASSET.sha256"

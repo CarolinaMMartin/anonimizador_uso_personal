@@ -2,6 +2,24 @@
 
 ## 3.4.3 — 6 de noviembre de 2026
 
+La [descarga vigente](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3)
+incluye las correcciones de la revisión EGM:
+
+- Respeta exactamente la selección manual, incluso dentro de una palabra.
+  Sus repeticiones y la lupa usan límites completos por defecto; el usuario
+  puede activar coincidencias parciales.
+- Oculta toda la extensión de datos superpuestos y aplica la etiqueta de
+  la última decisión manual; las otras apariciones conservan sus etiquetas.
+- Preserva etiquetas manuales al cambiar categorías y aplica la etiqueta
+  del destino al asignar o unir grupos.
+- Habilita el editor y las exportaciones tras el análisis aunque no queden
+  detecciones, y respeta las ediciones del texto, incluida una salida vacía.
+- Mantiene el foco y el cursor al editar etiquetas, y actualiza las variantes
+  del grupo y la vista anonimizada después del guardado.
+- Corrige coincidencias y posiciones con tildes descompuestas y emojis.
+
+También incluye las mejoras iniciales de 3.4.3:
+
 - Conserva nombres completos en minúsculas y fuera del catálogo cuando
   ocupan una parte delimitada de carátula. Los separadores `c/` y `s/`
   permanecen fuera de las entidades.
@@ -103,4 +121,7 @@ La entrega de esta versión corresponde a Windows x64. macOS requiere su propia 
 
 ## Versiones anteriores
 
-El historial de versiones públicas anteriores se conserva en [GitHub Releases](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases). Las revisiones locales intermedias de 3.3.11 se consolidan en 3.3.12.
+Las entradas anteriores conservan el historial del proyecto; no son enlaces
+a la descarga vigente. Las revisiones locales intermedias de 3.3.11 se
+consolidaron en 3.3.12. Para instalar la aplicación, usá la descarga indicada
+en el [README](README.md).

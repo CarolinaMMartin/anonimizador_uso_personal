@@ -23,7 +23,7 @@ Detecta automáticamente, entre otros:
 - Pólizas de seguro, números de chasis y motor.
 
 Reemplaza cada dato por una etiqueta, por ejemplo `[PERSONA_1]` o
-`[DNI_1]`, y permite exportar Word, PDF, CSV y Markdown.
+`[DNI_1]`, y permite exportar Word, PDF y CSV, y copiar Markdown al portapapeles.
 Los identificadores sin categoría específica, como seguimiento, póliza,
 chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
@@ -32,6 +32,10 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 ## 2. Cómo iniciar
 
 ### Windows
+
+Descargá y extraé el paquete vigente enlazado en el [README](../README.md).
+La entrega con las correcciones EGM se identifica por `revision-egm` en el
+nombre del ZIP; la cabecera muestra **v3.4.3**.
 
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
@@ -43,9 +47,9 @@ otras copias ni transfiere sus documentos.
 
 ### macOS
 
-La entrega 3.4.3 se verifica en Windows. Los paquetes anteriores de macOS
-conservan su propia versión y sus instrucciones. Este ZIP Windows no funciona
-en Mac; una compilación nueva debe probarse en ese sistema antes de publicarse.
+Esta entrega se verifica en Windows y su ZIP no funciona en Mac. Todavía no
+hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y
+verificarse en ese sistema antes de publicarse.
 
 El indicador superior debe mostrar algo similar a:
 
@@ -236,7 +240,7 @@ la tabla de revisión.
 | Word (.docx) | Documento anonimizado con el formato elegido |
 | PDF | Documento anonimizado en formato PDF |
 | CSV | Tabla de equivalencias entre original y etiqueta |
-| Markdown | Texto anonimizado fácil de copiar en otra herramienta |
+| Markdown (portapapeles) | Texto anonimizado para pegar en otra herramienta |
 
 ---
 
@@ -271,13 +275,6 @@ ejecuta por detrás.
 
 Si el puerto está ocupado, `INICIAR.bat` busca otro puerto libre y conserva la copia anterior.
 Guardá tus exportaciones antes de terminar esa copia y abrir otra.
-
-### macOS
-
-1. Cerrá la pestaña del navegador.
-2. Abrí **Monitor de Actividad**.
-3. Buscá `AnonimizadorJudicial-NLP`.
-4. Elegí **Salir** o **Forzar salida**.
 
 ---
 

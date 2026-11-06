@@ -6,7 +6,7 @@ La [Release 3.4.3](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/
 distribuye el paquete con las correcciones de la revisión EGM:
 `AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip` y su SHA-256.
 La carpeta local verificada es `dist/AnonimizadorJudicial-NLP-3.4.3-revision-egm/`.
-El ZIP anterior `AnonimizadorJudicial-3.4.3-Windows.zip` no incluye esas
+La primera entrega local con el mismo número no incluye esas
 correcciones y no es el archivo de esta publicación. Generar un ZIP local
 no publica una Release ni modifica las descargas existentes.
 

@@ -4,7 +4,7 @@ El proyecto procesa documentos localmente con regex, Presidio y spaCy. Mantener 
 
 ## Entorno
 
-Python 3.11–3.13. La entrega Windows 3.3.12 se verifica con Python 3.13.15. Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
+Python 3.11–3.13. La entrega Windows 3.4.3 con las correcciones EGM se construyó y verificó con Python 3.12.14 de 64 bits. Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
 
 ```powershell
 python -m venv .venv
@@ -38,4 +38,4 @@ Para cambios grandes, abrir un Issue con el problema y alcance; para correccione
 
 Mantener versiones fijadas, avisos de terceros y manuales consistentes con el comportamiento. Las contribuciones se distribuyen bajo Apache 2.0 conforme a [LICENSE](LICENSE); el uso del logo y marca se rige por [NOTICE](NOTICE).
 
-La función de personas conocidas es una [propuesta pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md) y no se incluye en 3.3.12.
+La función de personas conocidas es una [propuesta pendiente](docs/propuestas/PERSONAS_CONOCIDAS.md) y no se incluye en 3.4.3.

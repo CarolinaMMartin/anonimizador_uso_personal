@@ -1,5 +1,8 @@
 # Verificación de 3.3.12
 
+> Registro histórico de esa entrega. Para instalar la versión vigente,
+> consultar el [README](../README.md); estos resultados no validan otra versión.
+
 Revisión y validación local realizadas el 18 de septiembre de 2026 sobre Windows x64, Python 3.13.15, spaCy 3.8.14, modelo local 3.8.0 y Node.js 22.23.2.
 
 - Revisión de los archivos publicables: código, frontend, catálogos, herramientas, documentación, avisos de terceros, plantillas y automatización. Se preservaron los cambios existentes en main antes de preparar la versión.

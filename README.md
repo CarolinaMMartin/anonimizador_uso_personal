@@ -19,6 +19,8 @@ Las descargas de este proyecto se centralizan en **anonimizador_mpf**.
 [Detalles de la versión](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.3) ·
 [Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.3/AnonimizadorJudicial-3.4.3-revision-egm-Windows.zip.sha256)
 
+[Verificación de la descarga y su documentación](docs/VERIFICACION_PUBLICACION_3.4.3.md).
+
 **Mac Intel y Apple Silicon:** todavía no hay una descarga de esta versión
 para macOS. El ZIP de Windows no funciona en Mac.
 

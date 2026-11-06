@@ -171,7 +171,11 @@ def bundle_docs(pkg_dir: Path) -> None:
     for source, name in ((ROOT / 'CHANGELOG.md', 'CHANGELOG.md'),
                          (docs_dir / 'dependencies-frozen.txt', 'DEPENDENCIAS_BUILD.txt')):
         if source.is_file():
-            shutil.copyfile(source, root / name)
+            if source.suffix == '.md':
+                text = portable_text(source.read_text(encoding='utf-8'), source, Path(name))
+                (root / name).write_text(text, encoding='utf-8')
+            else:
+                shutil.copyfile(source, root / name)
 
 
 def write_release_zip(root: Path, output: Path) -> None:

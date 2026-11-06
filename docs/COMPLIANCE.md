@@ -14,7 +14,7 @@ adaptación visual no implica aval institucional del MPF.
 
 [THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt) enumera las dependencias principales fijadas en `requirements.txt`. El portable conserva textos de referencia en `LICENSES/` y copias de avisos originales de las distribuciones instaladas en `LICENSES/third_party/`.
 
-`LICENSES/INVENTARIO_BUILD.json` identifica versiones y archivos de licencia del entorno de compilación. Puede incluir herramientas de desarrollo; no afirma que todas esas herramientas se ejecuten dentro del portable. Las versiones completas del entorno validado se documentan en [dependencies-frozen.txt](dependencies-frozen.txt).
+`LICENSES/INVENTARIO_BUILD.json` identifica versiones y archivos de licencia del entorno de compilación. Puede incluir herramientas de desarrollo; no afirma que todas esas herramientas se ejecuten dentro del portable. Para comprobar una descarga concreta, consultar ese inventario y `DEPENDENCIAS_BUILD.txt` dentro del ZIP. El repositorio conserva también [dependencies-frozen.txt](dependencies-frozen.txt) como referencia del entorno documentado.
 
 ## Modelo local
 

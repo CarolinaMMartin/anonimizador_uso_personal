@@ -24,3 +24,8 @@ versión de aplicación. Para futuras entregas, usar una versión nueva.
 Las ejecuciones por tag y las ejecuciones manuales sin `publish` construyen artifacts para revisión. Los demás commits en `main` no publican. La publicación crea una Release nueva y adjunta el ZIP y su SHA-256 después de pasar las verificaciones; no reemplaza archivos de versiones anteriores.
 
 Las notas se obtienen de [NOTAS_VERSION.md](NOTAS_VERSION.md). Si falla una comprobación, corregir el problema y repetir la validación antes de publicar. No usar documentos reales en Issues, tests, capturas ni artifacts.
+
+El nombre del ZIP se obtiene del enlace Windows del README y debe coincidir
+con la versión del código. La auditoría rechaza repositorios, tags o checksums
+incoherentes. Al publicar, los enlaces relativos de las notas se convierten
+en enlaces al commit de esa entrega.

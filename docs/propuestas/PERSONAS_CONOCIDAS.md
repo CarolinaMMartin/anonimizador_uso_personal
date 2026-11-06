@@ -1,7 +1,9 @@
 # Personas conocidas: propuesta de funcionalidad
 
-Propuesta revisada contra el motor local 3.3.12. Todavía no está
-implementada en la interfaz ni en el ejecutable.
+Propuesta pendiente, elaborada sobre el motor 3.3.12. Las comprobaciones
+de este documento corresponden a esa base histórica; no acreditan una nueva
+validación de 3.4.3. La función todavía no está implementada. Para la descarga
+vigente y sus capacidades, consultar el [README](../../README.md).
 
 ## Objetivo
 
@@ -90,13 +92,13 @@ identidades por similitud de escritura ni se generan apodos o errores de tipeo.
 
 ## Viabilidad comprobada y verificación pendiente
 
-Se probó el buscador actual con una referencia ficticia `Maria Perez` sobre
+Se probó el buscador de esa versión con una referencia ficticia `Maria Perez` sobre
 texto en memoria. Encontró el nombre completo, iniciales con y sin espacio y
 el apellido solo. Encontró abreviaturas incluso sin aparición del nombre
 completo. No se modificó ninguna sesión abierta.
 
 La misma prueba identificó dos ajustes necesarios: la referencia natural
-actual no reconoce como una única mención el orden inverso con coma, y el
+evaluada no reconoce como una única mención el orden inverso con coma, y el
 buscador de alias aislado puede encontrar el apellido dentro del nombre
 completo de otra persona. Por eso no basta con conectar un campo al buscador.
 

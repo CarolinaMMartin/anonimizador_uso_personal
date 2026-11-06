@@ -1,5 +1,10 @@
 # Revisión acotada de deriva — Anonimizador Judicial
 
+> Informe histórico anterior a las correcciones EGM. Sus hallazgos y pruebas
+> pendientes describen el estado revisado, no el de la descarga vigente.
+> Ver [el cierre de correcciones](docs/revision-egm/correcciones_pendientes.md)
+> y el [README](README.md).
+
 Fecha: 2026-11-06. Referencia del repositorio: `628913f6803eb6677fefdd0fbd3a35a28f4709cf`.
 
 Recorrido revisado: **selección manual → aplicación de la anonimización → editor → exportación a Word y PDF**. Referencias iniciales: `README.md` y `docs/MANUAL_USUARIO.md`, que describen la entrega 3.4.3. Se contrastó el código fuente del repositorio; no se verificó su correspondencia con el ejecutable distribuido.
