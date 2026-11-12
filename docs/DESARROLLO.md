@@ -3,8 +3,8 @@
 Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Los resultados de la entrega están en [VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md).
 
 ```powershell
-git clone https://github.com/CarolinaMMartin/anonimizador_mpf.git
-cd anonimizador_mpf
+git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
+cd anonimizador_uso_personal
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python.exe scripts\install_nlp.py

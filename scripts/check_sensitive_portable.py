@@ -216,7 +216,14 @@ def main():
         'served_assets_match_sources': all(
             hashlib.sha256(api.request('/static/' + name)).digest()
             == hashlib.sha256((ROOT / 'frontend' / name).read_bytes()).digest()
-            for name in ('app.js', 'styles.css', 'assets/mpf-verde.svg')
+            for name in (
+                'app.js', 'styles.css',
+                'assets/ialab/logo_blanco_navy.png',
+                'assets/ialab/logo_azul.png',
+                'assets/ialab/isotype_azul.png',
+                'assets/fonts/Roboto.ttf',
+                'assets/fonts/OFL.txt',
+            )
         ),
     }
     for extension in ('docx', 'pdf'):

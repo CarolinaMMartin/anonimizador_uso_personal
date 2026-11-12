@@ -1,4 +1,4 @@
-/* Anonimizador Judicial - Frontend */
+/* Anonimizador de documentos — IALAB */
 const API = '';
 
 let activeAbort = null;
@@ -637,17 +637,17 @@ $('analyzeBtn').addEventListener('click', async () => {
 $('cancelProcessBtn')?.addEventListener('click', cancelActiveProcess);
 
 const CAT_COLORS = {
-  PERSONA: '#961310',
-  DNI: '#B45B00',
-  CUIT: '#B45B00',
-  EMPRESA: '#4E1873',
-  EMAIL: '#007A33',
-  TELEFONO: '#005F71',
-  DOMICILIO: '#4E1873',
-  PATENTE: '#4E1873',
-  EXPEDIENTE: '#003C73',
-  ORGANISMO: '#005298',
-  OTRO: '#333F48',
+  PERSONA: '#051431',
+  DNI: '#55606E',
+  CUIT: '#55606E',
+  EMPRESA: '#7D539D',
+  EMAIL: '#051431',
+  TELEFONO: '#203958',
+  DOMICILIO: '#7D539D',
+  PATENTE: '#7D539D',
+  EXPEDIENTE: '#051431',
+  ORGANISMO: '#203958',
+  OTRO: '#203958',
 };
 
 const CATEGORIES = [
@@ -805,7 +805,7 @@ function renderStats(stats) {
   row.innerHTML = '';
   for (const [cat, n] of Object.entries(stats)) {
     if (cat === 'TOTAL') continue;
-    const color = CAT_COLORS[cat] || '#333F48';
+    const color = CAT_COLORS[cat] || '#203958';
     row.innerHTML += `
       <div class="stat-card" style="--cat-color:${color}">
         <div class="stat-num">${n}</div>
@@ -813,7 +813,7 @@ function renderStats(stats) {
       </div>`;
   }
   row.innerHTML += `
-    <div class="stat-card" style="--cat-color:#333F48">
+    <div class="stat-card" style="--cat-color:#203958">
       <div class="stat-num">${stats.TOTAL || detections.length}</div>
       <div class="stat-label">Total</div>
     </div>`;

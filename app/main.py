@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Anonimizador Judicial",
+    title="Anonimizador de documentos · IALAB",
     description="Anonimización local de documentos judiciales — uso personal",
     version=APP_VERSION,
     lifespan=lifespan,
@@ -58,7 +58,7 @@ async def index():
             index_path,
             headers={"Cache-Control": "no-cache, must-revalidate"},
         )
-    return {"message": "Anonimizador Judicial API", "docs": "/docs"}
+    return {"message": "Anonimizador IALAB API", "docs": "/docs"}
 
 
 @app.get("/health")

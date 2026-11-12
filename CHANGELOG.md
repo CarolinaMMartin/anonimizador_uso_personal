@@ -1,9 +1,22 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.4 · Edición IALAB — 12 de noviembre de 2026
+
+- Crea una copia independiente desde el código 3.4.4 de la edición MPF
+  (commit de origen `a293199`), conservando sus mejoras funcionales.
+- Aplica los logos y la paleta del manual `marca-ialab-v2`, con Roboto local.
+- Actualiza documentación, enlaces y publicación para `anonimizador_uso_personal`.
+- Conserva detección, agrupación, revisión manual y exportación Word/PDF/CSV.
+- Archiva la verificación anterior; las comprobaciones de esta copia se registran
+  en [VERIFICACION_3.4.4.md](docs/VERIFICACION_3.4.4.md).
+
+El portable IALAB está pendiente de verificación y publicación.
+
 ## 3.4.4 — 6 de noviembre de 2026
 
-La [descarga vigente](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4)
-usa un único paquete Windows identificado como 3.4.4.
+La versión de origen preparó un paquete Windows identificado como 3.4.4.
+Su [verificación histórica](docs/historico/VERIFICACION_MPF_3.4.4.md) corresponde
+a la edición previa del MPF.
 
 - Actualiza las dependencias compatibles y retira `aiofiles` y
   `presidio-anonymizer`, que el código no utiliza.
@@ -17,7 +30,7 @@ usa un único paquete Windows identificado como 3.4.4.
 - El entorno de desarrollo requiere Python 3.12–3.13.
 
 Las comprobaciones de esta entrega se registran en
-[VERIFICACION_3.4.4.md](docs/VERIFICACION_3.4.4.md).
+[VERIFICACION_MPF_3.4.4.md](docs/historico/VERIFICACION_MPF_3.4.4.md).
 
 ## 3.4.3 — 6 de noviembre de 2026
 

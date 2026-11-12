@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>Anonimizador de documentos · MPF</title>
+  <title>Anonimizador de documentos · IALAB UBA</title>
+  <meta name="theme-color" content="#051431">
+  <link rel="icon" type="image/png" href="/static/assets/ialab/isotype_azul.png">
   <link rel="stylesheet" href="/static/styles.css?v=3.4.4">
 </head>
 <body>
@@ -13,14 +15,14 @@
     <div class="header-main">
       <div class="brand-block">
         <div class="brand-logo-wrap">
-          <img class="brand-logo" src="/static/assets/mpf-verde.svg" alt="Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires" width="280" height="63">
+          <img class="brand-logo" src="/static/assets/ialab/logo_blanco_navy.png" alt="IALAB · Facultad de Derecho, Universidad de Buenos Aires" width="1157" height="326">
         </div>
         <span class="badge badge-local brand-badge" id="nlpBadge">Verificando motor local…</span>
       </div>
       <div class="header-copy">
         <h1>Anonimizador de documentos</h1>
         <p class="header-lead">Detección automatizada de datos personales. Controlá, editá y luego descargá el documento anonimizado.</p>
-        <p class="header-privacy">La anonimización se realiza local en tu PC personal. No se envían datos ni información a servidores externos.</p>
+        <p class="header-privacy">Procesamiento local en tu computadora. Tus documentos no se envían a servidores externos.</p>
       </div>
     </div>
     <nav class="steps" aria-label="Pasos del flujo">
@@ -97,19 +99,19 @@
           <label class="field-label">Categorías a detectar</label>
           <p class="field-hint">Desmarcá las que no quieras buscar. Siempre podés agregar datos manualmente en la vista previa.</p>
           <div class="check-grid" id="catChecks">
-            <label class="check-option" title="Nombres de personas físicas"><input type="checkbox" data-cat="PERSONA" checked><span class="color-dot" style="--c:#961310" aria-hidden="true"></span> Personas</label>
-            <label class="check-option" title="Documento Nacional de Identidad"><input type="checkbox" data-cat="DNI" checked><span class="color-dot" style="--c:#B45B00" aria-hidden="true"></span> DNI</label>
-            <label class="check-option" title="Clave única tributaria / laboral"><input type="checkbox" data-cat="CUIT" checked><span class="color-dot" style="--c:#B45B00" aria-hidden="true"></span> CUIT/CUIL</label>
-            <label class="check-option" title="Razones sociales y sociedades"><input type="checkbox" data-cat="EMPRESA" checked><span class="color-dot" style="--c:#4E1873" aria-hidden="true"></span> Empresas</label>
-            <label class="check-option" title="Correos electrónicos"><input type="checkbox" data-cat="EMAIL" checked><span class="color-dot" style="--c:#007A33" aria-hidden="true"></span> Emails</label>
-            <label class="check-option" title="Teléfonos fijos y celulares"><input type="checkbox" data-cat="TELEFONO" checked><span class="color-dot" style="--c:#005F71" aria-hidden="true"></span> Teléfonos</label>
-            <label class="check-option" title="Direcciones y domicilios"><input type="checkbox" data-cat="DOMICILIO" checked><span class="color-dot" style="--c:#4E1873" aria-hidden="true"></span> Domicilios</label>
-            <label class="check-option" title="Patentes y dominios de vehículos"><input type="checkbox" data-cat="PATENTE" checked><span class="color-dot" style="--c:#4E1873" aria-hidden="true"></span> Patentes</label>
-            <label class="check-option" title="Seguimiento de denuncias, pólizas, chasis, motor, enlaces y otros identificadores"><input type="checkbox" data-cat="OTRO" checked><span class="color-dot" style="--c:#333F48" aria-hidden="true"></span> Otros sensibles</label>
+            <label class="check-option" title="Nombres de personas físicas"><input type="checkbox" data-cat="PERSONA" checked><span class="color-dot" style="--c:var(--ialab-navy)" aria-hidden="true"></span> Personas</label>
+            <label class="check-option" title="Documento Nacional de Identidad"><input type="checkbox" data-cat="DNI" checked><span class="color-dot" style="--c:var(--ialab-caption)" aria-hidden="true"></span> DNI</label>
+            <label class="check-option" title="Clave única tributaria / laboral"><input type="checkbox" data-cat="CUIT" checked><span class="color-dot" style="--c:var(--ialab-caption)" aria-hidden="true"></span> CUIT/CUIL</label>
+            <label class="check-option" title="Razones sociales y sociedades"><input type="checkbox" data-cat="EMPRESA" checked><span class="color-dot" style="--c:var(--ialab-violet)" aria-hidden="true"></span> Empresas</label>
+            <label class="check-option" title="Correos electrónicos"><input type="checkbox" data-cat="EMAIL" checked><span class="color-dot" style="--c:var(--ialab-navy)" aria-hidden="true"></span> Emails</label>
+            <label class="check-option" title="Teléfonos fijos y celulares"><input type="checkbox" data-cat="TELEFONO" checked><span class="color-dot" style="--c:var(--ialab-steel)" aria-hidden="true"></span> Teléfonos</label>
+            <label class="check-option" title="Direcciones y domicilios"><input type="checkbox" data-cat="DOMICILIO" checked><span class="color-dot" style="--c:var(--ialab-violet)" aria-hidden="true"></span> Domicilios</label>
+            <label class="check-option" title="Patentes y dominios de vehículos"><input type="checkbox" data-cat="PATENTE" checked><span class="color-dot" style="--c:var(--ialab-violet)" aria-hidden="true"></span> Patentes</label>
+            <label class="check-option" title="Seguimiento de denuncias, pólizas, chasis, motor, enlaces y otros identificadores"><input type="checkbox" data-cat="OTRO" checked><span class="color-dot" style="--c:var(--ialab-steel)" aria-hidden="true"></span> Otros sensibles</label>
             <label class="check-option" title="Números de expedientes, causas y legajos">
-              <input type="checkbox" data-cat="EXPEDIENTE" checked><span class="color-dot" style="--c:#003C73" aria-hidden="true"></span> Expedientes
+              <input type="checkbox" data-cat="EXPEDIENTE" checked><span class="color-dot" style="--c:var(--ialab-navy)" aria-hidden="true"></span> Expedientes
             </label>
-            <label class="check-option" title="Juzgados, fiscalías, tribunales"><input type="checkbox" data-cat="ORGANISMO" checked><span class="color-dot" style="--c:#005298" aria-hidden="true"></span> Organismos</label>
+            <label class="check-option" title="Juzgados, fiscalías, tribunales"><input type="checkbox" data-cat="ORGANISMO" checked><span class="color-dot" style="--c:var(--ialab-steel)" aria-hidden="true"></span> Organismos</label>
           </div>
         </div>
       </div>

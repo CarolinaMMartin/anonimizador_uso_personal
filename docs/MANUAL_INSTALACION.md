@@ -1,34 +1,34 @@
 # Instalación — Anonimizador Judicial 3.4.4
 
-Aplicación portable de uso personal/académico. Esta entrega se verifica en
-**Windows 10/11 de 64 bits**. No requiere instalar Python ni conectarse a
-Internet para procesar documentos. En general no requiere administrador;
-pueden existir restricciones propias de tu equipo u organización.
+Edición IALAB de uso personal y académico. La publicación del portable 3.4.4
+está pendiente. Para usar el código actualizado, seguí
+[Desarrollo del anonimizador](DESARROLLO.md).
 
-## Descargar y extraer
+## Descargar y extraer el portable, una vez publicado
 
-[**Descargar para Windows — versión 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip).
+El paquete previsto para **Windows 10/11 de 64 bits** es
+**AnonimizadorJudicial-3.4.4-Windows.zip**. Consultá el estado de publicación
+en el [README](../README.md). No requiere Python ni Internet para procesar
+documentos; la preparación del entorno de desarrollo sí requiere descargas.
 
-1. Descargá **AnonimizadorJudicial-3.4.4-Windows.zip**.
+1. Descargá el ZIP del portable publicado en esta edición IALAB.
 2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
-   escritura, por ejemplo Documentos\Anonimizador-3.4.4.
+   escritura, por ejemplo Documentos\Anonimizador-IALAB-3.4.4.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
    mezcles archivos _internal de versiones distintas.
 
-El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
-El tamaño y el SHA-256 de la descarga se informan junto a la entrega.
+El ZIP incluirá el ejecutable, frontend, modelo local, manuales y licencias.
+El tamaño y el SHA-256 se informarán junto a la entrega.
 **Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
-La descarga vigente está en la [Release 3.4.4 de anonimizador_mpf](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4).
-Si trabajás desde el proyecto, la copia de esta entrega está en
-`dist/AnonimizadorJudicial-NLP-3.4.4/`. Para actualizar desde 3.4.3 o una
-versión anterior, usá esta carpeta nueva y conservá los archivos juntos.
+La carpeta prevista de compilación es `dist/AnonimizadorJudicial-NLP-3.4.4/`.
+Usá una carpeta nueva para mantener intactas otras instalaciones.
 
 ## Iniciar y verificar
 
 1. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
 2. El navegador abre la dirección indicada al iniciar. Usa 127.0.0.1:8787
    o un puerto libre entre **8788 y 8796** si otra copia ocupa el primero.
-3. La cabecera debe indicar **v3.4.4**, el estado de Presidio/spaCy y
+3. La cabecera debe identificar **IALAB** e indicar **v3.4.4**, el estado de Presidio/spaCy y
    **Catálogos cargados**.
 
 Repetir INICIAR.bat vuelve a la instancia de esa misma carpeta. Las otras
@@ -98,5 +98,5 @@ COMPLIANCE.md y models/es_core_news_md/LICENSE al compartir el portable.
 ## macOS
 
 Este ZIP contiene un ejecutable Windows y no funciona en macOS. Todavía no
-hay una entrega Mac de esta versión en `anonimizador_mpf`: necesita compilarse
+hay una entrega Mac de esta versión en `anonimizador_uso_personal`: necesita compilarse
 y verificarse en ese sistema antes de publicarse.

@@ -103,4 +103,4 @@ jobs:
           RELEASE_ASSET: ${{ needs.build.outputs.asset_name }}
         run: |
           python scripts/release_notes.py --commit "$GITHUB_SHA" --output release-files/NOTAS_VERSION.md
-          gh release create "v$RELEASE_VERSION" --target "$GITHUB_SHA" --title "Anonimizador Judicial $RELEASE_VERSION" --notes-file release-files/NOTAS_VERSION.md "release-files/$RELEASE_ASSET" "release-files/$RELEASE_ASSET.sha256"
+          gh release create "v$RELEASE_VERSION" --target "$GITHUB_SHA" --title "Anonimizador IALAB $RELEASE_VERSION" --notes-file release-files/NOTAS_VERSION.md "release-files/$RELEASE_ASSET" "release-files/$RELEASE_ASSET.sha256"

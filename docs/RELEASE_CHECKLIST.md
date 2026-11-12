@@ -1,9 +1,9 @@
 # Publicación de versiones
 
-Repositorio: [anonimizador_mpf](https://github.com/CarolinaMMartin/anonimizador_mpf).
+Repositorio: [anonimizador_uso_personal](https://github.com/CarolinaMMartin/anonimizador_uso_personal).
 La versión 3.4.4 se entrega para Windows x64. Publicar macOS únicamente después de construir y verificar esa misma versión en una Mac.
 
-La publicación actual usa `AnonimizadorJudicial-3.4.4-Windows.zip`
+El paquete previsto para la primera publicación IALAB usa `AnonimizadorJudicial-3.4.4-Windows.zip`
 y su SHA-256, obtenidos de `dist/AnonimizadorJudicial-NLP-3.4.4/`.
 Código, interfaz, manuales y paquete deben identificar 3.4.4. Para futuras
 entregas, usar una versión nueva.
@@ -15,7 +15,7 @@ entregas, usar una versión nueva.
 5. Repetir `python scripts/check_identity_flow.py --caption-cases --url http://127.0.0.1:PUERTO` para las carátulas en minúsculas, apellidos fuera del catálogo, separadores aislados, saltos de línea y prosa. Crear la entrega con `python scripts/package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.4 --output dist/AnonimizadorJudicial-3.4.4-Windows.zip`. Verificar el CRC, SHA-256 y exclusión de sesiones, documentos, equivalencias, registros y credenciales.
 6. Extraer el ZIP en una carpeta nueva y verificar inicio, versión, capas NLP locales, carga y exportaciones. El lanzador debe conservar procesos anteriores. Comprobar que la entrega solo incluya los manuales e informe de verificación actuales; conservar los antecedentes en `docs/historico/` y las copias locales anteriores en `_archivo/`.
 7. Guardar el código revisado en Git. Crear el tag `vVERSION` sobre el mismo commit que se compila y una Release con notas, plataforma, limitaciones, ZIP y SHA-256.
-8. Comprobar los enlaces de descarga y la coincidencia entre versión del tag, código, interfaz, `/health` y `VERSION_APP.txt`. Los enlaces públicos deben apuntar a `CarolinaMMartin/anonimizador_mpf`; descargar el adjunto publicado y comparar su SHA-256 con el paquete verificado antes de anunciarlo.
+8. Comprobar los enlaces de descarga y la coincidencia entre versión del tag, código, interfaz, `/health` y `VERSION_APP.txt`. Los enlaces públicos deben apuntar a `CarolinaMMartin/anonimizador_uso_personal`; descargar el adjunto publicado y comparar su SHA-256 con el paquete verificado antes de anunciarlo.
 
 ## Automatización de Windows
 

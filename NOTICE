@@ -1,4 +1,4 @@
-Anonimizador Judicial
+Anonimizador de documentos — Edición IALAB
 Copyright (c) 2024-2026 IALAB — Laboratorio de Innovación e Inteligencia
 Artificial, Facultad de Derecho, Universidad de Buenos Aires (UBA).
 
@@ -16,22 +16,21 @@ de IALAB / Facultad de Derecho – UBA:
 
   * "IALAB"
   * "Laboratorio de Innovación e Inteligencia Artificial"
-  * Logo IALAB en sus variantes (`frontend/logo-ialab.svg`,
-    `frontend/logo-ialab.png`)
+  * Logos e isotipo IALAB suministrados en marca-ialab-v2 e incluidos
+    en frontend/assets/ y docs/marca/logos/
 
 La licencia Apache 2.0 (Sección 6) NO concede licencia para usar las
 marcas registradas, denominaciones comerciales o logos de los
 licenciantes. Forks o derivados del proyecto deben reemplazar estos
 activos por sus propias marcas o eliminarlos antes de redistribuir.
 
-La adaptación visual incorpora la denominación y el logo del
-Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires (MPF),
-a partir de los recursos marca-mpf suministrados y del manual
-«MPFCABA Identidad 2026 V1», aportado para la versión 3.4.1.
-Estos activos tampoco están cubiertos por la licencia del código. Su
-incorporación no modifica la autoría IALAB del software ni supone un aval
-institucional del MPF. La paleta del manual reemplaza los valores de la
-guía anterior; las fuentes del producto se conservan por pedido de la usuaria.
+La edición IALAB aplica el manual de marca y los recursos originales del
+paquete marca-ialab-v2 suministrado. La versión anterior con identidad MPF
+se conserva separada; sus referencias históricas documentan la procedencia
+del código y no identifican esta interfaz.
+
+Roboto se incluye como recurso local bajo SIL Open Font License 1.1.
+Conservar su aviso original: frontend/assets/fonts/OFL.txt.
 
 ================================================================================
 COMPONENTES DE TERCEROS

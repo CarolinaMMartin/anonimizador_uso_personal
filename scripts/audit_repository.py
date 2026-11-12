@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from package_release import app_version
 
-PUBLIC_REPOSITORY = 'CarolinaMMartin/anonimizador_mpf'
+PUBLIC_REPOSITORY = 'CarolinaMMartin/anonimizador_uso_personal'
 # Current delivery instructions; historical reports retain their versions.
 # CHANGELOG is checked for active links, not for historical version prose.
 PUBLICATION_DOCUMENTS = (

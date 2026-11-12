@@ -9,7 +9,7 @@ from audit_repository import check_publication_links, release_download_info
 
 
 VERSION = '8.2.1'
-REPOSITORY = 'CarolinaMMartin/anonimizador_mpf'
+REPOSITORY = 'CarolinaMMartin/anonimizador_uso_personal'
 ASSET = f'AnonimizadorJudicial-{VERSION}-Windows.zip'
 URL = f'https://github.com/{REPOSITORY}/releases/download/v{VERSION}/{ASSET}'
 
@@ -20,9 +20,9 @@ def documents(extra=''):
 
 
 @pytest.mark.parametrize('repository', [
-    'CarolinaMMartin/anonimizador_uso_personal',
+    'CarolinaMMartin/anonimizador_mpf',
     'CarolinaMMartin/anonimizador_mpff',
-    'OtherOwner/anonimizador_mpf',
+    'OtherOwner/anonimizador_uso_personal',
     'OtherOwner/unrelated-project',
 ])
 def test_wrong_repository_cannot_redirect_operators_to_an_old_project(repository):

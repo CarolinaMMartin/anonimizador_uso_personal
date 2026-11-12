@@ -1,14 +1,16 @@
 # Construcción y distribución — 3.4.4
 
-La entrega 3.4.4 corresponde a Windows x64. Todavía no hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y validarse en una Mac antes de publicarse.
+Esta edición IALAB se publica en `CarolinaMMartin/anonimizador_uso_personal`.
+El portable Windows 3.4.4 está pendiente de construcción, verificación y
+publicación. El nombre previsto es `AnonimizadorJudicial-3.4.4-Windows.zip`,
+acompañado por su SHA-256. La carpeta local de compilación propuesta es
+`dist/AnonimizadorJudicial-NLP-3.4.4/`.
 
-La [Release 3.4.4](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4)
-distribuye el paquete de esta versión:
-`AnonimizadorJudicial-3.4.4-Windows.zip` y su SHA-256.
-La carpeta local de entrega es `dist/AnonimizadorJudicial-NLP-3.4.4/`.
 Generar un ZIP local no publica una Release ni modifica las descargas
-existentes. Los resultados de las verificaciones están en
-[VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md).
+existentes. Los resultados de esta copia se registran en
+[VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md). Los resultados históricos del
+MPF no validan el nuevo paquete. macOS requiere construir y verificar un
+paquete propio en ese sistema.
 
 ## Bloqueo de Windows 11 pendiente de resolver
 

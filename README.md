@@ -1,47 +1,47 @@
-# Anonimizador Judicial
+# Anonimizador de documentos · IALAB
 
 **Ocultá datos personales de un documento antes de compartirlo.**
 La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros datos
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Descargar para Windows — versión 3.4.4
+## Edición IALAB — 3.4.4
 
-[**DESCARGAR PARA WINDOWS · 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip)
+Esta copia independiente conserva las mejoras funcionales de la versión 3.4.4
+y aplica la identidad de **IALAB — Facultad de Derecho, UBA**. El proyecto y
+las futuras descargas de esta edición se mantienen en **anonimizador_uso_personal**.
+La copia original del MPF se conserva por separado.
 
-Para **Windows 10 y 11 de 64 bits**. Descargá el ZIP completo,
-extraelo y abrí **INICIAR.bat**. No necesitás instalar Python ni otras dependencias.
+## Abrir desde el código fuente
 
-Esta es la entrega **3.4.4**, con dependencias actualizadas y documentación
-coherente con los archivos incluidos.
-El archivo se llama **AnonimizadorJudicial-3.4.4-Windows.zip**.
-Las descargas de este proyecto se centralizan en **anonimizador_mpf**.
+Por ahora, la edición IALAB actualizada se ofrece como código fuente. Seguí
+las [instrucciones de desarrollo](docs/DESARROLLO.md) para preparar Python,
+instalar las dependencias y el modelo local, y ejecutar
+**INICIAR_DESARROLLO.bat** en Windows. La preparación inicial requiere Internet;
+el procesamiento de documentos funciona localmente.
 
-[Detalles de la versión](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/tag/v3.4.4) ·
-[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
+## Paquete Windows IALAB — publicación pendiente
 
-[Verificación de la entrega](docs/VERIFICACION_3.4.4.md).
+El paquete previsto se llama **AnonimizadorJudicial-3.4.4-Windows.zip**.
+La publicación se confirmará después de construir y verificar esta copia.
+Los siguientes enlaces identifican el destino previsto y pueden no estar
+disponibles todavía; las descargas anteriores del repositorio no incluyen
+esta adaptación de marca.
 
-**Mac Intel y Apple Silicon:** todavía no hay una descarga de esta versión
-para macOS. El ZIP de Windows no funciona en Mac.
+[ZIP previsto · 3.4.4](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip) ·
+[SHA-256 previsto](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
 
-**Aviso para algunos equipos con Windows 11:** esta versión todavía no tiene
-firma digital. Si aparece el mensaje **«Control Inteligente de Aplicaciones ha
-bloqueado un archivo»**, Windows impide abrirla. La aplicación necesita una
-entrega firmada para funcionar en esos equipos. No hace falta descargarla de
-nuevo ni desactivar la protección. [Qué hacer si aparece este aviso](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
+Cuando esté publicado, descargá el ZIP completo para **Windows 10 y 11 de
+64 bits**, elegí **Extraer todo** y abrí **INICIAR.bat** desde la carpeta
+extraída. El portable incluye Python y el modelo local; conservá toda la carpeta.
+**Code → Download ZIP** contiene el código fuente y no incluye el ejecutable.
 
-## Abrir por primera vez
+[Estado de verificación](docs/VERIFICACION_3.4.4.md) ·
+[Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
-1. Descargá **AnonimizadorJudicial-3.4.4-Windows.zip** con el enlace de arriba.
-2. Hacé clic derecho sobre el archivo y elegí **Extraer todo**. Después, **Extraer**.
-3. Abrí la carpeta que se creó y entrá en la carpeta del anonimizador.
-4. Hacé doble clic en **INICIAR.bat** (puede aparecer como **INICIAR**).
-5. Esperá a que la aplicación se abra en tu navegador. Aunque se vea allí,
-   funciona en tu computadora y podés usarla sin conexión.
-
-**Conservá toda la carpeta extraída.** Para volver a usarla, abrí **INICIAR**.
-No hace falta instalar otros programas.
+Todavía no hay un paquete IALAB actualizado para macOS. El ZIP Windows no
+funciona en Mac ni celulares. La entrega no tiene firma digital; si Windows
+impide abrirla, consultá [el aviso de instalación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
 
 ## Anonimizar un documento
 
@@ -98,9 +98,8 @@ El número de versión aparece en la parte superior de la aplicación.
 
 Si usabas 3.4.3 o una versión anterior, verificá que la nueva copia indique
 **v3.4.4**. Esta actualización conserva la detección de nombres en carátulas,
-las sugerencias de identidad y las decisiones manuales. También mantiene
-la identidad visual del Ministerio Público Fiscal de la Ciudad Autónoma de
-Buenos Aires.
+las sugerencias de identidad y las decisiones manuales. La cabecera identifica
+la edición IALAB y utiliza su manual de marca.
 [Ver las novedades](docs/NOTAS_VERSION.md).
 
 ## Tus documentos y tu privacidad
@@ -117,12 +116,12 @@ compartí el documento anonimizado que revisaste.
 
 [Manual de uso](docs/MANUAL_USUARIO.md) · [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
-Esta descarga es para Windows. **No funciona en Mac ni en celulares.**
+El portable previsto es para Windows. **No funciona en Mac ni en celulares.**
 
 Desarrollado por **IALAB — Laboratorio de Innovación e Inteligencia Artificial,
 Facultad de Derecho, Universidad de Buenos Aires**. Uso personal y académico.
-La adaptación visual usa los recursos MPF suministrados para esta entrega;
-no modifica la autoría del software ni supone un aval institucional.
+Identidad visual aplicada a partir del paquete de marca IALAB suministrado.
+[Manual y criterios de aplicación](docs/marca/README.md).
 
 [Información para quienes desarrollan](docs/DESARROLLO.md) ·
 [Licencia de uso](LICENSE) · [Créditos y componentes](THIRD_PARTY_NOTICES.txt) ·

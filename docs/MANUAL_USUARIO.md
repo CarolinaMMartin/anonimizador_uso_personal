@@ -1,8 +1,9 @@
 # Manual de usuario — Anonimizador Judicial 3.4.4
 
-Herramienta académica de uso personal desarrollada por IALAB, con identidad
-visual del Ministerio Público Fiscal de la Ciudad Autónoma de Buenos Aires
-adaptada a partir de los recursos suministrados para esta entrega.
+Herramienta académica de uso personal desarrollada por IALAB, Laboratorio de
+Innovación e Inteligencia Artificial de la Facultad de Derecho, UBA. Esta
+copia utiliza la identidad visual del laboratorio y conserva las funciones
+de anonimización de la versión 3.4.4.
 
 ---
 
@@ -33,7 +34,9 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ### Windows
 
-Descargá y extraé el paquete vigente enlazado en el [README](../README.md).
+La publicación del portable IALAB 3.4.4 está pendiente. Mientras tanto,
+podés [iniciar desde el código fuente](DESARROLLO.md). Las instrucciones
+siguientes corresponden al portable una vez publicado en el [README](../README.md).
 El archivo es `AnonimizadorJudicial-3.4.4-Windows.zip`; la cabecera muestra
 **v3.4.4**.
 
@@ -47,8 +50,8 @@ otras copias ni transfiere sus documentos.
 
 ### macOS
 
-Esta entrega se verifica en Windows y su ZIP no funciona en Mac. Todavía no
-hay una entrega Mac de esta versión en `anonimizador_mpf`; debe compilarse y
+El portable se construye para Windows y su ZIP no funciona en Mac. Todavía no
+hay una entrega Mac de esta versión en `anonimizador_uso_personal`; debe compilarse y
 verificarse en ese sistema antes de publicarse.
 
 El indicador superior debe mostrar algo similar a:

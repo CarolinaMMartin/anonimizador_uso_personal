@@ -34,7 +34,8 @@ not a declaration that every listed tool is a runtime dependency.
 DEPENDENCIAS_BUILD.txt and LICENSES/INVENTARIO_BUILD.json in the portable
 come from the same build snapshot, including transitive packages.
 BUILD_PROVENANCE.json records that environment, source hashes and executable.
-docs/dependencies-frozen.txt records the validated local release environment.
+docs/dependencies-frozen.txt records the source edition build environment;
+refresh it from the IALAB build before publishing its portable.
 Preserve component-specific copyright and license notices when redistributing.
 
 PROJECT RESOURCES AND MARKS
@@ -42,14 +43,17 @@ Application code and project dictionaries: see LICENSE, NOTICE and data/README.m
 No real judicial documents are distributed as examples.
 IALAB logo and institutional marks: see NOTICE; the code license does not grant
 trademark authorization.
-The interface uses MPF CABA identity assets supplied with the marca-mpf
-reference and the subsequently supplied MPFCABA Identidad 2026 V1 manual.
-The interface follows the manual's palette and preserves the earlier product
-fonts at the user's request. These marks are not covered by the application
-code license and do not imply institutional endorsement.
+The IALAB edition uses original identity assets from the supplied
+marca-ialab-v2 package. Institutional marks are not licensed under the
+application code license.
+
+LOCAL FONT
+Roboto — SIL Open Font License 1.1.
+The original license is included at frontend/assets/fonts/OFL.txt.
+Preserve the font's copyright and license when redistributing.
 
 PRIVACY AND OFFLINE OPERATION
-The frontend uses system fonts, without web font or CDN downloads.
+The frontend serves the bundled Roboto font locally, without Internet font or CDN downloads.
 Presidio's EmailRecognizer is disabled; email detection uses local regex.
 tldextract uses its local snapshot; analysis requires no network.
 Sessions are held in process memory; no SQLite session database is created

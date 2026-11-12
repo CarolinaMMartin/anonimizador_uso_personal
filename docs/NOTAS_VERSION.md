@@ -1,21 +1,20 @@
 # Anonimizador Judicial 3.4.4
 
-Entrega para Windows x64 del 6 de noviembre de 2026.
+Edición IALAB del 12 de noviembre de 2026, basada en la versión funcional 3.4.4.
+La copia original del MPF se conserva por separado.
 
-## Abrir la aplicación
+## Disponibilidad
 
-[**DESCARGAR PARA WINDOWS — 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_mpf/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip)
+El código actualizado está en este repositorio. La publicación del portable
+Windows IALAB está pendiente de construcción y verificación. Consultá el
+[README](../README.md) para el estado actual y las instrucciones de inicio.
 
-El archivo es **AnonimizadorJudicial-3.4.4-Windows.zip**:
+## Identidad IALAB
 
-1. Elegí **Extraer todo** y conservá la carpeta completa.
-2. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
-3. Esperá a que abra el navegador. Verificá **v3.4.4** y **Catálogos cargados**
-   en la cabecera.
-
-No requiere instalar Python ni descargar modelos. Para actualizar, guardá
-el trabajo abierto y extraé esta entrega en una carpeta nueva. Si usabas
-3.4.3 o una versión anterior, comprobá que la nueva copia indique **v3.4.4**.
+- Logo institucional, isotipo y favicon del paquete `marca-ialab-v2`.
+- Paleta navy, violeta y azul acero del manual del laboratorio.
+- Tipografía Roboto incluida localmente para conservar el funcionamiento sin conexión.
+- Documentación y canal de distribución independientes en `anonimizador_uso_personal`.
 
 ## Novedades de 3.4.4
 
@@ -63,8 +62,8 @@ Se mantienen las mejoras de las versiones anteriores:
   Su incorporación requiere una decisión explícita y conserva la etiqueta
   de ese grupo.
 
-- Estética, tipografías y controles coherentes con la entrega 3.4.1. El logo
-  y la paleta siguen el manual MPFCABA Identidad 2026 V1 suministrado.
+- Controles y flujo de revisión conservados, con la identidad visual IALAB
+  aplicada a partir del manual suministrado.
 - Corrección del tipo de dato de un grupo y unión manual entre tipos, con
   confirmación y conservación del reemplazo de destino.
 - Personas físicas bajo «Razón social», límites de campos de formulario e
@@ -80,7 +79,8 @@ Se mantienen las mejoras de las versiones anteriores:
   visibles si faltan o están dañados. Una falla no reemplaza la revisión anterior.
 - Coincidencias superpuestas cubiertas íntegramente en resaltados y
   sustituciones. Los identificadores distintos no se agrupan por semejanza.
-- Procesamiento local, modelo incluido y autoría IALAB del software.
+- Procesamiento local y autoría IALAB del software; el modelo se incluye
+  al construir el portable.
 
 El detalle técnico está en [CHANGELOG.md](../CHANGELOG.md). Los resultados
 de esta entrega se registran en [VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md).
