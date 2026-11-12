@@ -34,8 +34,8 @@ not a declaration that every listed tool is a runtime dependency.
 DEPENDENCIAS_BUILD.txt and LICENSES/INVENTARIO_BUILD.json in the portable
 come from the same build snapshot, including transitive packages.
 BUILD_PROVENANCE.json records that environment, source hashes and executable.
-docs/dependencies-frozen.txt records the source edition build environment;
-refresh it from the IALAB build before publishing its portable.
+docs/dependencies-frozen.txt records the verified IALAB build environment,
+copied from the portable build inventory.
 Preserve component-specific copyright and license notices when redistributing.
 
 PROJECT RESOURCES AND MARKS

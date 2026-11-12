@@ -10,7 +10,8 @@
 - Archiva la verificación anterior; las comprobaciones de esta copia se registran
   en [VERIFICACION_3.4.4.md](docs/VERIFICACION_3.4.4.md).
 
-El portable IALAB está pendiente de verificación y publicación.
+El portable IALAB para Windows se distribuye desde este repositorio.
+Consultá la descarga y su SHA-256 en el [README](README.md).
 
 ## 3.4.4 — 6 de noviembre de 2026
 

@@ -34,9 +34,9 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ### Windows
 
-La publicación del portable IALAB 3.4.4 está pendiente. Mientras tanto,
-podés [iniciar desde el código fuente](DESARROLLO.md). Las instrucciones
-siguientes corresponden al portable una vez publicado en el [README](../README.md).
+Descargá y extraé el portable IALAB 3.4.4 enlazado en el
+[README](../README.md). También podés
+[iniciar desde el código fuente](DESARROLLO.md).
 El archivo es `AnonimizadorJudicial-3.4.4-Windows.zip`; la cabecera muestra
 **v3.4.4**.
 

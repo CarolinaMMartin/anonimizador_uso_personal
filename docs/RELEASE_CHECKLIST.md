@@ -3,7 +3,7 @@
 Repositorio: [anonimizador_uso_personal](https://github.com/CarolinaMMartin/anonimizador_uso_personal).
 La versión 3.4.4 se entrega para Windows x64. Publicar macOS únicamente después de construir y verificar esa misma versión en una Mac.
 
-El paquete previsto para la primera publicación IALAB usa `AnonimizadorJudicial-3.4.4-Windows.zip`
+La primera publicación IALAB usa `AnonimizadorJudicial-3.4.4-Windows.zip`
 y su SHA-256, obtenidos de `dist/AnonimizadorJudicial-NLP-3.4.4/`.
 Código, interfaz, manuales y paquete deben identificar 3.4.4. Para futuras
 entregas, usar una versión nueva.

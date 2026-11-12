@@ -1,9 +1,9 @@
 # Construcción y distribución — 3.4.4
 
 Esta edición IALAB se publica en `CarolinaMMartin/anonimizador_uso_personal`.
-El portable Windows 3.4.4 está pendiente de construcción, verificación y
-publicación. El nombre previsto es `AnonimizadorJudicial-3.4.4-Windows.zip`,
-acompañado por su SHA-256. La carpeta local de compilación propuesta es
+El portable Windows 3.4.4 se distribuye como
+`AnonimizadorJudicial-3.4.4-Windows.zip`,
+acompañado por su SHA-256. La carpeta local de compilación es
 `dist/AnonimizadorJudicial-NLP-3.4.4/`.
 
 Generar un ZIP local no publica una Release ni modifica las descargas

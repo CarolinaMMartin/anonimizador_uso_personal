@@ -5,9 +5,9 @@ La copia original del MPF se conserva por separado.
 
 ## Disponibilidad
 
-El código actualizado está en este repositorio. La publicación del portable
-Windows IALAB está pendiente de construcción y verificación. Consultá el
-[README](../README.md) para el estado actual y las instrucciones de inicio.
+El código y el portable Windows IALAB 3.4.4 se distribuyen en este
+repositorio. Consultá el [README](../README.md) para descargar el ZIP,
+comprobar su SHA-256 y abrir la aplicación.
 
 ## Identidad IALAB
 

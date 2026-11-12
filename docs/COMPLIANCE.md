@@ -1,6 +1,6 @@
 # Licencias y privacidad — 3.4.4
 
-Documentación de la edición IALAB: 12 de noviembre de 2026. El portable de esta copia está pendiente de verificación y publicación. Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
+Documentación de la edición IALAB: 12 de noviembre de 2026. La verificación de esta copia se registra en [VERIFICACION_3.4.4.md](VERIFICACION_3.4.4.md). Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
 
 ## Código, marca y terceros
 
@@ -14,7 +14,7 @@ La identidad MPF permanece únicamente en el historial de la versión de origen.
 
 [THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt) enumera las dependencias principales fijadas en `requirements.txt`. El portable conserva textos de referencia en `LICENSES/` y copias de avisos originales de las distribuciones instaladas en `LICENSES/third_party/`.
 
-`LICENSES/INVENTARIO_BUILD.json` identifica versiones y archivos de licencia del entorno de compilación. Se genera junto con `DEPENDENCIAS_BUILD.txt` desde el mismo entorno. Puede incluir herramientas de desarrollo; no afirma que todas esas herramientas se ejecuten dentro del portable. `BUILD_PROVENANCE.json` registra las huellas de los fuentes y del ejecutable, además del entorno. El empaquetado comprueba esa procedencia y conserva los inventarios y licencias del build. El repositorio conserva también [dependencies-frozen.txt](dependencies-frozen.txt), heredado de la compilación de origen y pendiente de actualizar desde el build IALAB final.
+`LICENSES/INVENTARIO_BUILD.json` identifica versiones y archivos de licencia del entorno de compilación. Se genera junto con `DEPENDENCIAS_BUILD.txt` desde el mismo entorno. Puede incluir herramientas de desarrollo; no afirma que todas esas herramientas se ejecuten dentro del portable. `BUILD_PROVENANCE.json` registra las huellas de los fuentes y del ejecutable, además del entorno. El empaquetado comprueba esa procedencia y conserva los inventarios y licencias del build. El repositorio conserva también [dependencies-frozen.txt](dependencies-frozen.txt), copiado del inventario del build IALAB final.
 
 ## Modelo local
 

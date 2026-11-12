@@ -1,5 +1,7 @@
 # Anonimizador de documentos · IALAB
 
+<img src="frontend/assets/ialab/logo_azul.png" alt="IALAB · Facultad de Derecho, Universidad de Buenos Aires" width="240">
+
 **Ocultá datos personales de un documento antes de compartirlo.**
 La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros datos
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
@@ -9,29 +11,19 @@ Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
 Esta copia independiente conserva las mejoras funcionales de la versión 3.4.4
 y aplica la identidad de **IALAB — Facultad de Derecho, UBA**. El proyecto y
-las futuras descargas de esta edición se mantienen en **anonimizador_uso_personal**.
+las descargas de esta edición se mantienen en **anonimizador_uso_personal**.
 La copia original del MPF se conserva por separado.
 
-## Abrir desde el código fuente
+## Descargar para Windows · IALAB 3.4.4
 
-Por ahora, la edición IALAB actualizada se ofrece como código fuente. Seguí
-las [instrucciones de desarrollo](docs/DESARROLLO.md) para preparar Python,
-instalar las dependencias y el modelo local, y ejecutar
-**INICIAR_DESARROLLO.bat** en Windows. La preparación inicial requiere Internet;
-el procesamiento de documentos funciona localmente.
+El paquete **AnonimizadorJudicial-3.4.4-Windows.zip** corresponde a esta
+edición IALAB y conserva las mejoras funcionales de la versión 3.4.4.
+Incluye el ejecutable, el modelo local, la interfaz y los manuales.
 
-## Paquete Windows IALAB — publicación pendiente
+[**Descargar para Windows · 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip) ·
+[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
 
-El paquete previsto se llama **AnonimizadorJudicial-3.4.4-Windows.zip**.
-La publicación se confirmará después de construir y verificar esta copia.
-Los siguientes enlaces identifican el destino previsto y pueden no estar
-disponibles todavía; las descargas anteriores del repositorio no incluyen
-esta adaptación de marca.
-
-[ZIP previsto · 3.4.4](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip) ·
-[SHA-256 previsto](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
-
-Cuando esté publicado, descargá el ZIP completo para **Windows 10 y 11 de
+Descargá el ZIP completo para **Windows 10 y 11 de
 64 bits**, elegí **Extraer todo** y abrí **INICIAR.bat** desde la carpeta
 extraída. El portable incluye Python y el modelo local; conservá toda la carpeta.
 **Code → Download ZIP** contiene el código fuente y no incluye el ejecutable.
@@ -112,11 +104,19 @@ Si descargás la **tabla de equivalencias (CSV)**, ese archivo contiene los
 **datos originales** junto a sus etiquetas. Guardalo de forma privada y
 compartí el documento anonimizado que revisaste.
 
+## Abrir desde el código fuente
+
+Para trabajar con el código fuente, seguí las
+[instrucciones de desarrollo](docs/DESARROLLO.md) para preparar Python,
+instalar las dependencias y el modelo local, y ejecutar
+**INICIAR_DESARROLLO.bat** en Windows. La preparación inicial requiere Internet;
+el procesamiento de documentos funciona localmente.
+
 ## Más ayuda
 
 [Manual de uso](docs/MANUAL_USUARIO.md) · [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
-El portable previsto es para Windows. **No funciona en Mac ni en celulares.**
+El portable es para Windows. **No funciona en Mac ni en celulares.**
 
 Desarrollado por **IALAB — Laboratorio de Innovación e Inteligencia Artificial,
 Facultad de Derecho, Universidad de Buenos Aires**. Uso personal y académico.

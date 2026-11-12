@@ -1,14 +1,14 @@
 # Instalación — Anonimizador Judicial 3.4.4
 
-Edición IALAB de uso personal y académico. La publicación del portable 3.4.4
-está pendiente. Para usar el código actualizado, seguí
-[Desarrollo del anonimizador](DESARROLLO.md).
+Edición IALAB 3.4.4 de uso personal y académico. El portable para Windows
+incluye el ejecutable y el modelo local. Para trabajar con el código fuente,
+seguí [Desarrollo del anonimizador](DESARROLLO.md).
 
-## Descargar y extraer el portable, una vez publicado
+## Descargar y extraer el portable
 
-El paquete previsto para **Windows 10/11 de 64 bits** es
-**AnonimizadorJudicial-3.4.4-Windows.zip**. Consultá el estado de publicación
-en el [README](../README.md). No requiere Python ni Internet para procesar
+El paquete para **Windows 10/11 de 64 bits** es
+**AnonimizadorJudicial-3.4.4-Windows.zip**. Usá el enlace de descarga
+del [README](../README.md). No requiere Python ni Internet para procesar
 documentos; la preparación del entorno de desarrollo sí requiere descargas.
 
 1. Descargá el ZIP del portable publicado en esta edición IALAB.
@@ -17,10 +17,10 @@ documentos; la preparación del entorno de desarrollo sí requiere descargas.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
    mezcles archivos _internal de versiones distintas.
 
-El ZIP incluirá el ejecutable, frontend, modelo local, manuales y licencias.
-El tamaño y el SHA-256 se informarán junto a la entrega.
+El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
+El tamaño y el SHA-256 se informan junto a la entrega.
 **Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
-La carpeta prevista de compilación es `dist/AnonimizadorJudicial-NLP-3.4.4/`.
+La carpeta local de compilación es `dist/AnonimizadorJudicial-NLP-3.4.4/`.
 Usá una carpeta nueva para mantener intactas otras instalaciones.
 
 ## Iniciar y verificar
