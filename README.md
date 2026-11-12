@@ -12,7 +12,7 @@ Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 Esta copia independiente conserva las mejoras funcionales de la versión 3.4.4
 y aplica la identidad de **IALAB — Facultad de Derecho, UBA**. El proyecto y
 las descargas de esta edición se mantienen en **anonimizador_uso_personal**.
-La copia original del MPF se conserva por separado.
+
 
 ## Descargar para Windows · IALAB 3.4.4
 
