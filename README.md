@@ -112,6 +112,29 @@ instalar las dependencias y el modelo local, y ejecutar
 **INICIAR_DESARROLLO.bat** en Windows. La preparación inicial requiere Internet;
 el procesamiento de documentos funciona localmente.
 
+## Licencia de código abierto y reconocimiento institucional
+
+El Anonimizador IALAB es un desarrollo del Laboratorio de Innovación e Inteligencia Artificial (IALAB) de la Facultad de Derecho de la Universidad de Buenos Aires.
+
+El software se distribuye bajo la licencia Apache 2.0, que permite su utilización, reproducción, modificación, adaptación y redistribución, tanto para fines personales como académicos, institucionales o comerciales, conforme a las condiciones de dicha licencia.
+
+Quienes reutilicen o modifiquen el software deberán conservar los avisos de autoría y atribución aplicables, respetar el archivo NOTICE y cumplir las demás condiciones de la licencia Apache 2.0.
+
+Se solicita reconocer la procedencia académica del desarrollo y mencionar a IALAB y a la Facultad de Derecho de la Universidad de Buenos Aires cuando se comunique públicamente su utilización o adaptación.
+
+Los nombres, logotipos e identidades visuales institucionales no quedan licenciados para su utilización general por terceros.
+
+Colaboración y mejora continua
+
+El proyecto forma parte de las iniciativas académicas de investigación aplicada y desarrollo de inteligencia artificial de IALAB.
+
+Invitamos a las personas, instituciones y organismos que utilicen el anonimizador a compartir voluntariamente una devolución escrita de las pruebas realizadas, sus resultados, dificultades identificadas y propuestas de mejora.
+
+Estas contribuciones permitirán continuar perfeccionando la herramienta, evaluar su desempeño en diferentes contextos y favorecer el desarrollo colaborativo de soluciones abiertas.
+
+La presentación de devoluciones no constituye una condición para utilizar, modificar o redistribuir el software.
+
+
 ## Más ayuda
 
 [Manual de uso](docs/MANUAL_USUARIO.md) · [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
