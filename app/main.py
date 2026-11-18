@@ -71,20 +71,28 @@ async def health():
         "port": PORT,
         "app_version": APP_VERSION,
         "frontend_dir": str(FRONTEND_DIR),
+        # Permite que un segundo arranque traiga al frente la ventana abierta.
+        "pid": os.getpid(),
         "nlp_layers": get_nlp_layers_status(),
     }
+
+
+def ensure_std_streams() -> None:
+    """En builds "windowed" (PyInstaller), stdout/stderr pueden ser None.
+
+    Uvicorn intenta acceder a .isatty() y falla si el stream es None.
+    """
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 
 def run_server(open_browser: bool = True, cache_bust: bool = True):
     import time
     import uvicorn
 
-    # En builds "windowed" (PyInstaller), stdout/stderr pueden ser None.
-    # Uvicorn intenta acceder a .isatty() y falla si el stream es None.
-    if sys.stdout is None:
-        sys.stdout = open(os.devnull, "w", encoding="utf-8")
-    if sys.stderr is None:
-        sys.stderr = open(os.devnull, "w", encoding="utf-8")
+    ensure_std_streams()
 
     url = f"http://{HOST}:{PORT}"
     if cache_bust:
