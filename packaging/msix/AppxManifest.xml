@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Plantilla del manifiesto MSIX. No se empaqueta tal cual:
+  scripts/build_msix.py reemplaza {{VERSION}} por APP_VERSION de app/config.py
+  en formato de cuatro partes (1.2.3 pasa a 1.2.3.0).
+
+  Identity/@Name, Identity/@Publisher, PublisherDisplayName y DisplayName son
+  los valores reservados en Partner Center. Si no coinciden exactamente, la
+  Store rechaza el paquete. tests/test_msix_package.py los verifica.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="CarolinaMartin.Anonimizadordeusopersonal"
+    Publisher="CN=54101CBA-F9F0-4A60-A1F4-FA1225FEC231"
+    Version="{{VERSION}}"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Anonimizador de uso personal</DisplayName>
+    <PublisherDisplayName>Carolina Martin</PublisherDisplayName>
+    <Description>Anonimización local de documentos judiciales. Los documentos se procesan en este equipo y no se envían a ningún servidor.</Description>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="es-AR" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+
+  <Applications>
+    <Application
+      Id="App"
+      Executable="AnonimizadorJudicial-NLP.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Anonimizador de uso personal"
+        Description="Anonimización local de documentos judiciales."
+        BackgroundColor="#FFFFFF"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+    </Application>
+  </Applications>
+</Package>
