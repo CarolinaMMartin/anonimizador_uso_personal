@@ -37,6 +37,7 @@ APP_TITLE = "Anonimizador de uso personal"
 LOCK_TIMEOUT_SECONDS = 65
 READY_TIMEOUT_SECONDS = 60
 HEALTH_TIMEOUT_SECONDS = 1.5
+SHUTDOWN_GRACE_SECONDS = 2
 
 
 # ── Puerto ────────────────────────────────────────────────────────────────
@@ -298,8 +299,11 @@ class ServerThread:
         main_module.PORT = port
         main_module.ensure_std_streams()
         self.port = port
-        self._server = uvicorn.Server(
-            uvicorn.Config(main_module.app, host=HOST, port=port, log_level="info"))
+        # Al cerrar, WebView2 puede dejar conexiones abiertas unos segundos:
+        # sin este límite Uvicorn espera a que se cierren solas.
+        self._server = uvicorn.Server(uvicorn.Config(
+            main_module.app, host=HOST, port=port, log_level="info",
+            timeout_graceful_shutdown=SHUTDOWN_GRACE_SECONDS))
         self._thread = threading.Thread(target=self._server.run, name="uvicorn", daemon=True)
 
     def start(self) -> None:
@@ -319,9 +323,13 @@ class ServerThread:
             time.sleep(0.2)
         return False
 
-    def stop(self, timeout: float = 10) -> None:
+    def stop(self) -> None:
+        """Detiene el servidor sin esperar indefinidamente conexiones abiertas."""
         self._server.should_exit = True
-        self._thread.join(timeout)
+        self._thread.join(SHUTDOWN_GRACE_SECONDS + 2)
+        if self._thread.is_alive():
+            self._server.force_exit = True
+            self._thread.join(2)
 
     def join(self) -> None:
         while self._thread.is_alive():
@@ -349,6 +357,22 @@ def notify_info(message: str) -> None:
         pass
 
 
+def terminate_process(code: int = 0) -> None:
+    """Termina el proceso sin esperar a los hilos del motor de la ventana.
+
+    Después de cerrar la ventana, pywebview y .NET dejan hilos que demoran
+    unos diez segundos la salida normal del intérprete. Para entonces el
+    servidor ya está detenido, el puerto libre y los temporales borrados, y la
+    sesión vive solo en memoria: no queda nada por guardar.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except (AttributeError, OSError, ValueError):
+            pass
+    os._exit(code)
+
+
 def run_interface(server: ServerThread, mode: str) -> None:
     """Presenta la aplicación y espera hasta que corresponda terminar.
 
@@ -365,6 +389,7 @@ def run_interface(server: ServerThread, mode: str) -> None:
             # demorar unos segundos y no debe impedir volver a abrirla.
             server.stop()
             window.clear_storage(storage)
+            terminate_process()
             return
         window.clear_storage(storage, attempts=1)
         notify_info(WEBVIEW_FALLBACK_MESSAGE)

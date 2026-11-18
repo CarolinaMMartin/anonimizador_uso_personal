@@ -10,6 +10,14 @@ from app import launcher, window
 ROOT = Path(__file__).resolve().parent.parent
 
 
+@pytest.fixture(autouse=True)
+def terminated(monkeypatch):
+    """Ninguna prueba debe terminar de verdad el proceso de pytest."""
+    codes = []
+    monkeypatch.setattr(launcher, "terminate_process", lambda code=0: codes.append(code))
+    return codes
+
+
 class FakeWebview(types.ModuleType):
     """Registra cómo se configura pywebview sin abrir ninguna ventana."""
 
@@ -155,7 +163,7 @@ class FakeServer:
         self.events.append("join")
 
 
-def test_closing_the_window_stops_the_server(monkeypatch, tmp_path):
+def test_closing_the_window_stops_the_server(monkeypatch, tmp_path, terminated):
     calls = []
     monkeypatch.setattr(window, "run_window", lambda url, title, storage: calls.append((url, title, storage)) or True)
     monkeypatch.setattr(launcher.runtime_paths, "user_data_dir", lambda: tmp_path)
@@ -170,9 +178,21 @@ def test_closing_the_window_stops_the_server(monkeypatch, tmp_path):
     assert storage == window.process_storage_dir(tmp_path / "webview")
     assert server.events == ["stop", ("clear", storage)], \
         "Primero se libera el puerto; después se borran los temporales"
+    assert terminated == [0], "El proceso termina sin esperar a los hilos del motor"
 
 
-def test_window_failure_opens_the_browser_with_a_clear_message(monkeypatch, tmp_path):
+def test_process_termination_does_not_wait_for_engine_threads(monkeypatch):
+    import app.launcher as real
+
+    exits = []
+    monkeypatch.undo()  # se prueba la función real, con os._exit simulado
+    monkeypatch.setattr(real.os, "_exit", exits.append)
+    monkeypatch.setattr(real.sys, "stdout", None)  # ejecutable sin consola
+    real.terminate_process(0)
+    assert exits == [0]
+
+
+def test_window_failure_opens_the_browser_with_a_clear_message(monkeypatch, tmp_path, terminated):
     opened, messages = [], []
     monkeypatch.setattr(window, "run_window", lambda url, title, storage: False)
     monkeypatch.setattr(launcher.runtime_paths, "user_data_dir", lambda: tmp_path)
@@ -181,6 +201,7 @@ def test_window_failure_opens_the_browser_with_a_clear_message(monkeypatch, tmp_
     server = FakeServer()
     launcher.run_interface(server, "window")
     assert server.events == ["join"], "El servidor sigue atendiendo al navegador"
+    assert terminated == [], "En el navegador el proceso sigue vivo"
     assert len(opened) == 1 and opened[0].startswith("http://127.0.0.1:8790")
     assert len(messages) == 1 and "WebView2" in messages[0] and "navegador" in messages[0]
 
