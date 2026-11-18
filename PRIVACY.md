@@ -35,10 +35,11 @@ no se guardan en una base de datos ni en archivos de sesión.
   `%LOCALAPPDATA%\AnonimizadorUsoPersonal`; en el portable, en la carpeta
   donde lo extrajiste.
 - **Datos temporales de la ventana**, en el paquete de Store. La ventana
-  funciona en modo privado, sin cookies ni almacenamiento persistentes, y sus
-  archivos temporales se eliminan al cerrarla. Si el equipo se apaga o la
-  aplicación se interrumpe de forma abrupta, pueden quedar restos en la
-  subcarpeta `webview` de la carpeta anterior; podés borrarla.
+  funciona en modo privado, sin cookies ni almacenamiento persistentes. Sus
+  archivos temporales están en la subcarpeta `webview` de la carpeta anterior
+  y la aplicación los borra al cerrar la ventana. Si algo queda, por ejemplo
+  porque el equipo se apagó, se borra la próxima vez que abrís la aplicación;
+  también podés eliminar esa subcarpeta a mano.
 
 La **tabla de equivalencias (CSV)** que podés exportar contiene los datos
 originales junto a sus etiquetas. Guardala de forma privada: quien la tenga

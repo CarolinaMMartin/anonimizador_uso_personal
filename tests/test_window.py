@@ -70,6 +70,40 @@ def test_window_enables_downloads_text_selection_and_private_storage(monkeypatch
     assert Path(start["storage_path"]) == tmp_path / "webview"
 
 
+def test_engine_temporary_data_is_removed_before_and_after_the_window(monkeypatch, tmp_path):
+    storage = tmp_path / "webview"
+    (storage / "EBWebView").mkdir(parents=True)
+    (storage / "EBWebView" / "resto.bin").write_text("sesión anterior", encoding="utf-8")
+    fake = FakeWebview()
+    seen_at_start = []
+    original_start = fake.start
+
+    def start(**options):
+        seen_at_start.append(storage.exists())
+        (storage / "EBWebView").mkdir(parents=True)
+        (storage / "EBWebView" / "cache.bin").write_text("temporal", encoding="utf-8")
+        original_start(**options)
+
+    fake.start = start
+    monkeypatch.setitem(sys.modules, "webview", fake)
+    monkeypatch.setattr(window, "webview2_available", lambda: True)
+    assert window.run_window("http://127.0.0.1:8787", "x", storage) is True
+    assert seen_at_start == [False], "Los restos anteriores se borran antes de abrir"
+    assert not storage.exists(), "Al cerrar no quedan datos temporales"
+
+
+def test_storage_cleanup_reports_what_it_could_not_remove(monkeypatch, tmp_path):
+    storage = tmp_path / "webview"
+    storage.mkdir()
+    assert window.clear_storage(storage) is True
+    assert window.clear_storage(storage) is True  # ya no existe
+    storage.mkdir()
+    import shutil
+
+    monkeypatch.setattr(shutil, "rmtree", lambda path, ignore_errors=False: None)
+    assert window.clear_storage(storage, attempts=2, delay=0) is False
+
+
 def test_missing_webview2_falls_back_without_loading_the_engine(monkeypatch, tmp_path):
     fake = FakeWebview()
     monkeypatch.setitem(sys.modules, "webview", fake)

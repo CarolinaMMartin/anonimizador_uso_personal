@@ -72,6 +72,25 @@ def webview2_available(builds: list[str] | None = None) -> bool:
     return any(parse_build(build) >= MIN_WEBVIEW2_BUILD for build in builds)
 
 
+def clear_storage(storage_dir: Path, attempts: int = 10, delay: float = 0.3) -> bool:
+    """Borra los datos temporales del motor de la ventana.
+
+    pywebview intenta borrarlos al cerrar, pero los procesos de WebView2
+    pueden tardar en soltar los archivos. Se reintenta unos segundos y, si
+    queda algo, se limpia en el próximo inicio. Devuelve True si no quedó nada.
+    """
+    import shutil
+    import time
+
+    for attempt in range(attempts):
+        shutil.rmtree(storage_dir, ignore_errors=True)
+        if not storage_dir.exists():
+            return True
+        if attempt < attempts - 1:
+            time.sleep(delay)
+    return False
+
+
 def run_window(url: str, title: str, storage_dir: Path) -> bool:
     """Muestra ``url`` en una ventana propia y espera a que se cierre.
 
@@ -94,6 +113,8 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
         nonlocal shown
         shown = True
 
+    # Restos de un cierre abrupto anterior.
+    clear_storage(storage_dir, attempts=1)
     try:
         # En pywebview las descargas vienen deshabilitadas; las exportaciones
         # (Word, PDF, CSV, Markdown) son descargas de un blob.
@@ -116,5 +137,7 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
                       localization=LOCALIZATION)
     except Exception:  # noqa: BLE001 - cualquier fallo del motor deriva al navegador.
         logger.exception("No se pudo abrir la ventana propia.")
+        clear_storage(storage_dir)
         return shown
+    clear_storage(storage_dir)
     return True
