@@ -69,6 +69,8 @@ jobs:
           python scripts/check_grouping.py --learned-alias-cases
           python scripts/check_document_parts.py
           python scripts/check_sensitive_portable.py
+          python scripts/check_identity_flow.py
+          python scripts/check_identity_flow.py --caption-cases
       - name: Package reviewed source
         env:
           RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
@@ -76,6 +78,19 @@ jobs:
         run: |
           Set-Content dist/AnonimizadorJudicial-NLP/SOURCE_COMMIT.txt $env:GITHUB_SHA -Encoding ascii
           python scripts/package_release.py --output "dist/$env:RELEASE_ASSET"
+      - name: Verify extracted release ZIP
+        env:
+          RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: pwsh
+        run: |
+          Expand-Archive -LiteralPath "dist/$env:RELEASE_ASSET" -DestinationPath build/validation/release-extracted
+          $package = "build/validation/release-extracted/AnonimizadorJudicial-NLP-$env:RELEASE_VERSION"
+          python scripts/check_windows_launcher.py --package $package --keep-running
+          if ($LASTEXITCODE -ne 0) { throw 'Fallo el inicio del ZIP extraido.' }
+          $appPort = Get-Content -LiteralPath "$package/PUERTO_ACTUAL.txt"
+          python scripts/portable_smoke.py --package $package --port $appPort --use-existing --category-cases --all-categories
+          if ($LASTEXITCODE -ne 0) { throw 'Fallo el analisis/exportacion del ZIP extraido.' }
       - uses: actions/upload-artifact@v4
         with:
           name: anonimizador-windows-${{ steps.version.outputs.version }}
