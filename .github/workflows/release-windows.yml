@@ -69,8 +69,8 @@ jobs:
           python scripts/check_grouping.py --learned-alias-cases
           python scripts/check_document_parts.py
           python scripts/check_sensitive_portable.py
-          python scripts/check_identity_flow.py
-          python scripts/check_identity_flow.py --caption-cases
+          python scripts/check_identity_flow.py --url http://127.0.0.1:8787
+          python scripts/check_identity_flow.py --caption-cases --url http://127.0.0.1:8787
       - name: Package reviewed source
         env:
           RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
