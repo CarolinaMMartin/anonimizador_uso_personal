@@ -7,28 +7,29 @@ La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros dat
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Edición IALAB — 3.4.4
+## Edición IALAB — 3.4.5
 
-Esta copia independiente conserva las mejoras funcionales de la versión 3.4.4
-y aplica la identidad de **IALAB — Facultad de Derecho, UBA**. El proyecto y
+Esta actualización renueva la estética y conserva las funciones de la versión 3.4.4,
+con la identidad de **IALAB — Facultad de Derecho, UBA**. El proyecto y
 las descargas de esta edición se mantienen en **anonimizador_uso_personal**.
 
 
-## Descargar para Windows · IALAB 3.4.4
+## Descargar para Windows · IALAB 3.4.5
 
-El paquete **AnonimizadorJudicial-3.4.4-Windows.zip** corresponde a esta
-edición IALAB y conserva las mejoras funcionales de la versión 3.4.4.
+El paquete **AnonimizadorJudicial-3.4.5-Windows.zip** corresponde a esta
+edición IALAB e incluye el encabezado blanco, el logo azul, los paneles
+redondeados y los botones actualizados con acentos violeta.
 Incluye el ejecutable, el modelo local, la interfaz y los manuales.
 
-[**Descargar para Windows · 3.4.4**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip) ·
-[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.4/AnonimizadorJudicial-3.4.4-Windows.zip.sha256)
+[**Descargar para Windows · 3.4.5**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip) ·
+[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip.sha256)
 
 Descargá el ZIP completo para **Windows 10 y 11 de
 64 bits**, elegí **Extraer todo** y abrí **INICIAR.bat** desde la carpeta
 extraída. El portable incluye Python y el modelo local; conservá toda la carpeta.
 **Code → Download ZIP** contiene el código fuente y no incluye el ejecutable.
 
-[Estado de verificación](docs/VERIFICACION_3.4.4.md) ·
+[Estado de verificación](docs/VERIFICACION_3.4.5.md) ·
 [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
 Todavía no hay un paquete IALAB actualizado para macOS. El ZIP Windows no
@@ -73,7 +74,7 @@ respetan al descargar.
 
 | Qué sucede | Qué hacer |
 | --- | --- |
-| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.4` que está dentro. |
+| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.5` que está dentro. |
 | Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
@@ -88,8 +89,8 @@ nueva**. Abrí **INICIAR** desde esa carpeta;
 los accesos directos anteriores siguen abriendo la versión anterior.
 El número de versión aparece en la parte superior de la aplicación.
 
-Si usabas 3.4.3 o una versión anterior, verificá que la nueva copia indique
-**v3.4.4**. Esta actualización conserva la detección de nombres en carátulas,
+Si usabas 3.4.4 o una versión anterior, verificá que la nueva copia indique
+**v3.4.5**. Esta actualización conserva la detección de nombres en carátulas,
 las sugerencias de identidad y las decisiones manuales. La cabecera identifica
 la edición IALAB y utiliza su manual de marca.
 [Ver las novedades](docs/NOTAS_VERSION.md).

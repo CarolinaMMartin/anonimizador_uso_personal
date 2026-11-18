@@ -1,5 +1,17 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.5 · Actualización de estética IALAB — 18 de noviembre de 2026
+
+- Recupera el encabezado blanco con logo azul, paneles redondeados y más
+  espacio entre elementos, tomando como referencia la interfaz anterior del laboratorio.
+- Actualiza los botones principales con formas redondeadas y acentos violeta;
+  presenta la información de formatos sobre un fondo gris neutro.
+- Ajusta la distribución en pantallas pequeñas y renueva la caché de estilos.
+- Publica un portable Windows nuevo con esta interfaz y enlaces de descarga
+  identificados como 3.4.5. Conserva la lógica de anonimización de 3.4.4.
+- La verificación de esta entrega se describe en
+  [VERIFICACION_3.4.5.md](docs/VERIFICACION_3.4.5.md).
+
 ## 3.4.4 · Edición IALAB — 12 de noviembre de 2026
 
 - Crea una copia independiente desde el código 3.4.4 de la edición MPF
