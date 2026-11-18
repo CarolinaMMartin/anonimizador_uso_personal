@@ -4,6 +4,40 @@ Edición IALAB 3.4.5 de uso personal y académico. El portable para Windows
 incluye el ejecutable y el modelo local. Para trabajar con el código fuente,
 seguí [Desarrollo del anonimizador](DESARROLLO.md).
 
+Hay dos formas de instalarla en Windows: el **portable ZIP**, disponible hoy,
+y la aplicación de **Microsoft Store**, en preparación. Las dos procesan los
+documentos en tu equipo y se pueden tener instaladas a la vez.
+
+## Instalar desde Microsoft Store (en preparación)
+
+La aplicación se va a llamar **Anonimizador de uso personal**. **Todavía no
+está publicada**; cuando lo esté, el [README](../README.md) va a incluir el
+enlace a su ficha. La instalación prevista es:
+
+1. Abrir la ficha en Microsoft Store y pulsar **Obtener**.
+2. Abrir **Anonimizador de uso personal** desde el menú Inicio.
+3. La aplicación abre en su propia ventana. No hace falta extraer un ZIP ni
+   ejecutar INICIAR.bat.
+
+Diferencias con el portable:
+
+- **Cerrar la ventana cierra la aplicación.** Antes de cerrar pide
+  confirmación, porque el documento en revisión se descarta. Guardá primero
+  tus exportaciones.
+- Abrirla otra vez mientras está en uso trae al frente la ventana abierta; no
+  inicia una segunda copia.
+- Las actualizaciones llegan por Microsoft Store.
+- Al exportar, Windows pregunta dónde guardar cada archivo.
+- Requiere **Microsoft Edge WebView2**, incluido en Windows 11 y en Windows 10
+  actualizado. Si falta, la aplicación avisa y se abre en el navegador; en ese
+  caso cerrar la pestaña no la detiene.
+
+Microsoft firma el paquete al certificarlo. Se espera que eso evite
+[el bloqueo del Control Inteligente de Aplicaciones](#si-windows-bloquea-la-aplicación)
+que afecta al portable; se va a confirmar con la aplicación ya publicada.
+
+Qué guarda en el equipo: ver la [directiva de privacidad](../PRIVACY.md).
+
 ## Descargar y extraer el portable
 
 El paquete para **Windows 10/11 de 64 bits** es
@@ -83,7 +117,7 @@ se pierden sus sesiones en memoria.
 | Presidio o spaCy no disponibles | Volvé a extraer el paquete completo; deben conservarse _internal y models. |
 | Catálogos incompletos | Volvé a extraer el ZIP completo. Si agregaste catálogos propios, revisá que cada archivo sea una lista JSON válida y no vacía, y reiniciá la aplicación. |
 | No encuentra esta sesión | Cargá el documento otra vez: el proceso puede haberse cerrado o la página pertenecer a otra copia. |
-| PDF escaneado | Usá un PDF con texto digital o Word. Esta versión no incluye OCR. |
+| PDF escaneado | Usá un PDF con texto digital o Word. El reconocimiento de documentos escaneados (OCR) todavía no está disponible. |
 | Archivo demasiado grande | El límite de carga es 40 MB. Dividilo o reducí su tamaño. |
 
 ## Privacidad y licencia

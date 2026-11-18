@@ -28,6 +28,94 @@ Inteligente de Aplicaciones activado. Firmar solo el ZIP no firma los archivos
 que se ejecutan dentro. Hasta entonces, informar el bloqueo en el README y
 no presentar el ZIP como compatible con todos los equipos Windows 11.
 
+El paquete de Microsoft Store es la vía prevista para resolverlo: la Store
+firma el MSIX al certificarlo. Que una aplicación instalada desde la Store
+funcione con el Control Inteligente de Aplicaciones activo es una hipótesis
+que solo se puede comprobar con la aplicación ya publicada; es la primera
+prueba a hacer después de la certificación.
+
+## Paquete MSIX para Microsoft Store
+
+El MSIX es una salida adicional del mismo build. No reemplaza al portable: se
+arma a partir de la carpeta portable ya construida y no la modifica.
+
+```powershell
+.venv\Scripts\python scripts\build_portable_full.py
+.venv\Scripts\python scripts\build_msix.py
+$env:ANON_REQUIRE_MSIX = '1'
+.venv\Scripts\python -m pytest tests/test_msix_manifest.py tests/test_msix_package.py -q
+```
+
+Resultado: la carpeta `build/msix/AnonimizadorUsoPersonal/` y el archivo
+`dist/AnonimizadorUsoPersonal-3.4.5-x64.msix`, sin firmar. `build_msix.py`
+necesita `makepri.exe` y `makeappx.exe` del Windows SDK; los busca en
+`ANON_WINDOWS_SDK_BIN`, en el PATH y en el SDK instalado. Con `--layout-only`
+arma y verifica solo la carpeta, sin el SDK. Con `--package` toma otra carpeta
+portable.
+
+El paquete lleva el ejecutable, `_internal` (con los diccionarios), `frontend`,
+el modelo, las licencias, el manifiesto y los íconos. No lleva `INICIAR.bat`,
+`VERIFICAR.bat` ni `iniciar.ps1`: la Store inicia directamente el ejecutable, y
+[app/launcher.py](../app/launcher.py) resuelve la instancia única y el puerto
+libre. Con identidad de paquete la aplicación abre en ventana propia
+([app/window.py](../app/window.py)) y escribe solo en
+`%LOCALAPPDATA%\AnonimizadorUsoPersonal`.
+
+### Identidad
+
+El manifiesto se genera desde la plantilla
+[packaging/msix/AppxManifest.xml](../packaging/msix/AppxManifest.xml). La
+versión sale de `APP_VERSION` en cuatro partes: `3.4.5` pasa a `3.4.5.0`. Los
+valores siguientes son los del producto reservado en Partner Center; si no
+coinciden exactamente, la Store rechaza el paquete.
+
+| Campo | Valor |
+|---|---|
+| `Identity/@Name` | `CarolinaMartin.Anonimizadordeusopersonal` |
+| `Identity/@Publisher` | `CN=54101CBA-F9F0-4A60-A1F4-FA1225FEC231` |
+| `Properties/PublisherDisplayName` | `Carolina Martin` |
+| `Properties/DisplayName` | `Anonimizador de uso personal` |
+
+El idioma del recurso es `es-AR`. Confirmar al crear la ficha que el idioma de
+la descripción en Partner Center coincide.
+
+### Íconos
+
+`packaging/msix/Assets/` se genera con
+`python scripts/make_msix_icons.py` a partir de
+`docs/marca/logos/isotype_azul.png`. Para usar otra imagen, correr el script
+con `--source otro.png` (PNG de fondo transparente) o reemplazar los archivos
+de esa carpeta conservando nombres y tamaños. El isotipo actual mide
+251 × 215 px: las variantes de 256 px y de escala 400 % salen ampliadas; un
+original de mayor resolución las mejora. El uso del isotipo IALAB bajo una
+cuenta personal de la Store está pendiente de decisión.
+
+### Prueba local antes de enviar
+
+1. Activar el modo de desarrollador de Windows.
+2. Registrar el paquete sin firmar desde la carpeta armada:
+   `Add-AppxPackage -Register build\msix\AnonimizadorUsoPersonal\AppxManifest.xml`
+3. Abrir la aplicación desde el menú Inicio y recorrer el flujo completo con
+   [el escrito de ejemplo](ejemplos/escrito_ficticio.docx): cargar, analizar,
+   revisar, exportar en todos los formatos y cerrar la ventana. Confirmar en el
+   Administrador de tareas que el proceso terminó.
+4. Abrirla dos veces y confirmar que queda un solo proceso.
+5. Confirmar que no se escribió nada en la carpeta de instalación.
+6. Correr el Kit de certificación de aplicaciones en Windows sobre el `.msix`.
+
+Sin registrar el paquete, la ventana propia se puede probar sobre el portable
+o el código fuente definiendo `ANON_WINDOW=1` antes de iniciar el ejecutable.
+
+### Envío
+
+El workflow de release arma el MSIX después de verificar el portable y lo sube
+como artefacto `anonimizador-msix-VERSION`. No lo adjunta a la Release de
+GitHub. El envío se hace a mano desde Partner Center, con la
+[directiva de privacidad](../PRIVACY.md) como URL de privacidad y el escrito
+de ejemplo en las notas de certificación. `runFullTrust` es una capacidad
+restringida: Partner Center pide justificarla (la aplicación es un programa de
+escritorio que ejecuta un servidor local y un modelo de lenguaje incluido).
+
 ## Construcción
 
 Desde la raíz del repositorio, con Python 3.12–3.13:
