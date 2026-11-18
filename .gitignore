@@ -46,3 +46,6 @@ data/uploads/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Estado local del lanzador (puerto de la instancia abierta)
+PUERTO_ACTUAL.txt

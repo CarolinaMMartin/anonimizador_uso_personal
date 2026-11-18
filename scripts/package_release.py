@@ -174,6 +174,27 @@ def bundle_docs(pkg_dir: Path) -> None:
         (root / source.name).write_text(text, encoding='utf-8')
 
 
+RESOURCE_TYPES = frozenset({'.docx', '.pdf', '.csv'})
+
+
+def trusted_wheel_resources() -> dict[str, Path]:
+    """DOCX/PDF/CSV que pertenecen a las dependencias instaladas.
+
+    Algunas dependencias necesitan esos recursos (por ejemplo, plantillas de
+    exportación). Solo se entregan los que coinciden byte a byte con el wheel
+    instalado; un documento del usuario en la misma carpeta queda excluido.
+    El ZIP portable y el paquete MSIX comparten esta regla.
+    """
+    trusted = {}
+    for distribution in distributions():
+        for record in distribution.files or ():
+            if record.suffix.lower() in RESOURCE_TYPES and '..' not in record.parts:
+                source = Path(distribution.locate_file(record))
+                if source.is_file():
+                    trusted['_internal/' + record.as_posix()] = source
+    return trusted
+
+
 def write_release_zip(root: Path, output: Path) -> None:
     """Package the application resources without sessions or personal exports."""
     verify_build_provenance(root)
@@ -189,14 +210,8 @@ def write_release_zip(root: Path, output: Path) -> None:
     # Some dependencies need DOCX/PDF/CSV resources (for example export
     # templates). Keep only files matching installed wheel resources byte
     # for byte; a user's document under the same directory is still excluded.
-    resource_types = {'.docx', '.pdf', '.csv'}
-    trusted_resources = {}
-    for distribution in distributions():
-        for record in distribution.files or ():
-            if record.suffix.lower() in resource_types and '..' not in record.parts:
-                source = Path(distribution.locate_file(record))
-                if source.is_file():
-                    trusted_resources['_internal/' + record.as_posix()] = source
+    resource_types = RESOURCE_TYPES
+    trusted_resources = trusted_wheel_resources()
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for file in sorted(root.rglob('*')):

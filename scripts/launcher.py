@@ -1,4 +1,8 @@
-"""Entry point para PyInstaller."""
+"""Entry point para PyInstaller.
+
+La lógica de arranque (instancia única, puerto libre, reutilización) vive en
+``app/launcher.py`` para poder probarla sin compilar el ejecutable.
+"""
 import sys
 from pathlib import Path
 
@@ -9,7 +13,7 @@ else:
 
 sys.path.insert(0, str(ROOT))
 
-from app.main import run_server
+from app.launcher import main
 
 if __name__ == "__main__":
-    run_server(open_browser=True)
+    raise SystemExit(main())

@@ -32,6 +32,18 @@ extraída. El portable incluye Python y el modelo local; conservá toda la carpe
 [Estado de verificación](docs/VERIFICACION_3.4.5.md) ·
 [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
+## Instalar desde Microsoft Store (en preparación)
+
+Está en preparación un segundo canal de instalación: la aplicación
+**Anonimizador de uso personal** en Microsoft Store. Se instala con un clic,
+queda en el menú Inicio y abre en su propia ventana, sin ZIP ni INICIAR.bat.
+Microsoft firma el paquete al certificarlo.
+
+**Todavía no está publicada.** Cuando lo esté, este apartado va a incluir el
+enlace a la ficha. Mientras tanto, y también después, **el portable ZIP de
+arriba sigue disponible** y funciona igual.
+[Cómo va a ser la instalación](docs/MANUAL_INSTALACION.md#instalar-desde-microsoft-store-en-preparación).
+
 Todavía no hay un paquete IALAB actualizado para macOS. El ZIP Windows no
 funciona en Mac ni celulares. La entrega no tiene firma digital; si Windows
 impide abrirla, consultá [el aviso de instalación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
@@ -100,6 +112,7 @@ la edición IALAB y utiliza su manual de marca.
 Los documentos se procesan en tu equipo. Guardá tus resultados antes de cerrar
 la aplicación: el trabajo en curso se pierde al cerrar por completo la aplicación.
 Cerrar solo la pestaña del navegador puede dejar la aplicación funcionando.
+La [directiva de privacidad](PRIVACY.md) detalla qué se guarda en tu equipo.
 
 Si descargás la **tabla de equivalencias (CSV)**, ese archivo contiene los
 **datos originales** junto a sus etiquetas. Guardalo de forma privada y

@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST_NAME = "AnonimizadorJudicial-NLP"
 SPACY_MODEL = "es_core_news_md"
 MODEL_VERSION = '3.8.0'
+APP_ICON = ROOT / "packaging" / "app.ico"
 
 
 def is_windows() -> bool:
@@ -274,6 +275,9 @@ def build_onedir() -> Path:
         f"{ROOT / 'data' / 'dictionaries'}{sep}data/dictionaries",
         str(ROOT / "scripts" / "launcher.py"),
     ]
+    if is_windows():
+        # Ícono del ejecutable; la ventana propia lo toma de ahí.
+        cmd[-1:-1] = ["--icon", str(APP_ICON)]
     run(cmd)
 
     pkg_dir = find_package_dir(stage_dist)

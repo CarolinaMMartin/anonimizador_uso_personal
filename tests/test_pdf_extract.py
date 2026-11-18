@@ -38,3 +38,38 @@ def test_extract_pdf_rejects_all_empty():
         assert False, "expected ValueError"
     except ValueError as e:
         assert "no tiene texto digital" in str(e).lower()
+        assert "documentos escaneados todavía no está disponible" in str(e)
+
+
+def test_pages_without_text_go_through_the_recognition_hook(monkeypatch):
+    from app.extraction import pdf
+
+    seen = []
+    monkeypatch.setattr(pdf, "recognize_page_without_text",
+                        lambda page, page_number: seen.append(page_number) or "")
+    text = extract_pdf(_make_mixed_pdf())
+    assert seen == [1, 2, 3], "Solo las páginas sin texto pasan por el enganche"
+    assert "Juan Carlos Perez" in text
+
+
+def test_text_returned_by_the_hook_is_kept_in_page_order(monkeypatch):
+    from app.extraction import pdf
+
+    monkeypatch.setattr(
+        pdf, "recognize_page_without_text",
+        lambda page, page_number: f"Texto reconocido de la portada número {page_number}."
+        if page_number == 1 else "")
+    text = extract_pdf(_make_mixed_pdf())
+    assert text.index("portada número 1") < text.index("Juan Carlos Perez")
+    assert "número 2" not in text
+
+
+def test_recognition_hook_does_nothing_yet_and_adds_no_ocr_dependency():
+    from pathlib import Path
+
+    from app.extraction import pdf
+
+    assert pdf.recognize_page_without_text(object(), 1) == ""
+    requirements = (Path(__file__).resolve().parent.parent / "requirements.txt").read_text(encoding="utf-8").lower()
+    for name in ("tesseract", "easyocr", "rapidocr", "paddleocr", "ocrmypdf"):
+        assert name not in requirements

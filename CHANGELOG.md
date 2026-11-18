@@ -1,5 +1,34 @@
 # Cambios — Anonimizador Judicial
 
+## En preparación · Paquete para Microsoft Store
+
+Todavía sin publicar. El portable ZIP no cambia de comportamiento.
+
+- Suma un paquete MSIX como salida adicional del build, con la identidad
+  «Anonimizador de uso personal» reservada en Partner Center. Ver
+  [DEPLOY.md](docs/DEPLOY.md#paquete-msix-para-microsoft-store).
+- El ejecutable resuelve por sí mismo la instancia única y el puerto libre
+  entre 8787 y 8796 cuando se abre sin `INICIAR.bat`. Abrirlo dos veces trae
+  al frente la instancia abierta.
+- En el paquete de Store la aplicación abre en ventana propia; cerrar la
+  ventana termina el proceso. Escribe solo en la carpeta de datos del usuario.
+- La ventana arranca el motor de WebView2 sin red en segundo plano: sin
+  comprobaciones de seguridad en línea, sin envío de volcados y sin
+  actualización de componentes, y con los pedidos del motor ajenos al equipo
+  derivados a un proxy inexistente. Medido: desaparece la descarga de
+  configuración y componentes; queda, en la mitad de las corridas, una
+  conexión del motor a los servicios de identidad de Microsoft que la
+  aplicación no logra evitar. Ver
+  [VERIFICACION_RED_WEBVIEW2.md](docs/VERIFICACION_RED_WEBVIEW2.md).
+- El ejecutable y el paquete de Store usan un logo propio de la aplicación
+  (`packaging/app.ico`). El portable también lo muestra en su ejecutable.
+- El título de la interfaz pasa a «Anonimizador de uso personal».
+- Los PDF de solo imagen informan que el reconocimiento de documentos
+  escaneados todavía no está disponible. La extracción queda preparada para
+  sumarlo.
+- Agrega un [escrito de ejemplo ficticio](docs/ejemplos/escrito_ficticio.docx)
+  y la [directiva de privacidad](PRIVACY.md).
+
 ## 3.4.5 · Actualización de estética IALAB — 18 de noviembre de 2026
 
 - Recupera el encabezado blanco con logo azul, paneles redondeados y más
