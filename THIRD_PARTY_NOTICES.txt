@@ -15,6 +15,18 @@ NetworkX                  3.7               BSD-3-Clause
 Pydantic                  2.14.3            MIT
 presidio-analyzer         2.2.366           MIT
 spaCy (library)           3.8.18            MIT
+pywebview (Windows only)  6.2.1             BSD-3-Clause
+
+APPLICATION WINDOW (WINDOWS)
+pywebview shows the local interface in its own window in the Microsoft Store
+package. It installs pythonnet (MIT), clr-loader (MIT), bottle (MIT),
+proxy_tools (MIT) and typing_extensions (PSF-2.0); their original notices are
+copied to LICENSES/third_party/ during the build.
+pywebview redistributes Microsoft Edge WebView2 SDK libraries
+(Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll and
+WebView2Loader.dll), which remain under Microsoft's WebView2 SDK license terms.
+The Microsoft Edge WebView2 Runtime itself is not bundled: it is a Windows
+component installed and updated by Microsoft.
 
 MODEL AND BUILD TOOL
 es_core_news_md           3.8.0             GPL-3.0
@@ -56,6 +68,9 @@ PRIVACY AND OFFLINE OPERATION
 The frontend serves the bundled Roboto font locally, without Internet font or CDN downloads.
 Presidio's EmailRecognizer is disabled; email detection uses local regex.
 tldextract uses its local snapshot; analysis requires no network.
+The application window loads only http://127.0.0.1 in private mode. The
+WebView2 Runtime is a Microsoft component outside this project's control; see
+PRIVACY.md for what that means.
 Sessions are held in process memory; no SQLite session database is created
 automatically by the normal application workflow.
 The release excludes user documents, sessions, equivalence CSVs and logs.

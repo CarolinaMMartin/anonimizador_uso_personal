@@ -328,8 +328,43 @@ class ServerThread:
             self._thread.join(0.5)
 
 
+WEBVIEW_FALLBACK_MESSAGE = (
+    "No se pudo abrir la ventana de la aplicación porque falta Microsoft Edge "
+    "WebView2 o no responde.\n\nLa aplicación se abre en tu navegador. Sigue "
+    "funcionando en este equipo, sin conexión.\n\nCerrar la pestaña no la "
+    "detiene: para cerrarla del todo, finalizá «Anonimizador de uso personal» "
+    "desde el Administrador de tareas."
+)
+
+
+def notify_info(message: str) -> None:
+    print(message, file=sys.stderr, flush=True)
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(None, message, APP_TITLE, 0x40)  # MB_ICONINFORMATION
+    except (AttributeError, OSError):
+        pass
+
+
 def run_interface(server: ServerThread, mode: str) -> None:
-    """Presenta la aplicación y espera hasta que corresponda terminar."""
+    """Presenta la aplicación y espera hasta que corresponda terminar.
+
+    Con ventana propia, cerrarla detiene el servidor y termina el proceso.
+    En el navegador el proceso sigue vivo, como en el portable.
+    """
+    if mode == "window":
+        from app import window
+
+        shown = window.run_window(app_url(server.port, cache_bust=False), APP_TITLE,
+                                  runtime_paths.user_data_dir() / "webview")
+        if shown:
+            server.stop()
+            return
+        notify_info(WEBVIEW_FALLBACK_MESSAGE)
+        mode = "browser"
     if mode == "browser":
         webbrowser.open(app_url(server.port))
     server.join()

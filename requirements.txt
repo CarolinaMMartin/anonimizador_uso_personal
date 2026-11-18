@@ -10,6 +10,10 @@ rapidfuzz==3.14.6
 networkx==3.7
 pydantic==2.14.3
 
+# Ventana propia del paquete de Microsoft Store (usa Edge WebView2).
+# Solo Windows: el portable de macOS y las pruebas en Linux no la necesitan.
+pywebview==6.2.1; sys_platform == "win32"
+
 # NLP local (Presidio + spaCy)
 presidio-analyzer==2.2.366
 spacy==3.8.18

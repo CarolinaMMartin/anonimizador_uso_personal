@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Anonimizador de documentos · IALAB",
+    title="Anonimizador de uso personal",
     description="Anonimización local de documentos judiciales — uso personal",
     version=APP_VERSION,
     lifespan=lifespan,
