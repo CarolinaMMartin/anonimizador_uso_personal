@@ -358,11 +358,15 @@ def run_interface(server: ServerThread, mode: str) -> None:
     if mode == "window":
         from app import window
 
-        shown = window.run_window(app_url(server.port, cache_bust=False), APP_TITLE,
-                                  runtime_paths.user_data_dir() / "webview")
+        storage = window.process_storage_dir(runtime_paths.user_data_dir() / "webview")
+        shown = window.run_window(app_url(server.port, cache_bust=False), APP_TITLE, storage)
         if shown:
+            # Primero se libera el puerto; el borrado de temporales puede
+            # demorar unos segundos y no debe impedir volver a abrirla.
             server.stop()
+            window.clear_storage(storage)
             return
+        window.clear_storage(storage, attempts=1)
         notify_info(WEBVIEW_FALLBACK_MESSAGE)
         mode = "browser"
     if mode == "browser":

@@ -70,16 +70,25 @@ def test_window_enables_downloads_text_selection_and_private_storage(monkeypatch
     assert Path(start["storage_path"]) == tmp_path / "webview"
 
 
-def test_engine_temporary_data_is_removed_before_and_after_the_window(monkeypatch, tmp_path):
-    storage = tmp_path / "webview"
-    (storage / "EBWebView").mkdir(parents=True)
-    (storage / "EBWebView" / "resto.bin").write_text("sesión anterior", encoding="utf-8")
+def test_each_process_uses_its_own_temporary_folder(tmp_path):
+    import os
+
+    storage = window.process_storage_dir(tmp_path / "webview")
+    assert storage == tmp_path / "webview" / str(os.getpid())
+
+
+def test_leftovers_from_previous_processes_are_removed_before_opening(monkeypatch, tmp_path):
+    root = tmp_path / "webview"
+    storage = root / "4242"
+    (root / "1111" / "EBWebView").mkdir(parents=True)
+    (root / "1111" / "EBWebView" / "resto.bin").write_text("sesión anterior", encoding="utf-8")
+    (root / "suelto.tmp").write_text("x", encoding="utf-8")
     fake = FakeWebview()
     seen_at_start = []
     original_start = fake.start
 
     def start(**options):
-        seen_at_start.append(storage.exists())
+        seen_at_start.append(sorted(path.name for path in root.iterdir()))
         (storage / "EBWebView").mkdir(parents=True)
         (storage / "EBWebView" / "cache.bin").write_text("temporal", encoding="utf-8")
         original_start(**options)
@@ -88,19 +97,28 @@ def test_engine_temporary_data_is_removed_before_and_after_the_window(monkeypatc
     monkeypatch.setitem(sys.modules, "webview", fake)
     monkeypatch.setattr(window, "webview2_available", lambda: True)
     assert window.run_window("http://127.0.0.1:8787", "x", storage) is True
-    assert seen_at_start == [False], "Los restos anteriores se borran antes de abrir"
-    assert not storage.exists(), "Al cerrar no quedan datos temporales"
+    assert seen_at_start == [[]], "Los restos anteriores se borran antes de abrir"
+    assert (storage / "EBWebView" / "cache.bin").is_file(), "El borrado propio lo decide quien llama"
+
+    assert window.clear_storage(storage, delay=0) is True
+    assert not root.exists(), "Al cerrar no queda nada, tampoco la carpeta vacía"
+
+
+def test_cleanup_keeps_the_folder_of_another_running_instance(tmp_path):
+    root = tmp_path / "webview"
+    mine, other = root / "1", root / "2"
+    mine.mkdir(parents=True)
+    (other / "EBWebView").mkdir(parents=True)
+    assert window.clear_storage(mine, delay=0) is True
+    assert (other / "EBWebView").is_dir()
+
+    window.clear_stale_storage(tmp_path / "no-existe", tmp_path / "no-existe" / "1")  # no falla
 
 
 def test_storage_cleanup_reports_what_it_could_not_remove(monkeypatch, tmp_path):
-    storage = tmp_path / "webview"
-    storage.mkdir()
-    assert window.clear_storage(storage) is True
-    assert window.clear_storage(storage) is True  # ya no existe
-    storage.mkdir()
-    import shutil
-
-    monkeypatch.setattr(shutil, "rmtree", lambda path, ignore_errors=False: None)
+    storage = tmp_path / "webview" / "1"
+    storage.mkdir(parents=True)
+    monkeypatch.setattr(window.shutil, "rmtree", lambda path, ignore_errors=False: None)
     assert window.clear_storage(storage, attempts=2, delay=0) is False
 
 
@@ -143,12 +161,15 @@ def test_closing_the_window_stops_the_server(monkeypatch, tmp_path):
     monkeypatch.setattr(launcher.runtime_paths, "user_data_dir", lambda: tmp_path)
     monkeypatch.setattr(launcher.webbrowser, "open", lambda url: pytest.fail("no debe abrir el navegador"))
     server = FakeServer()
+    monkeypatch.setattr(window, "clear_storage",
+                        lambda storage, **options: server.events.append(("clear", storage)) or True)
     launcher.run_interface(server, "window")
-    assert server.events == ["stop"]
     (url, title, storage), = calls
     assert url == "http://127.0.0.1:8790"
     assert title == "Anonimizador de uso personal"
-    assert storage == tmp_path / "webview"
+    assert storage == window.process_storage_dir(tmp_path / "webview")
+    assert server.events == ["stop", ("clear", storage)], \
+        "Primero se libera el puerto; después se borran los temporales"
 
 
 def test_window_failure_opens_the_browser_with_a_clear_message(monkeypatch, tmp_path):

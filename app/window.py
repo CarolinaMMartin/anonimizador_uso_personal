@@ -10,7 +10,10 @@ pruebas de Linux/macOS no hace falta tenerlo instalado.
 from __future__ import annotations
 
 import logging
+import os
+import shutil
 import sys
+import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -72,19 +75,45 @@ def webview2_available(builds: list[str] | None = None) -> bool:
     return any(parse_build(build) >= MIN_WEBVIEW2_BUILD for build in builds)
 
 
-def clear_storage(storage_dir: Path, attempts: int = 10, delay: float = 0.3) -> bool:
-    """Borra los datos temporales del motor de la ventana.
+def process_storage_dir(root: Path) -> Path:
+    """Carpeta temporal del motor para este proceso, dentro de ``root``.
+
+    Una carpeta por proceso evita que una instancia que está terminando borre
+    archivos de la que se acaba de abrir.
+    """
+    return root / str(os.getpid())
+
+
+def clear_stale_storage(root: Path, keep: Path) -> None:
+    """Borra restos de procesos anteriores (por ejemplo, tras un apagado)."""
+    try:
+        leftovers = [child for child in root.iterdir() if child != keep]
+    except OSError:
+        return
+    for child in leftovers:
+        if child.is_dir():
+            shutil.rmtree(child, ignore_errors=True)
+        else:
+            try:
+                child.unlink()
+            except OSError:
+                pass
+
+
+def clear_storage(storage_dir: Path, attempts: int = 25, delay: float = 0.4) -> bool:
+    """Borra los datos temporales del motor de la ventana de este proceso.
 
     pywebview intenta borrarlos al cerrar, pero los procesos de WebView2
-    pueden tardar en soltar los archivos. Se reintenta unos segundos y, si
-    queda algo, se limpia en el próximo inicio. Devuelve True si no quedó nada.
+    pueden tardar varios segundos en soltar los archivos. Se reintenta y, si
+    queda algo, lo limpia el próximo inicio. Devuelve True si no quedó nada.
     """
-    import shutil
-    import time
-
     for attempt in range(attempts):
         shutil.rmtree(storage_dir, ignore_errors=True)
         if not storage_dir.exists():
+            try:
+                storage_dir.parent.rmdir()  # solo si quedó vacía
+            except OSError:
+                pass
             return True
         if attempt < attempts - 1:
             time.sleep(delay)
@@ -96,7 +125,8 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
 
     Devuelve ``True`` si la ventana se mostró (y ya fue cerrada) y ``False``
     si no pudo crearse, para que quien llama use el navegador.
-    Debe ejecutarse en el hilo principal.
+    Debe ejecutarse en el hilo principal. Quien llama borra ``storage_dir``
+    con ``clear_storage`` cuando ya detuvo el servidor.
     """
     if not webview2_available():
         logger.warning("Microsoft Edge WebView2 no está instalado.")
@@ -113,8 +143,7 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
         nonlocal shown
         shown = True
 
-    # Restos de un cierre abrupto anterior.
-    clear_storage(storage_dir, attempts=1)
+    clear_stale_storage(storage_dir.parent, storage_dir)
     try:
         # En pywebview las descargas vienen deshabilitadas; las exportaciones
         # (Word, PDF, CSV, Markdown) son descargas de un blob.
@@ -137,7 +166,5 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
                       localization=LOCALIZATION)
     except Exception:  # noqa: BLE001 - cualquier fallo del motor deriva al navegador.
         logger.exception("No se pudo abrir la ventana propia.")
-        clear_storage(storage_dir)
         return shown
-    clear_storage(storage_dir)
     return True
