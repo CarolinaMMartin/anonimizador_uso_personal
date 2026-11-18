@@ -20,6 +20,7 @@ SOURCE_FILES = (
     'scripts/launcher.py', 'scripts/build_portable_full.py', 'scripts/install_nlp.py',
     'scripts/bundle_compliance.py', 'scripts/package_release.py',
     'scripts/build_provenance.py', 'scripts/portable_docs.py',
+    'packaging/app.ico',
 )
 
 

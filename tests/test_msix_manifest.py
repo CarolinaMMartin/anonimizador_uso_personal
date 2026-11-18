@@ -110,18 +110,64 @@ def test_icon_folder_holds_exactly_the_generated_set():
         assert f"Square44x44Logo.targetsize-{size}_altform-lightunplated.png" in expected
 
 
-def test_icons_can_be_regenerated_from_the_brand_isotype(tmp_path):
-    written = make_msix_icons.build(output=tmp_path / "Assets")
-    assert {path.name for path in written} == set(make_msix_icons.expected_assets())
+def _opaque_colours(path):
     from PIL import Image
 
-    dark = Image.open(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-unplated.png")
-    light = Image.open(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-lightunplated.png")
-    assert dark.mode == light.mode == "RGBA"
-    assert dark.getpixel((0, 0))[3] == 0, "Sin placa: el fondo es transparente"
-    opaque_dark = max((color for _count, color in dark.getcolors(maxcolors=48 * 48)),
-                      key=lambda pixel: pixel[3])
-    opaque_light = max((color for _count, color in light.getcolors(maxcolors=48 * 48)),
-                       key=lambda pixel: pixel[3])
-    assert opaque_dark[:3] == (255, 255, 255), "Sobre fondo oscuro el isotipo va en blanco"
-    assert sum(opaque_light[:3]) < 300, "Sobre fondo claro conserva el azul de la marca"
+    image = Image.open(path)
+    assert image.mode == "RGBA"
+    assert image.getpixel((0, 0))[3] == 0, "Sin placa: el fondo es transparente"
+    return {colour[:3] for _count, colour in image.getcolors(maxcolors=image.width * image.height)
+            if colour[3] == 255}
+
+
+def test_committed_icons_come_from_the_application_logo(tmp_path):
+    assert make_msix_icons.SOURCE == ROOT / "packaging" / "app.ico"
+    written = make_msix_icons.build(output=tmp_path / "Assets")
+    assert {path.name for path in written} == set(make_msix_icons.expected_assets())
+    from PIL import Image, ImageChops
+
+    for path in written:
+        # Se comparan píxeles, no bytes: la compresión PNG varía entre plataformas.
+        committed = Image.open(msix_manifest.ASSETS_DIR / path.name).convert("RGBA")
+        generated = Image.open(path).convert("RGBA")
+        assert committed.size == generated.size
+        difference = max(high for _low, high in ImageChops.difference(committed, generated).getextrema())
+        assert difference <= 3, \
+            f"{path.name} no coincide con packaging/app.ico: regenerá con scripts/make_msix_icons.py"
+
+
+def test_multicolour_logo_keeps_its_colours_on_dark_and_light_backgrounds(tmp_path):
+    make_msix_icons.build(output=tmp_path / "Assets")
+    dark = _opaque_colours(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-unplated.png")
+    light = _opaque_colours(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-lightunplated.png")
+    assert dark == light and len(dark) > 1, "No se aplana a un solo color"
+
+
+def test_single_colour_logo_turns_white_for_dark_backgrounds(tmp_path):
+    from PIL import Image, ImageDraw
+
+    source = tmp_path / "silueta.png"
+    image = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
+    ImageDraw.Draw(image).ellipse((16, 16, 112, 112), fill=(2, 50, 87, 255))
+    image.save(source)
+    make_msix_icons.build(source=source, output=tmp_path / "Assets")
+    dark = _opaque_colours(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-unplated.png")
+    light = _opaque_colours(tmp_path / "Assets" / "Square44x44Logo.targetsize-48_altform-lightunplated.png")
+    assert dark == {(255, 255, 255)}, "Sobre fondo oscuro la silueta va en blanco"
+    assert (2, 50, 87) in light and all(r < 60 and b > r and r + g + b < 300 for r, g, b in light), \
+        "Sobre fondo claro conserva su color"
+
+
+def test_small_icons_use_the_versions_drawn_for_small_sizes():
+    marks = make_msix_icons.load_marks(make_msix_icons.SOURCE)
+    assert len(marks) >= 5 and [m.size for m in marks] == sorted(m.size for m in marks)
+    assert max(max(m.size) for m in marks) >= 200, "Alcanza para 256 px sin agrandar de más"
+
+
+def test_logo_without_transparent_background_is_rejected(tmp_path):
+    from PIL import Image
+
+    source = tmp_path / "opaco.png"
+    Image.new("RGBA", (64, 64), (255, 255, 255, 255)).save(source)
+    with pytest.raises(SystemExit):
+        make_msix_icons.build(source=source, output=tmp_path / "Assets")
