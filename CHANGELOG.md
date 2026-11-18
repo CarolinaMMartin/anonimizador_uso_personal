@@ -12,6 +12,16 @@ Todavía sin publicar. El portable ZIP no cambia de comportamiento.
   al frente la instancia abierta.
 - En el paquete de Store la aplicación abre en ventana propia; cerrar la
   ventana termina el proceso. Escribe solo en la carpeta de datos del usuario.
+- La ventana arranca el motor de WebView2 sin red en segundo plano: sin
+  comprobaciones de seguridad en línea, sin envío de volcados y sin
+  actualización de componentes, y con los pedidos del motor ajenos al equipo
+  derivados a un proxy inexistente. Medido: desaparece la descarga de
+  configuración y componentes; queda, en la mitad de las corridas, una
+  conexión del motor a los servicios de identidad de Microsoft que la
+  aplicación no logra evitar. Ver
+  [VERIFICACION_RED_WEBVIEW2.md](docs/VERIFICACION_RED_WEBVIEW2.md).
+- El ejecutable y el paquete de Store usan un logo propio de la aplicación
+  (`packaging/app.ico`). El portable también lo muestra en su ejecutable.
 - El título de la interfaz pasa a «Anonimizador de uso personal».
 - Los PDF de solo imagen informan que el reconocimiento de documentos
   escaneados todavía no está disponible. La extracción queda preparada para

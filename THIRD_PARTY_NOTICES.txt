@@ -69,8 +69,14 @@ The frontend serves the bundled Roboto font locally, without Internet font or CD
 Presidio's EmailRecognizer is disabled; email detection uses local regex.
 tldextract uses its local snapshot; analysis requires no network.
 The application window loads only http://127.0.0.1 in private mode. The
-WebView2 Runtime is a Microsoft component outside this project's control; see
-PRIVACY.md for what that means.
+WebView2 Runtime is a Microsoft component that, left alone, contacts Microsoft
+servers on its own. The application starts it with SmartScreen, crash upload
+and background networking disabled, and routes the engine's non-loopback
+requests to a proxy that does not exist. Measured effect: configuration and
+component downloads stop; in about half of the runs the engine still opens one
+connection to Microsoft identity services, which the application cannot
+prevent. Windows diagnostic data and runtime updates are not controllable by
+an application either. See docs/VERIFICACION_RED_WEBVIEW2.md in the repository.
 Sessions are held in process memory; no SQLite session database is created
 automatically by the normal application workflow.
 The release excludes user documents, sessions, equivalence CSVs and logs.

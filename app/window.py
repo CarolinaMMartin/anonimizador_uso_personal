@@ -145,6 +145,10 @@ def run_window(url: str, title: str, storage_dir: Path) -> bool:
 
     clear_stale_storage(storage_dir.parent, storage_dir)
     try:
+        # Sin red en segundo plano: SmartScreen, volcados, componentes.
+        from app import webview_hardening
+
+        webview_hardening.install()
         # En pywebview las descargas vienen deshabilitadas; las exportaciones
         # (Word, PDF, CSV, Markdown) son descargas de un blob.
         webview.settings["ALLOW_DOWNLOADS"] = True

@@ -81,14 +81,33 @@ la descripción en Partner Center coincide.
 
 ### Íconos
 
-`packaging/msix/Assets/` se genera con
-`python scripts/make_msix_icons.py` a partir de
-`docs/marca/logos/isotype_azul.png`. Para usar otra imagen, correr el script
-con `--source otro.png` (PNG de fondo transparente) o reemplazar los archivos
-de esa carpeta conservando nombres y tamaños. El isotipo actual mide
-251 × 215 px: las variantes de 256 px y de escala 400 % salen ampliadas; un
-original de mayor resolución las mejora. El uso del isotipo IALAB bajo una
-cuenta personal de la Store está pendiente de decisión.
+El logo de la aplicación es [packaging/app.ico](../packaging/app.ico), con
+versiones dibujadas de 16 a 256 px. Lo usan el ejecutable (PyInstaller lo
+incrusta en Windows y la ventana propia lo toma de ahí) y el paquete de Store:
+`packaging/msix/Assets/` se genera con `python scripts/make_msix_icons.py` a
+partir de ese archivo, y una prueba falla si las dos cosas dejan de coincidir.
+Para cambiarlo, reemplazar `app.ico` y volver a correr el script; también
+acepta `--source` con otro ICO o PNG de fondo transparente.
+
+La interfaz conserva el logo y la identidad de IALAB en el encabezado; el
+logo de la aplicación no es una marca institucional. Sobre una barra de tareas
+oscura el cuerpo azul del logo contrasta poco: se distinguen las líneas blancas
+y la franja verde.
+
+### Red de la ventana (WebView2)
+
+La ventana solo muestra `127.0.0.1`, pero el motor de WebView2 abre por su
+cuenta conexiones a servidores de Microsoft.
+[app/webview_hardening.py](../app/webview_hardening.py) lo arranca con esas
+funciones desactivadas y deriva a un proxy inexistente los pedidos del motor
+que no sean a la propia máquina. Eso elimina la descarga de configuración y
+componentes, pero no todo: queda una conexión intermitente a los servicios de
+identidad de Microsoft. Qué se midió, qué opción funciona y qué no puede
+controlar la aplicación está en
+[VERIFICACION_RED_WEBVIEW2.md](VERIFICACION_RED_WEBVIEW2.md). No afirmar en la
+ficha de la Store que la aplicación no realiza ninguna conexión.
+Repetir esa medición al cambiar la versión de pywebview o cuando una versión
+nueva del runtime de WebView2 cambie el comportamiento.
 
 ### Prueba local antes de enviar
 
@@ -101,7 +120,8 @@ cuenta personal de la Store está pendiente de decisión.
    Administrador de tareas que el proceso terminó.
 4. Abrirla dos veces y confirmar que queda un solo proceso.
 5. Confirmar que no se escribió nada en la carpeta de instalación.
-6. Correr el Kit de certificación de aplicaciones en Windows sobre el `.msix`.
+6. Desconectar la red y repetir el paso 3: la aplicación debe funcionar igual.
+7. Correr el Kit de certificación de aplicaciones en Windows sobre el `.msix`.
 
 Sin registrar el paquete, la ventana propia se puede probar sobre el portable
 o el código fuente definiendo `ANON_WINDOW=1` antes de iniciar el ejecutable.
