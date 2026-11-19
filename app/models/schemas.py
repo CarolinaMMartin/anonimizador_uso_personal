@@ -90,6 +90,8 @@ class SessionState(BaseModel):
     enabled_categories: list[Category] = Field(default_factory=list)
     review_sequence: int = 0
     has_review: bool = False
+    last_analysis_sequence: int | None = None
+    omitted_pdf_pages: list[int] = Field(default_factory=list)
 
 
 class UploadResponse(BaseModel):
@@ -97,10 +99,13 @@ class UploadResponse(BaseModel):
     doc_name: str
     char_count: int
     paragraph_count: int
+    pdf_page_count: int | None = None
+    omitted_pdf_pages: list[int] = Field(default_factory=list)
     message: str = "Documento cargado correctamente"
 
 
 class AnalyzeRequest(BaseModel):
+    replace_review_sequence: int | None = Field(default=None, ge=0)
     session_id: str
     label_mode: LabelMode = "cat"
     enabled_categories: list[Category] | None = None
@@ -111,6 +116,7 @@ class CancelRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
+    review_preserved: bool = False
     session_id: str
     detections: list[Detection]
     clusters: list[Cluster]
@@ -159,6 +165,7 @@ class ExportDocumentRequest(BaseModel):
 
     session_id: str
     use_confirmed_only: bool = False
+    acknowledge_partial_pdf: bool = False
     text: str | None = None
     format: ExportFormatOptions | None = None
 

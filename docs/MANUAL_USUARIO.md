@@ -71,6 +71,11 @@ Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 - Formatos: **Word (.docx)** o **PDF digital** con texto seleccionable.
 - Arrastrá el archivo o hacé clic en la zona de carga.
+- Si un PDF combina texto digital y páginas sin texto recuperable, la carga indica
+  cuántas páginas tiene el original y cuáles se omitieron. Para incluir su contenido,
+  cargá una copia con OCR. Si preferís trabajar con el texto parcial, revisá el aviso
+  del editor y marcá la casilla antes de exportar a Word o PDF o copiar Markdown.
+  Las imágenes dentro de páginas con texto tampoco se transcriben.
 - No se procesan PDFs completamente escaneados.
 - Límite: **40 MB**. Word extrae párrafos, tablas, encabezados y pies; verificá
   por separado contenido de imágenes, dibujos, notas y revisiones pendientes.
@@ -86,7 +91,10 @@ capa de texto.
 - Marcá las categorías que querés buscar.
 - Conservá **Otros** activada para incluir seguimiento de denuncias, pólizas,
   chasis, motor y enlaces.
-- Hacé clic en **Analizar documento**.
+- Hacé clic en **Analizar documento**. Si repetís la acción con la misma configuración,
+  se conserva la revisión. Al cambiar de modo o categorías, la aplicación pide
+  confirmación si el nuevo análisis descartaría correcciones manuales o del editor.
+  Cancelar permite volver a la revisión y exportarla.
 - Seleccioná al menos una categoría. **Detener** solicita la cancelación;
   el motor la atiende al llegar a un punto de control entre sus bloques.
 

@@ -1,37 +1,41 @@
 """Extracción de texto desde PDF digital (pdfplumber, sin OCR)."""
 import io
-import logging
+from dataclasses import dataclass
 
 import pdfplumber
 
 from app.extraction.pdf_cleanup import clean_pdf_text, merge_lines_to_paragraphs
 
-logger = logging.getLogger(__name__)
-
 MIN_DIGITAL_CHARS = 15
 
 
-def extract_pdf(data: bytes) -> str:
-    """Extrae solo la capa de texto nativa del PDF.
+@dataclass
+class PdfExtraction:
+    text: str
+    page_count: int
+    omitted_pages: list[int]
 
-    PDFs mixtos (portada escaneada + páginas digitales) están soportados:
-    las páginas sin texto seleccionable se omiten y se concatena el resto.
-    """
+
+def extract_pdf(data: bytes) -> str:
+    return extract_pdf_with_pages(data).text
+
+
+def extract_pdf_with_pages(data: bytes) -> PdfExtraction:
+    """Extrae el texto utilizable e identifica páginas omitidas (numeradas desde 1)."""
     parts: list[str] = []
-    empty_pages = 0
-    total_pages = 0
+    omitted: list[int] = []
 
     with pdfplumber.open(io.BytesIO(data)) as doc:
         total_pages = len(doc.pages)
-        for page in doc.pages:
+        for number, page in enumerate(doc.pages, start=1):
             page_text = (page.extract_text() or "").strip()
-            if not page_text:
-                empty_pages += 1
-                continue
-            cleaned = clean_pdf_text(page_text)
-            parts.append(merge_lines_to_paragraphs(cleaned))
+            cleaned = merge_lines_to_paragraphs(clean_pdf_text(page_text))
+            if cleaned:
+                parts.append(cleaned)
+            else:
+                omitted.append(number)
 
-    text = "\n\n".join(p for p in parts if p).strip()
+    text = "\n\n".join(parts).strip()
 
     if not text:
         raise ValueError(
@@ -45,11 +49,4 @@ def extract_pdf(data: bytes) -> str:
             "o un archivo dañado."
         )
 
-    if empty_pages:
-        logger.info(
-            "PDF mixto: %d de %d páginas sin texto digital (omitidas)",
-            empty_pages,
-            total_pages,
-        )
-
-    return text
+    return PdfExtraction(text, total_pages, omitted)

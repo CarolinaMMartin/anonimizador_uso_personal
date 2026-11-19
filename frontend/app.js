@@ -6,6 +6,7 @@ let sessionGeneration = 0;
 let mutationTail = Promise.resolve();
 let reviewRevision = 0;
 let editorSnapshot = null;
+let lastAnalysisSettings = null;
 let previewSequence = 0;
 let localDecisionSequence = 0;
 const localDecisionTokens = new Map();
@@ -105,6 +106,8 @@ function resetDocumentState() {
   mutationTail = Promise.resolve();
   sessionId = null;
   currentDocName = '';
+  lastAnalysisSettings = null;
+  showPdfCoverage(null, []);
   docText = '';
   offsetText = null;
   browserOffsets = [];
@@ -277,6 +280,7 @@ async function parseApiError(res) {
     const data = await res.json();
     const d = data.detail;
     if (typeof d === 'string') return d;
+    if (typeof d?.message === 'string') return d.message;
     if (Array.isArray(d)) return d.map((x) => x.msg || JSON.stringify(x)).join('; ');
   } catch {
     /* ignore */
@@ -534,6 +538,26 @@ fileInput.addEventListener('change', (e) => {
   if (e.target.files.length) handleFile(e.target.files[0]);
 });
 
+function showPdfCoverage(total, omitted) {
+  const partial = omitted.length > 0;
+  const message = partial
+    ? `PDF de ${total} páginas. Páginas omitidas por falta de texto recuperable: ${omitted.join(', ')}. Para incluirlas, cargá una copia con reconocimiento de texto (OCR).`
+    : '';
+  $('uploadPageWarning').textContent = message;
+  $('uploadPageWarning').hidden = !partial;
+  $('exportPageWarning').textContent = message;
+  $('partialPdfNotice').hidden = !partial;
+  $('ackPartialPdf').checked = false;
+  updatePartialExportButtons();
+}
+
+function updatePartialExportButtons() {
+  const blocked = !$('partialPdfNotice').hidden && !$('ackPartialPdf').checked;
+  for (const id of ['exportDocx', 'exportPdf', 'copyMdBtn']) $(id).disabled = blocked;
+}
+
+$('ackPartialPdf').addEventListener('change', updatePartialExportButtons);
+
 async function handleFile(file) {
   resetDocumentState();
   const generation = sessionGeneration;
@@ -553,6 +577,7 @@ async function handleFile(file) {
     if (generation !== sessionGeneration || signal.aborted) return;
     sessionId = data.session_id;
     currentDocName = file.name || 'documento';
+    showPdfCoverage(data.pdf_page_count, data.omitted_pdf_pages || []);
     $('fileInfo').innerHTML =
       `<strong>${escapeHTML(file.name)}</strong> · ${data.char_count.toLocaleString('es')} caracteres · ${data.paragraph_count} párrafos`;
     $('analyzeBtn').disabled = false;
@@ -584,29 +609,43 @@ $('analyzeBtn').addEventListener('click', async () => {
     return;
   }
   const context = sessionContext();
+  const labelMode = getLabelMode();
+  const settings = JSON.stringify([labelMode, enabledCategories.slice().sort()]);
   const signal = beginRequest();
   setProcessBusy(true);
-  for (const id of ['workspace', 'exportPanel', 'editorPanel']) $(id).hidden = true;
   try {
     await flushPendingSaves();
     assertCurrentSession(context);
     if (signal.aborted) return;
-    const res = await sessionFetch(API + '/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal,
-      body: JSON.stringify({
-        session_id: sessionId,
-        label_mode: getLabelMode(),
-        enabled_categories: enabledCategories,
-      }),
-    }, context);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Error en análisis');
+    if (settings === lastAnalysisSettings) {
+      showToast('La configuración es la misma. Podés continuar con tu revisión.', 'success');
+      return;
     }
+    const message = 'Un nuevo análisis descartará las correcciones manuales y del editor. ¿Querés reemplazar la revisión actual?';
+    const editorEdited = Boolean(editorSnapshot?.dirty);
+    if (editorEdited && !confirm(message)) return;
+
+    const body = { session_id: context.id, label_mode: labelMode, enabled_categories: enabledCategories };
+    const analyze = () => sessionFetch(API + '/api/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      signal, body: JSON.stringify(body),
+    }, context);
+    let res = await analyze();
+    if (res.status === 409) {
+      const { detail } = await res.json();
+      if (detail?.code === 'review_replacement') {
+        if (signal.aborted || (!editorEdited && !confirm(message))) return;
+        body.replace_review_sequence = detail.review_sequence;
+        res = await analyze();
+      }
+    }
+    if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
     if (signal.aborted) return;
+    if (data.review_preserved) {
+      showToast('Se conservó la revisión manual.', 'success');
+      return;
+    }
     applyReviewData(data);
     reviewChanged();
     editorSnapshot = null;
@@ -616,6 +655,7 @@ $('analyzeBtn').addEventListener('click', async () => {
     renderTable();
     renderClusters();
     await loadPreview();
+    lastAnalysisSettings = settings;
     $('statsRow').hidden = false;
     $('workspace').hidden = false;
     $('exportPanel').hidden = false;
@@ -1551,6 +1591,9 @@ async function downloadExport(url, filename, payloadExtra = {}) {
     use_confirmed_only: false,
     ...payloadExtra,
   };
+  if ('text' in payloadExtra && !$('partialPdfNotice').hidden) {
+    body.acknowledge_partial_pdf = $('ackPartialPdf').checked;
+  }
   const res = await sessionFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
