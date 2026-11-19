@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+PDF_MANUALS = ('Manual_de_usuario.pdf', 'Manual_tecnico.pdf', 'Resumen_ejecutivo.pdf')
 DELIVERED = {'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.txt', 'CHANGELOG.md',
              'MANUAL_INSTALACION.md', 'MANUAL_USUARIO.md', 'DEPLOY.md', 'COMPLIANCE.md',
              'NOTAS_VERSION.md'}
@@ -22,6 +23,8 @@ def portable_text(text, source, destination):
         relative = resolved.relative_to(ROOT).as_posix()
         if resolved.name in DELIVERED or resolved.name == f'VERIFICACION_{app_version()}.md':
             delivered = Path(resolved.name)
+        elif resolved.parent == ROOT / 'docs/manuales' and resolved.name in PDF_MANUALS:
+            delivered = Path('Manuales') / resolved.name
         elif relative == 'docs/dependencies-frozen.txt':
             delivered = Path('DEPENDENCIAS_BUILD.txt')
         elif relative.startswith('LICENSES/'):

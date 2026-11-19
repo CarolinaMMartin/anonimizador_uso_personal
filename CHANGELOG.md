@@ -1,5 +1,12 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.6 · Revisión manual, PDF y documentación · 19 de noviembre de 2026
+
+- Conserva las decisiones manuales si repetís el análisis con las mismas categorías. Si las cambiás después de revisar, pide confirmación antes de reemplazar la revisión.
+- Identifica las páginas del PDF que quedaron sin texto recuperable y pide confirmación antes de exportar solo el texto disponible.
+- Reúne letras y acentos separados en la capa de texto del PDF y mejora la representación de letras en la exportación. Conserva símbolos legítimos como ° y ®.
+- Incluye el manual de usuario, el manual técnico y el resumen ejecutivo con la identidad visual del IALAB en la carpeta **Manuales** del ZIP.
+
 ## 3.4.5 · Actualización de estética IALAB — 18 de noviembre de 2026
 
 - Recupera el encabezado blanco con logo azul, paneles redondeados y más

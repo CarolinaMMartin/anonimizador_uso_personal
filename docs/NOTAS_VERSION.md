@@ -1,26 +1,23 @@
-# Anonimizador IALAB 3.4.5
+# Anonimizador IALAB 3.4.6
 
-Actualización de estética del 18 de noviembre de 2026.
+Actualización de revisión manual, lectura de PDF y documentación del 19 de noviembre de 2026.
 
 ## Descargar para Windows
 
-[Descargar ZIP completo · 3.4.5](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip.sha256).
+[Descargar ZIP completo · 3.4.6](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip.sha256).
 
 Extraé el ZIP en una carpeta nueva y abrí **INICIAR.bat**. El paquete incluye
 el ejecutable, la interfaz actualizada, Python, el modelo local y los manuales.
-La cabecera y `/health` identifican la versión **3.4.5**.
+La cabecera y `/health` identifican la versión **3.4.6**.
 
 ## Qué cambia
 
-- Encabezado blanco con logo azul del IALAB.
-- Paneles redondeados, bordes sutiles y más espacio entre elementos.
-- Botones principales redondeados con acentos violeta del laboratorio.
-- Información de formatos sobre fondo gris neutro.
-- Ajustes de distribución en pantallas pequeñas.
+- Conserva las decisiones manuales si repetís el análisis con las mismas categorías. Si las cambiás después de revisar, pide confirmación antes de reemplazar la revisión.
+- Identifica las páginas del PDF que quedaron sin texto recuperable y pide confirmación antes de exportar solo el texto disponible.
+- Reúne letras y acentos separados en la capa de texto del PDF y mejora la representación de letras en la exportación. Conserva símbolos legítimos como ° y ®.
+- Incluye el manual de usuario, el manual técnico y el resumen ejecutivo con la identidad visual del IALAB en la carpeta **Manuales** del ZIP.
 
-Se conservan las funciones de detección, revisión manual, agrupación y
-exportación Word/PDF/CSV de 3.4.4. El cambio de estética también se incluye
-en el ZIP descargable; no requiere editar archivos de una instalación anterior.
+Si un PDF muestra una letra pero entrega otro carácter al copiar su texto, usá el documento fuente o una copia con OCR y comprobá el resultado en ambas vistas.
 
 ## Verificación y procedencia
 
@@ -30,7 +27,7 @@ el inicio real, las comprobaciones de análisis y exportación, la procedencia
 del binario y el inicio/análisis del ZIP extraído en otra carpeta.
 
 El ZIP incluye `SOURCE_COMMIT.txt`, `BUILD_PROVENANCE.json`, el inventario de
-dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.5.md)
+dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.6.md)
 y [el historial de cambios](../CHANGELOG.md).
 
 ## Uso y límites

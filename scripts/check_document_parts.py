@@ -15,7 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def upload(data, name='verificacion_ficticia.docx'):
     boundary = 'parts-' + uuid.uuid4().hex
-    body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{name}"\r\nContent-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n'.encode()
+    mime = ('application/pdf' if name.endswith('.pdf') else
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{name}"\r\nContent-Type: {mime}\r\n\r\n'.encode()
             + data + f'\r\n--{boundary}--\r\n'.encode())
     return json.loads(http.request('/api/upload', body, {'Content-Type': 'multipart/form-data; boundary=' + boundary}))
 
@@ -62,6 +64,57 @@ def verify_manual_review():
             and text.count(added['placeholder']) == 2 and 'Fin.' in text)
     return {'mode': 'manual_review', 'checks': checks}
 
+def verify_mixed_pdf_review():
+    import pdfplumber
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfgen import canvas
+
+    source = io.BytesIO()
+    pdfmetrics.registerFont(TTFont('InputRoboto', str(ROOT / 'frontend/assets/fonts/Roboto.ttf')))
+    document = canvas.Canvas(source)
+    document.setFont('InputRoboto', 11)
+    document.drawString(50, 700, 'La resolucio\u0301n de Łódź. Alias bruma. Correo: caso@example.org')
+    document.showPage()
+    document.rect(40, 500, 100, 100)
+    document.showPage()
+    document.save()
+
+    uploaded = upload(source.getvalue(), 'mixto_ficticio.pdf')
+    sid = uploaded['session_id']
+    payload = {'session_id': sid}
+    settings = {**payload, 'enabled_categories': ['EMAIL']}
+    http.post('/api/analyze', settings)
+    original = json.loads(http.request(f'/api/preview?session_id={sid}&mode=orig'))['text']
+    start = original.index('bruma')
+    added = http.post('/api/manual-detection', {**payload, 'cat': 'OTRO', 'original': 'bruma',
+                      'start': start, 'end': start + len('bruma')})['detection']
+    analyzed = http.post('/api/analyze', settings)
+    preview = http.post('/api/export/preview', payload)['text']
+    checks = {
+        'omitted_page_number': uploaded['pdf_page_count'] == 2 and uploaded['omitted_pdf_pages'] == [2],
+        'manual_review_preserved': analyzed['review_preserved'] and added['placeholder'] in preview,
+        'preview_contains_reviewed_text': 'resolución de Łódź' in preview and
+            'bruma' not in preview and '[EMAIL_1]' in preview and 'caso@example.org' not in preview,
+    }
+    for extension in ('docx', 'pdf'):
+        route = '/api/export/' + extension
+        try:
+            http.request(route, json.dumps(payload).encode(), {'Content-Type': 'application/json'})
+            checks[extension + '_requires_confirmation'] = False
+        except urllib.error.HTTPError as exc:
+            checks[extension + '_requires_confirmation'] = exc.code == 409
+        data = http.request(route, json.dumps({**payload, 'acknowledge_partial_pdf': True}).encode(),
+                            {'Content-Type': 'application/json'})
+        if extension == 'docx':
+            text = '\n'.join(p.text for p in Document(io.BytesIO(data)).paragraphs)
+        else:
+            with pdfplumber.open(io.BytesIO(data)) as pdf:
+                text = '\n'.join(page.extract_text() or '' for page in pdf.pages)
+        checks[extension + '_matches_preview'] = text == preview
+    return {'mode': 'mixed_pdf_review', 'checks': checks}
+
+
 def verify():
     document = Document()
     document.add_paragraph('El Dr. Juan Perez presentó un escrito.')
@@ -71,7 +124,7 @@ def verify():
     section.header.paragraphs[0].text = 'La Dra. Laura Suarez figura en el encabezado.'
     section.footer.paragraphs[0].text = 'El Dr. Diego Ramirez figura en el pie.'
     data = document_bytes(document)
-    results = [verify_manual_review()]
+    results = [verify_manual_review(), verify_mixed_pdf_review()]
     for categories in (['PERSONA'], None):
         sid = upload(data)['session_id']
         analyzed = http.post('/api/analyze', {'session_id': sid, 'enabled_categories': categories})

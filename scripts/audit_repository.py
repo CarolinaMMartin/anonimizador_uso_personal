@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from package_release import app_version
+from portable_docs import PDF_MANUALS
 
 PUBLIC_REPOSITORY = 'CarolinaMMartin/anonimizador_uso_personal'
 # Current delivery instructions; historical reports retain their versions.
@@ -130,7 +131,8 @@ def audit():
         parts = path.relative_to(ROOT).parts
         if parts[0] in {'.venv', 'models', 'build', 'dist'} or '__pycache__' in parts:
             errors.append(f'Generated resources tracked: {rel}')
-        if path.suffix.lower() in {'.db', '.docx', '.pdf', '.csv', '.exe', '.log'}:
+        official_manual = path.parent == ROOT / 'docs/manuales' and path.name in PDF_MANUALS
+        if not official_manual and path.suffix.lower() in {'.db', '.docx', '.pdf', '.csv', '.exe', '.log'}:
             errors.append(f'Unexpected data/binary file: {rel}')
         if path.name.startswith('.env'):
             errors.append(f'Environment file tracked: {rel}')

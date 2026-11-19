@@ -74,6 +74,10 @@ def test_build_refuses_an_environment_that_does_not_match_required_versions(buil
 
 def test_repack_preserves_captured_inventories_and_third_party_licenses(build):
     repository, delivery, _ = build
+    (repository / 'docs/manuales').mkdir()
+    for name in package.PDF_MANUALS:
+        (repository / 'docs/manuales' / name).write_bytes(name.encode())
+    package.bundle_docs(delivery)
     provenance.write_build_inventory(delivery, provenance.capture_build_snapshot())
     originals = {path.relative_to(delivery): path.read_bytes() for path in delivery.rglob('*') if path.is_file()}
     (repository / 'docs/dependencies-frozen.txt').write_text('unrelated-new-package==99.0\n')

@@ -1,6 +1,6 @@
 # Desarrollo del anonimizador
 
-Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Los resultados de la entrega están en [VERIFICACION_3.4.5.md](VERIFICACION_3.4.5.md).
+Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Los resultados de la entrega están en [VERIFICACION_3.4.6.md](VERIFICACION_3.4.6.md).
 
 ```powershell
 git clone https://github.com/CarolinaMMartin/anonimizador_uso_personal.git
