@@ -188,3 +188,28 @@ def test_csv_neutralizes_formulas_with_leading_whitespace(value):
     detections = [Detection(id=0, cat='OTRO', original=value, placeholder=value)]
     rows = list(csv.reader(io.StringIO(build_csv_bytes(detections).decode('utf-8-sig')), delimiter=';'))
     assert rows[1][1] == "'" + value and rows[1][2] == "'" + value
+
+
+def test_analysis_does_not_overwrite_edit_made_while_detection_runs(monkeypatch):
+    started, release = threading.Event(), threading.Event()
+    sid = session('bruma')
+    def working(state):
+        started.set()
+        assert release.wait(10)
+        return AnalyzeResponse(session_id=sid, detections=[], clusters=[], stats={})
+
+    monkeypatch.setattr(routes_analyze, 'run_full_analysis', working)
+    try:
+        with TestClient(app) as client, ThreadPoolExecutor(max_workers=1) as pool:
+            analysis = pool.submit(client.post, '/api/analyze', json={'session_id': sid})
+            try:
+                assert started.wait(5)
+                manual = client.post('/api/manual-detection', json={
+                    'session_id': sid, 'start': 0, 'end': 5, 'cat': 'OTRO', 'original': 'bruma'})
+                assert manual.is_success
+            finally:
+                release.set()
+            assert analysis.result(timeout=5).status_code == 409
+            assert client.post('/api/export/preview', json={'session_id': sid}).json()['text'] == '[DATO_1]'
+    finally:
+        store.delete(sid)

@@ -36,6 +36,16 @@ def _reviewed_document(session_id: str):
     return state
 
 
+def _document_for_export(req: ExportDocumentRequest):
+    state = _reviewed_document(req.session_id)
+    if state.omitted_pdf_pages and not req.acknowledge_partial_pdf:
+        raise HTTPException(409, detail={
+            "message": "Confirmá que querés exportar solo el texto recuperado del PDF.",
+            "omitted_pdf_pages": state.omitted_pdf_pages,
+        })
+    return state
+
+
 def _anonymized_preview_text(state, use_confirmed_only: bool = False) -> str:
     # Exportar exactamente la revisión actual, sin reclasificarla en silencio.
     detections = state.detections
@@ -63,7 +73,7 @@ async def export_preview(req: ExportRequest):
 
 @router.post("/export/docx")
 async def export_docx(req: ExportDocumentRequest):
-    state = _reviewed_document(req.session_id)
+    state = _document_for_export(req)
 
     try:
         anon = resolve_export_text(state, req)
@@ -86,7 +96,7 @@ async def export_docx(req: ExportDocumentRequest):
 
 @router.post("/export/pdf")
 async def export_pdf(req: ExportDocumentRequest):
-    state = _reviewed_document(req.session_id)
+    state = _document_for_export(req)
 
     try:
         anon = resolve_export_text(state, req)

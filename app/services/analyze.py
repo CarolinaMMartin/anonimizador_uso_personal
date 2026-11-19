@@ -51,6 +51,11 @@ def run_full_analysis(state: SessionState) -> AnalyzeResponse:
     detections = mentions_to_detections(mentions, state.label_mode, clusters)
     state.detections = detections
 
+    return review_response(state)
+
+
+def review_response(state: SessionState, *, preserved: bool = False) -> AnalyzeResponse:
+    detections = state.detections
     stats: dict[str, int] = {c: 0 for c in DEFAULT_CATEGORIES}
     stats["TOTAL"] = len(detections)
     for d in detections:
@@ -60,6 +65,7 @@ def run_full_analysis(state: SessionState) -> AnalyzeResponse:
     return AnalyzeResponse(
         session_id=state.session_id,
         detections=detections,
-        clusters=clusters,
+        clusters=state.clusters,
         stats=stats,
+        review_preserved=preserved,
     )

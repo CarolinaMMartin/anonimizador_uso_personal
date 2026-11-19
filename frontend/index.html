@@ -60,6 +60,7 @@
       </div>
       <input type="file" id="fileInput" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
       <div class="file-info" id="fileInfo"></div>
+      <p class="callout callout-warn" id="uploadPageWarning" role="status" hidden></p>
     </section>
 
     <section class="card" id="panelConfig">
@@ -295,6 +296,12 @@
         <span class="card-hint">Paso 4</span>
       </div>
       <p class="help-text">Editá el texto si hace falta y elegí el formato del documento final.</p>
+
+      <div class="callout callout-warn" id="partialPdfNotice" hidden>
+        <strong>Exportación parcial</strong>
+        <p id="exportPageWarning"></p>
+        <label><input type="checkbox" id="ackPartialPdf"> Revisé las páginas omitidas y quiero usar solo el texto recuperado.</label>
+      </div>
 
       <div class="editor-layout">
         <aside class="editor-format" aria-label="Formato del documento">
