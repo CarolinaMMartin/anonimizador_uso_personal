@@ -13,7 +13,7 @@ from app.export.export_utils import (
     text_to_paragraphs,
 )
 from app.export.http_headers import content_disposition_attachment
-from app.export.pdf_export import build_pdf_bytes
+from app.export.pdf_export import UnsupportedPdfLetter, build_pdf_bytes
 from app.models.schemas import (
     AnonymizedPreviewResponse,
     ExportDocumentRequest,
@@ -112,6 +112,8 @@ async def export_pdf(req: ExportDocumentRequest):
         )
     except HTTPException:
         raise
+    except UnsupportedPdfLetter as e:
+        raise HTTPException(422, str(e)) from e
     except Exception as e:
         logger.exception("Error exportando PDF")
         raise HTTPException(500, f"Error al generar PDF: {e}") from e
