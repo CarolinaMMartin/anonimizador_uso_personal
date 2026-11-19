@@ -14,30 +14,11 @@ mismas categorías y mejora la lectura de tildes y diéresis en PDF. Cuando un
 PDF combina páginas con y sin texto recuperable, la aplicación indica qué
 páginas quedaron fuera y pide confirmación antes de exportar.
 
-## Descargar para Windows · IALAB 3.4.6
+## Descarga de Windows suspendida
 
-El ZIP incluye el programa, el modelo local y una carpeta **Manuales** con los tres PDF.
+**Aviso del 19 de noviembre de 2026.** Microsoft Defender clasificó como troyano el ZIP de la versión 3.4.6 durante una descarga. Se está investigando la causa. Evitá descargar, ejecutar o redistribuir ese paquete. Si el antivirus lo quitó, dejalo quitado.
 
-[**Descargar para Windows · 3.4.6**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip) ·
-[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip.sha256)
-
-Descargá el ZIP completo para **Windows 10 y 11 de
-64 bits**, elegí **Extraer todo** y abrí **INICIAR.bat** desde la carpeta
-extraída. El portable incluye Python y el modelo local; conservá toda la carpeta.
-**Code → Download ZIP** contiene el código fuente y no incluye el ejecutable.
-
-[Estado de verificación](docs/VERIFICACION_3.4.6.md) ·
-[Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
-
-Todavía no hay un paquete IALAB actualizado para macOS. El ZIP Windows no
-funciona en Mac ni celulares. La entrega no tiene firma digital; si Windows
-impide abrirla, consultá [el aviso de instalación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
-
-**Si Microsoft Defender bloquea la descarga:** actualizá las definiciones
-del antivirus desde Windows Update y volvé a descargar el ZIP. El 19 de
-noviembre de 2026 un equipo con definiciones atrasadas lo bloqueó; con las
-definiciones al día, el mismo equipo lo descargó y analizó sin alertas.
-Mantené el antivirus activo. [Detalle de la comprobación](docs/VERIFICACION_3.4.6.md#si-defender-bloquea-la-descarga).
+Para seguir trabajando, consultá la [descarga temporal de la edición anterior, las comprobaciones y sus límites](docs/VERIFICACION_3.4.6.md#alternativa-temporal-para-windows).
 
 ## Anonimizar un documento
 
