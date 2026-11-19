@@ -30,3 +30,12 @@ jobs:
           $v = $env:RELEASE_VERSION
           $url = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/v$v/AnonimizadorJudicial-$v-Windows.zip"
           ./scripts/check_release_defender.ps1 -Package $url -ExpectedSHA256 $env:EXPECTED_SHA
+      - name: Probar la descarga en Chrome con sus protecciones activas
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ matrix.version }}
+          EXPECTED_SHA: ${{ matrix.digest }}
+        run: |
+          python -m pip install selenium
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python scripts/check_browser_download.py
