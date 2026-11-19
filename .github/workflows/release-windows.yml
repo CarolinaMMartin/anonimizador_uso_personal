@@ -78,6 +78,14 @@ jobs:
         run: |
           Set-Content dist/AnonimizadorJudicial-NLP/SOURCE_COMMIT.txt $env:GITHUB_SHA -Encoding ascii
           python scripts/package_release.py --output "dist/$env:RELEASE_ASSET"
+      - name: Verify final Windows ZIP with Microsoft Defender
+        env:
+          RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
+        shell: pwsh
+        run: |
+          $zip = "dist/$env:RELEASE_ASSET"
+          $expected = ((Get-Content -LiteralPath "$zip.sha256" -Raw).Trim() -split '\s+')[0]
+          ./scripts/check_release_defender.ps1 -Package $zip -ExpectedSHA256 $expected
       - name: Verify extracted release ZIP
         env:
           RELEASE_ASSET: ${{ steps.version.outputs.asset_name }}
