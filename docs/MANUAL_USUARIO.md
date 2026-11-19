@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador Judicial 3.4.6
+# Manual de usuario — Anonimizador Judicial 3.4.7
 
 Herramienta académica de uso personal desarrollada por IALAB, Laboratorio de
 Innovación e Inteligencia Artificial de la Facultad de Derecho, UBA. En un PDF, compará la vista Original con la página que cargaste. Si un acento aparece como un símbolo y también se copia así desde el PDF, usá el archivo fuente o una copia con OCR. Si quedaron páginas sin texto recuperable, revisá sus números antes de confirmar una exportación parcial.
@@ -34,16 +34,16 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ### Windows
 
-Descargá y extraé el portable IALAB 3.4.6 enlazado en el
+Descargá y extraé el portable IALAB 3.4.7 enlazado en el
 [README](../README.md). También podés
 [iniciar desde el código fuente](DESARROLLO.md).
-El archivo es `AnonimizadorJudicial-3.4.6-Windows.zip`; la cabecera muestra
-**v3.4.6**.
+El archivo es `AnonimizadorJudicial-3.4.7-Windows.zip`; la cabecera muestra
+**v3.4.7**.
 
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.4.6** en el indicador superior.
+3. Verificá **v3.4.7** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
@@ -60,7 +60,7 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy · Catálogos cargados
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.6**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.7**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---

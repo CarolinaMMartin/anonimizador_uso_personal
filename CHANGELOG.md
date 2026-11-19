@@ -1,5 +1,11 @@
 # Cambios — Anonimizador Judicial
 
+## 3.4.7 · Paquete nuevo de Windows · 19 de noviembre de 2026
+
+- Publica el programa de la 3.4.6 en un ZIP nuevo. Microsoft Defender bloqueaba la descarga del ZIP 3.4.6 con una detección heurística; los mismos archivos en otro paquete pasaron el mismo control.
+- Conserva sin cambios la lógica de anonimización, la interfaz y los manuales de la 3.4.6. Los PDF de la carpeta **Manuales** todavía mencionan y enlazan la 3.4.6.
+- La verificación de esta entrega se describe en [VERIFICACION_3.4.7.md](docs/VERIFICACION_3.4.7.md).
+
 ## 3.4.6 · Revisión manual, PDF y documentación · 19 de noviembre de 2026
 
 - Conserva las decisiones manuales si repetís el análisis con las mismas categorías. Si las cambiás después de revisar, pide confirmación antes de reemplazar la revisión.
