@@ -22,10 +22,9 @@ options.add_experimental_option("excludeSwitches", ["disable-client-side-phishin
 driver_path = shutil.which("chromedriver")
 with webdriver.Chrome(service=Service(executable_path=driver_path), options=options) as driver:
     print("Chrome",driver.capabilities["browserVersion"],flush=True)
-    driver.get(f"{release}/tag/v{version}")
-    selector = f'a[href$="/{name}"]'
-    link = WebDriverWait(driver, 45).until(lambda d: next((a for a in d.find_elements(By.CSS_SELECTOR, selector) if a.is_displayed()), None))
-    link.click()
+    url = f"{release}/download/v{version}/{name}"
+    result_nav = driver.execute_cdp_cmd("Page.navigate", {"url": url})
+    print("Respuesta de navegación", {k: result_nav.get(k) for k in ("isDownload","errorText")}, flush=True)
     result = directory / name
     for _ in range(45):
         if result.is_file() and result.stat().st_size > 0:
