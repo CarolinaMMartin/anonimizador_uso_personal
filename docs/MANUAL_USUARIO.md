@@ -199,7 +199,7 @@ otro destino mediante la unión manual.
 3. Ajustá fuente, tamaño, interlineado, márgenes o alineación.
 4. Exportá a Word o PDF.
 
-La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
+La fuente elegida se aplica a Word; el PDF usa Times Roman y una fuente local de apoyo para letras latinas extendidas. Tamaño,
 interlineado, alineación y márgenes se aplican a ambos formatos. La exportación
 reconstruye el texto y no conserva el diseño original ni sus tablas.
 Las ediciones del editor no cambian la tabla CSV ni se vuelven a analizar.

@@ -15,3 +15,7 @@ def test_merge_wrapped_lines():
     assert "funcionamiento destaca" in out
     assert "particular por la cual" in out
     assert out.count("\n\n") == 0
+
+
+def test_spaced_footer_can_be_removed_without_joining_letters_in_body():
+    assert clean_pdf_text('De A a B.\n2 | P a\u0301 g i n a\nFin.') == 'De A a B.\n\nFin.'
