@@ -1,13 +1,18 @@
-# Anonimizador IALAB 3.4.6
+# Anonimizador IALAB 3.4.7
 
-Actualización de revisión manual, lectura de PDF y documentación del 19 de noviembre de 2026.
+Paquete nuevo de Windows del 19 de noviembre de 2026. Reemplaza a la 3.4.6, cuya descarga bloqueaba Microsoft Defender, y conserva sus mejoras de revisión manual, lectura de PDF y documentación.
 
-## Descarga de Windows suspendida
+## Descargar para Windows
 
-Microsoft Defender bloqueó una descarga del ZIP de esta versión. La distribución está en revisión.
+[Descargar ZIP completo · 3.4.7](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.7/AnonimizadorJudicial-3.4.7-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.7/AnonimizadorJudicial-3.4.7-Windows.zip.sha256).
+
+Extraé el ZIP en una carpeta nueva y abrí **INICIAR.bat**. El paquete incluye
+el ejecutable, la interfaz actualizada, Python, el modelo local y los manuales.
+La cabecera y `/health` identifican la versión **3.4.7**.
 
 ## Qué cambia
 
+- Publica el programa de la 3.4.6 en un ZIP nuevo. La lógica de anonimización, la interfaz y los manuales son los mismos.
 - Conserva las decisiones manuales si repetís el análisis con las mismas categorías. Si las cambiás después de revisar, pide confirmación antes de reemplazar la revisión.
 - Identifica las páginas del PDF que quedaron sin texto recuperable y pide confirmación antes de exportar solo el texto disponible.
 - Reúne letras y acentos separados en la capa de texto del PDF y mejora la representación de letras en la exportación. Conserva símbolos legítimos como ° y ®.
@@ -23,7 +28,7 @@ el inicio real, las comprobaciones de análisis y exportación, la procedencia
 del binario y el inicio/análisis del ZIP extraído en otra carpeta.
 
 El ZIP incluye `SOURCE_COMMIT.txt`, `BUILD_PROVENANCE.json`, el inventario de
-dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.6.md)
+dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.7.md)
 y [el historial de cambios](../CHANGELOG.md).
 
 ## Uso y límites
