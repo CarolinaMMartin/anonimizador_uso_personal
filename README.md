@@ -18,6 +18,8 @@ páginas quedaron fuera y pide confirmación antes de exportar.
 
 **Aviso del 19 de noviembre de 2026.** Microsoft Defender clasificó como troyano el ZIP de la versión 3.4.6 durante una descarga. Se está investigando la causa. Evitá descargar, ejecutar o redistribuir ese paquete. Si el antivirus lo quitó, dejalo quitado.
 
+Para seguir trabajando, consultá la [descarga temporal de la edición anterior, las comprobaciones y sus límites](docs/VERIFICACION_3.4.6.md#alternativa-temporal-para-windows).
+
 ## Anonimizar un documento
 
 1. **Cargá el archivo:** un Word **.docx** o un **PDF donde puedas seleccionar
