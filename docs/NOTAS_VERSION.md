@@ -2,13 +2,9 @@
 
 Actualización de revisión manual, lectura de PDF y documentación del 19 de noviembre de 2026.
 
-## Descargar para Windows
+## Descarga de Windows suspendida
 
-[Descargar ZIP completo · 3.4.6](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip.sha256).
-
-Extraé el ZIP en una carpeta nueva y abrí **INICIAR.bat**. El paquete incluye
-el ejecutable, la interfaz actualizada, Python, el modelo local y los manuales.
-La cabecera y `/health` identifican la versión **3.4.6**.
+Microsoft Defender bloqueó una descarga del ZIP de esta versión. La distribución está en revisión.
 
 ## Qué cambia
 

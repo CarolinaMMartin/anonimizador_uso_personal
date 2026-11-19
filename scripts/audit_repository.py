@@ -51,13 +51,23 @@ def _windows_downloads(text: str):
     ]
 
 
+SUSPENSION_HEADING = '## Descarga de Windows suspendida'
+
+
+class DistributionSuspended(ValueError):
+    """Public documentation is valid, but no Windows release may be built."""
+
+
 def check_publication_links(documents: dict[str, str], version: str,
                             repository: str = PUBLIC_REPOSITORY) -> list[str]:
     """Reject wrong repositories, stale release tags and mismatched assets."""
     errors = []
     downloads = _windows_downloads(documents.get('README.md', ''))
     assets = {parts[5] for _, parts in downloads}
-    if len(assets) != 1:
+    suspended = SUSPENSION_HEADING in documents.get('README.md', '').splitlines()
+    if suspended and assets:
+        errors.append('Windows ZIP is linked during a distribution suspension')
+    if not suspended and len(assets) != 1:
         errors.append('README.md must identify exactly one Windows ZIP download')
     asset = next(iter(assets)) if len(assets) == 1 else None
     if asset and f'-{version}-' not in asset:
@@ -115,6 +125,8 @@ def release_download_info(root: Path = ROOT) -> dict[str, str]:
     errors = check_publication_links(documents, version)
     if errors:
         raise ValueError('\n'.join(errors))
+    if SUSPENSION_HEADING in documents['README.md'].splitlines():
+        raise DistributionSuspended('Distribución de Windows suspendida.')
     url, parts = _windows_downloads(documents['README.md'])[0]
     return {'repository': PUBLIC_REPOSITORY, 'version': version,
             'asset_name': parts[5], 'download_url': url}
@@ -180,6 +192,8 @@ def audit():
             errors.append(f'Launcher stops unrelated processes: {name}')
     try:
         release_download_info()
+    except DistributionSuspended as exc:
+        print(str(exc))
     except (ValueError, OSError, StopIteration) as exc:
         errors.append(f'Publication metadata: {exc}')
     result = {'version': app_version(), 'checked': counts, 'errors': errors}

@@ -118,3 +118,17 @@ def test_metadata_uses_source_version_and_ignores_archived_reports(tmp_path):
     (tmp_path / 'app/config.py').write_text('APP_VERSION = "8.2.2"\n', encoding='utf-8')
     with pytest.raises(ValueError, match='Stale release version'):
         release_download_info(tmp_path)
+
+
+def test_suspension_blocks_release_and_rejects_download_links(tmp_path):
+    from audit_repository import DistributionSuspended, SUSPENSION_HEADING
+    (tmp_path / 'app').mkdir()
+    (tmp_path / 'app/config.py').write_text(f'APP_VERSION = "{VERSION}"')
+    (tmp_path / 'README.md').write_text(SUSPENSION_HEADING, encoding='utf-8')
+    with pytest.raises(DistributionSuspended):
+        release_download_info(tmp_path)
+    assert check_publication_links({'README.md': SUSPENSION_HEADING}, VERSION) == []
+    for location in ('README.md', 'docs/NOTAS_VERSION.md'):
+        current = {'README.md': SUSPENSION_HEADING}
+        current[location] = current.get(location, '') + '\n' + URL
+        assert check_publication_links(current, VERSION)
