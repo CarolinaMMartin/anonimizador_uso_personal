@@ -18,15 +18,17 @@ jobs:
           }
           $service = Get-Service WinDefend
           if ($service.Status -ne 'Running') { Start-Service WinDefend }
+          Set-MpPreference -DisableRealtimeMonitoring $false -DisableArchiveScanning $false
           Update-MpSignature
           $s = Get-MpComputerStatus
           $s | Select-Object AMServiceEnabled,AntivirusEnabled,RealTimeProtectionEnabled,AMProductVersion,AMEngineVersion,AntivirusSignatureVersion,AntivirusSignatureLastUpdated | Format-List
+          if (!$s.RealTimeProtectionEnabled -or (Get-MpPreference).DisableArchiveScanning) { throw 'Protección en tiempo real o de archivos comprimidos inactiva' }
           if (!$s.AntivirusEnabled -or !$s.AMServiceEnabled -or $s.AntivirusSignatureAge -gt 2) { throw 'Motor o firmas no disponibles para un diagnóstico actual.' }
       - name: Descargar los bytes publicados y analizar sin ejecutar el contenido
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $root = Join-Path $env:RUNNER_TEMP 'revision-346'
+          $root = Join-Path $env:SystemDrive 'RevisionPublicacion346'
           New-Item -ItemType Directory $root | Out-Null
           $zip = Join-Path $root 'AnonimizadorJudicial-3.4.6-Windows.zip'
           $url = 'https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip'
@@ -35,6 +37,9 @@ jobs:
           if (!$mp) { throw 'No se encontró MpCmdRun.exe' }
           $start = Get-Date
           try {
+            & $mp.FullName -CheckExclusion -Path $root
+            Write-Host "Respuesta CheckExclusion: $LASTEXITCODE"
+            if ($LASTEXITCODE -ne 1) { throw 'No se pudo verificar una ruta de examen sin exclusiones' }
             Invoke-WebRequest -Uri $url -OutFile $zip
             if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $expected) { throw 'SHA-256 distinto' }
             Write-Host "ZIP verificado SHA-256 $expected"
