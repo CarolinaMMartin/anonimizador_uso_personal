@@ -38,8 +38,24 @@ function Invoke-CheckedScan([string] $Path) {
     & $mp.FullName -Scan -ScanType 3 -File $Path
     if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $Path)) { throw "Falló el examen de $Path" }
 }
-$root = Join-Path $env:SystemDrive ("RevisionPortable-" + [guid]::NewGuid())
-New-Item -ItemType Directory $root | Out-Null
+# Some hosted images exclude their entire system and workspace drives by policy.
+# Use a fresh NTFS volume whose contents can be explicitly checked for exclusions.
+$letter = @('V','W','X','Y','Z' | Where-Object { !(Test-Path "${_}:\") })[0]
+if (!$letter) { throw 'No hay una letra de unidad disponible.' }
+$vhd = Join-Path $env:RUNNER_TEMP ("Defender-" + [guid]::NewGuid() + ".vhdx")
+$diskScript = @"
+create vdisk file="$vhd" maximum=3072 type=expandable
+select vdisk file="$vhd"
+attach vdisk
+create partition primary
+format fs=ntfs quick label=Revision
+assign letter=$letter
+"@
+$commands = Join-Path $env:RUNNER_TEMP 'preparar-volumen-antivirus.txt'
+$diskScript | Set-Content -LiteralPath $commands -Encoding ascii
+& diskpart.exe /s $commands
+if ($LASTEXITCODE -ne 0 -or !(Test-Path "${letter}:\")) { throw 'Falló la creación del volumen de examen.' }
+$root = New-Item -ItemType Directory -Path "${letter}:\Revision"
 Assert-Scannable $root
 $zip = Join-Path $root 'AnonimizadorJudicial-Windows.zip'
 $start = Get-Date
