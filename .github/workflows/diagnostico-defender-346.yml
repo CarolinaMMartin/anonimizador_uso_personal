@@ -1,60 +1,32 @@
-name: Diagnóstico del ZIP 3.4.6 con Microsoft Defender
+name: Contraste con Defender en Windows
 on:
   push:
     branches: [diagnostico/defender-346]
   workflow_dispatch:
-permissions: {}
+permissions:
+  contents: read
 jobs:
-  inspect:
+  analysis:
     runs-on: windows-2025
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: '3.4.6'
+            digest: 582109b15827496403c098f0741c13ae163372b17ea8ab51b4a6e881d6f89f28
+          - version: '3.4.5'
+            digest: b3360c3baad4e68d25b22e2f1e3da39c1a0835f427430ce03c3eb111d799b57d
     steps:
-      - name: Comprobar el motor y actualizar las firmas
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verificar y examinar el portable publicado
         shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ matrix.version }}
+          EXPECTED_SHA: ${{ matrix.digest }}
         run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Get-Service WinDefend -ErrorAction SilentlyContinue)) {
-            Install-WindowsFeature -Name Windows-Defender
-          }
-          $service = Get-Service WinDefend
-          if ($service.Status -ne 'Running') { Start-Service WinDefend }
-          Set-MpPreference -DisableRealtimeMonitoring $false -DisableArchiveScanning $false
-          Update-MpSignature
-          $s = Get-MpComputerStatus
-          $s | Select-Object AMServiceEnabled,AntivirusEnabled,RealTimeProtectionEnabled,AMProductVersion,AMEngineVersion,AntivirusSignatureVersion,AntivirusSignatureLastUpdated | Format-List
-          if (!$s.RealTimeProtectionEnabled -or (Get-MpPreference).DisableArchiveScanning) { throw 'Protección en tiempo real o de archivos comprimidos inactiva' }
-          if (!$s.AntivirusEnabled -or !$s.AMServiceEnabled -or $s.AntivirusSignatureAge -gt 2) { throw 'Motor o firmas no disponibles para un diagnóstico actual.' }
-      - name: Descargar los bytes publicados y analizar sin ejecutar el contenido
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $root = Join-Path $env:SystemDrive 'RevisionPublicacion346'
-          New-Item -ItemType Directory $root | Out-Null
-          $zip = Join-Path $root 'AnonimizadorJudicial-3.4.6-Windows.zip'
-          $url = 'https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip'
-          $expected = '582109b15827496403c098f0741c13ae163372b17ea8ab51b4a6e881d6f89f28'
-          $mp = Get-ChildItem "$env:ProgramData\Microsoft\Windows Defender\Platform\*\MpCmdRun.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if (!$mp) { throw 'No se encontró MpCmdRun.exe' }
-          $start = Get-Date
-          try {
-            & $mp.FullName -CheckExclusion -Path $root
-            Write-Host "Respuesta CheckExclusion: $LASTEXITCODE"
-            if ($LASTEXITCODE -ne 1) { throw 'No se pudo verificar una ruta de examen sin exclusiones' }
-            Invoke-WebRequest -Uri $url -OutFile $zip
-            if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $expected) { throw 'SHA-256 distinto' }
-            Write-Host "ZIP verificado SHA-256 $expected"
-            & $mp.FullName -Scan -ScanType 3 -File $zip
-            $archiveResult = $LASTEXITCODE
-            Write-Host "Resultado del análisis del ZIP: $archiveResult"
-            if ($archiveResult -ne 0 -or !(Test-Path $zip)) { throw 'El ZIP no pasó el examen' }
-            $out = Join-Path $root 'extraido'
-            Expand-Archive -LiteralPath $zip -DestinationPath $out
-            & $mp.FullName -Scan -ScanType 3 -File $out
-            $expandedResult = $LASTEXITCODE
-            Write-Host "Resultado del análisis de los componentes: $expandedResult"
-            if ($expandedResult -ne 0) { throw 'Los archivos extraídos no pasaron el examen' }
-          } finally {
-            $events = @(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Id=1116,1117; StartTime=$start} -ErrorAction SilentlyContinue)
-            foreach ($event in $events) { Write-Host $event.Message }
-            if ($events.Count) { throw 'Defender registró una detección o remediación durante el examen. Ver eventos.' }
-          }
+          $v = $env:RELEASE_VERSION
+          $url = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/v$v/AnonimizadorJudicial-$v-Windows.zip"
+          ./scripts/check_release_defender.ps1 -Package $url -ExpectedSHA256 $env:EXPECTED_SHA
