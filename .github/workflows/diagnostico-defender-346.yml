@@ -1,0 +1,55 @@
+name: Diagnóstico del ZIP 3.4.6 con Microsoft Defender
+on:
+  push:
+    branches: [diagnostico/defender-346]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  inspect:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - name: Comprobar el motor y actualizar las firmas
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Get-Service WinDefend -ErrorAction SilentlyContinue)) {
+            Install-WindowsFeature -Name Windows-Defender
+          }
+          $service = Get-Service WinDefend
+          if ($service.Status -ne 'Running') { Start-Service WinDefend }
+          Update-MpSignature
+          $s = Get-MpComputerStatus
+          $s | Select-Object AMServiceEnabled,AntivirusEnabled,RealTimeProtectionEnabled,AMProductVersion,AMEngineVersion,AntivirusSignatureVersion,AntivirusSignatureLastUpdated | Format-List
+          if (!$s.AntivirusEnabled -or !$s.AMServiceEnabled -or $s.AntivirusSignatureAge -gt 2) { throw 'Motor o firmas no disponibles para un diagnóstico actual.' }
+      - name: Descargar los bytes publicados y analizar sin ejecutar el contenido
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'revision-346'
+          New-Item -ItemType Directory $root | Out-Null
+          $zip = Join-Path $root 'AnonimizadorJudicial-3.4.6-Windows.zip'
+          $url = 'https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.6/AnonimizadorJudicial-3.4.6-Windows.zip'
+          $expected = '582109b15827496403c098f0741c13ae163372b17ea8ab51b4a6e881d6f89f28'
+          $mp = Get-ChildItem "$env:ProgramData\Microsoft\Windows Defender\Platform\*\MpCmdRun.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (!$mp) { throw 'No se encontró MpCmdRun.exe' }
+          $start = Get-Date
+          try {
+            Invoke-WebRequest -Uri $url -OutFile $zip
+            if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $expected) { throw 'SHA-256 distinto' }
+            Write-Host "ZIP verificado SHA-256 $expected"
+            & $mp.FullName -Scan -ScanType 3 -File $zip
+            $archiveResult = $LASTEXITCODE
+            Write-Host "Resultado del análisis del ZIP: $archiveResult"
+            if ($archiveResult -ne 0 -or !(Test-Path $zip)) { throw 'El ZIP no pasó el examen' }
+            $out = Join-Path $root 'extraido'
+            Expand-Archive -LiteralPath $zip -DestinationPath $out
+            & $mp.FullName -Scan -ScanType 3 -File $out
+            $expandedResult = $LASTEXITCODE
+            Write-Host "Resultado del análisis de los componentes: $expandedResult"
+            if ($expandedResult -ne 0) { throw 'Los archivos extraídos no pasaron el examen' }
+          } finally {
+            $events = @(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational'; Id=1116,1117; StartTime=$start} -ErrorAction SilentlyContinue)
+            foreach ($event in $events) { Write-Host $event.Message }
+            if ($events.Count) { throw 'Defender registró una detección o remediación durante el examen. Ver eventos.' }
+          }
