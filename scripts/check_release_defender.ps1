@@ -22,7 +22,12 @@ foreach ($type in 'ExclusionPath','ExclusionExtension','ExclusionProcess') {
 }
 Set-MpPreference -DisableRealtimeMonitoring $false -DisableArchiveScanning $false
 Update-MpSignature
-$status = Get-MpComputerStatus
+$deadline = (Get-Date).AddSeconds(90)
+do {
+    $status = Get-MpComputerStatus
+    if ($status.RealTimeProtectionEnabled) { break }
+    Start-Sleep -Seconds 3
+} while ((Get-Date) -lt $deadline)
 $status | Select-Object AntivirusEnabled,RealTimeProtectionEnabled,AMEngineVersion,AntivirusSignatureVersion,AntivirusSignatureLastUpdated | Format-List
 if (!$status.AntivirusEnabled -or !$status.RealTimeProtectionEnabled -or $status.AntivirusSignatureAge -gt 2 -or (Get-MpPreference).DisableArchiveScanning) {
     throw 'Protección en tiempo real, firmas recientes y análisis de archivos comprimidos obligatorios.'
@@ -57,7 +62,7 @@ $diskScript | Set-Content -LiteralPath $commands -Encoding ascii
 if ($LASTEXITCODE -ne 0 -or !(Test-Path "${letter}:\")) { throw 'Falló la creación del volumen de examen.' }
 $root = New-Item -ItemType Directory -Path "${letter}:\Revision"
 Assert-Scannable $root
-$zip = Join-Path $root 'AnonimizadorJudicial-Windows.zip'
+$zip = Join-Path $root (Split-Path -Leaf $Package)
 $start = Get-Date
 try {
     if ($Package -match '^https://') {
