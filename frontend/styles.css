@@ -689,7 +689,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   color: var(--text-muted);
 }
 
-.review-tab.active .tab-badge { background: var(--primary); color: var(--surface); }
+.review-tab.active .tab-badge {
+  background: color-mix(in srgb, var(--ialab-violet) 14%, white);
+  color: var(--ialab-navy);
+}
 
 .review-tab-panel {
   display: none;
@@ -986,21 +989,58 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
   background: var(--ialab-caption);
 }
 
-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
+
+/* Tabla de detecciones: contenedor redondeado y cabecera neutra. */
+#detTable {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
 
 th {
   text-align: left;
-  padding: 8px 8px;
-  background: var(--primary);
+  padding: 10px 8px;
+  background: var(--ialab-light);
   font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: white;
+  color: var(--ialab-steel);
   position: sticky;
   top: 0;
   z-index: 1;
   border-bottom: 1px solid var(--border);
+}
+
+th:first-child { border-top-left-radius: var(--radius-sm); padding-left: 12px; }
+th:last-child { border-top-right-radius: var(--radius-sm); }
+#detBody td:first-child { padding-left: 12px; }
+#detBody tr:last-child td { border-bottom: none; }
+#detBody tr:hover td { background: color-mix(in srgb, var(--ialab-steel) 3%, white); }
+#detBody tr.hidden-by-filter { display: none; }
+
+.det-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.det-toolbar .search-input { flex: 1; width: auto; max-width: none; }
+
+.det-filter-count {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.det-filter-empty {
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
 }
 
 td {
@@ -1052,7 +1092,7 @@ tr.row-disabled td { opacity: 0.45; }
 .link-action {
   border: none;
   background: transparent;
-  color: var(--ialab-violet);
+  color: var(--ialab-steel);
   cursor: pointer;
   font: inherit;
   font-size: 0.72rem;
@@ -1365,9 +1405,14 @@ td:nth-child(4) { min-width: 100px; }
 .export-row { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .callout-warn {
-  background: color-mix(in srgb, var(--ialab-violet) 8%, white);
-  border-color: var(--ialab-violet);
+  background: color-mix(in srgb, var(--ialab-violet) 6%, white);
+  border: 1px solid color-mix(in srgb, var(--ialab-violet) 28%, white);
+  border-left: 4px solid color-mix(in srgb, var(--ialab-violet) 70%, white);
 }
+
+/* El aviso de páginas sin texto es un cuadro distinto del nombre del archivo. */
+.file-info + .callout { margin-top: 14px; }
+#uploadPageWarning { margin-bottom: 0; }
 
 .editor-panel { margin-top: 0; }
 
