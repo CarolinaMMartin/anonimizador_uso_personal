@@ -108,13 +108,19 @@ def detect_spacy(text: str, session_id: str | None = None) -> list[RawItem]:
             cat = LABEL_MAP.get(ent.label_, "OTRO")
             if cat == "OTRO":
                 continue
-            start, end = offset + ent.start_char, offset + ent.end_char
-            if not is_valid_detection(cat, ent.text, text, start):
+            surface = ent.text
+            if cat == "PERSONA":
+                from app.detection.person_names import cut_at_field_separator
+
+                surface = cut_at_field_separator(surface).rstrip()
+            start = offset + ent.start_char
+            end = start + len(surface)
+            if not surface or not is_valid_detection(cat, surface, text, start):
                 continue
             items.append(
                 RawItem(
                     cat=cat,
-                    original=ent.text,
+                    original=surface,
                     start=start,
                     end=end,
                     source_layer="spacy",

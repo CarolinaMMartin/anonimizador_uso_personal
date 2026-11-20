@@ -110,4 +110,6 @@ def run_detection(
             other.start <= item.start and item.end <= other.end for other in protected)]
         items.extend(detect_document_aliases(text, seeds, protected, session_id))
 
-    return raw_to_mentions(resolve_overlaps(items, text))
+    from app.detection.exceptions import apply_exceptions
+
+    return raw_to_mentions(resolve_overlaps(apply_exceptions(items, text), text))

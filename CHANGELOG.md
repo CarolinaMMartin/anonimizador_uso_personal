@@ -1,5 +1,15 @@
 # Cambios — Anonimizador Judicial
 
+## Sin publicar · Revisión del 20 de noviembre de 2026
+
+- Abre el navegador recién cuando la aplicación ya acepta conexiones. Antes podía mostrarse «Se rechazó la conexión» mientras el programa todavía iniciaba.
+- Separa las personas enumeradas con coma («Mariela Paz, Hernán Luna»). Conserva la forma invertida «APELLIDO, Nombre», también con apellidos compuestos o fuera del catálogo.
+- Deja de tomar como persona las frases formadas solo por términos abstractos («Conexidad Subjetiva») y corta el nombre en un separador «espacio-guion-espacio».
+- Permite desanonimizar un grupo completo, también si tiene una sola variante, y desanonimizar o volver a anonimizar un dato desde la selección en la vista previa.
+- Agrega una lista de términos que la detección automática nunca anonimiza (`data/dictionaries/no_anonimizar.json`), empezando por «Conexidad Subjetiva». Si el término aparece pegado a un nombre, se recorta y el nombre se conserva.
+- Separa el nombre del archivo del aviso de páginas PDF sin texto.
+- Rediseña la tabla de Detecciones con cabecera neutra y bordes redondeados, y agrega un buscador por texto, sustitución, tipo o grupo.
+
 ## 3.4.7 · Paquete nuevo de Windows · 19 de noviembre de 2026
 
 - Publica el programa de la 3.4.6 en un ZIP nuevo. Microsoft Defender bloqueaba la descarga del ZIP 3.4.6 con una detección heurística; los mismos archivos en otro paquete pasaron el mismo control.

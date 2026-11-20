@@ -11,7 +11,10 @@ from app.detection.case_titles import (
 )
 from app.detection.form_fields import field_value_end
 from app.detection.person_context import is_contextual_person, is_vehicle_name
-from app.detection.person_names import contains_person_list, is_person_name_candidate
+from app.detection.person_names import (
+    comma_separates_people, contains_person_list, cut_at_field_separator,
+    is_abstract_phrase, is_person_name_candidate,
+)
 from app.resolution.normalize import normalize_text
 
 _verbs_re = re.compile(
@@ -343,6 +346,15 @@ def is_valid_detection(cat: str, surface: str, text: str = "", start: int = 0) -
     if cat == "PERSONA":
         if overlaps_case_connector(s, text, start) or contains_person_list(s):
             return False
+        if is_abstract_phrase(s) or cut_at_field_separator(s) != s:
+            return False
+        if "," in s.rstrip(","):
+            # Leer la coma en su contexto: «Mariela Paz, Hernán Luna» es una
+            # lista; «PÉREZ, Juan» es un nombre invertido.
+            context, base = (text, start) if text[start:start + len(s)] == s else (s, 0)
+            if any(comma_separates_people(context, base + index)
+                   for index, char in enumerate(s.rstrip(",")) if char == ","):
+                return False
         if is_company_name(s) or is_organism_name(s) or is_vehicle_name(s, text, start):
             return False
         if is_contextual_person(s, text, start) and not _looks_like_narrative(s, max_chars=120, max_words=12):

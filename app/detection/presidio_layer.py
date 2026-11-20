@@ -169,6 +169,10 @@ def detect_presidio(text: str, session_id: str | None = None) -> list[RawItem]:
             raw = chunk[r.start:r.end]
             surface = raw.strip()
             start = r.start + offset + len(raw) - len(raw.lstrip())
+            if cat == "PERSONA":
+                from app.detection.person_names import cut_at_field_separator
+
+                surface = cut_at_field_separator(surface).rstrip()
             if len(surface) < 3:
                 continue
             if surface.lower() in SKIP_SURFACES:

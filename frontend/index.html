@@ -217,6 +217,7 @@
                 <label class="matching-option" title="Afecta las repeticiones. El fragmento seleccionado siempre se respeta."><input type="checkbox" id="selPartial"> Permitir coincidencias parciales en repeticiones</label>
                 <button type="button" class="btn btn-sm btn-outline" id="selAnonOnlyBtn">Solo anonimizar</button>
                 <button type="button" class="btn btn-sm btn-primary" id="selAnonGroupBtn">En grupo</button>
+                <button type="button" class="btn btn-sm btn-outline" id="selDeanonBtn" hidden title="Conservar el texto original de este dato en todo el documento">Desanonimizar</button>
                 <button type="button" class="btn btn-sm btn-ghost" id="selCancelBtn">Cancelar</button>
               </div>
             </div>
@@ -236,6 +237,10 @@
               </div>
 
               <div class="review-tab-panel active" id="panelDetections" role="tabpanel" aria-labelledby="tabDetections">
+                <div class="det-toolbar">
+                  <input type="search" class="search-input" id="detFilter" placeholder="Buscar detección…" aria-label="Buscar detección por texto, sustitución, tipo o grupo" autocomplete="off">
+                  <span class="det-filter-count" id="detFilterCount" aria-live="polite"></span>
+                </div>
                 <p class="help-text table-help">Cada fila es un dato encontrado. Cambiá <strong>Tipo</strong>, editá <strong>Sustitución</strong>, desmarcá lo incorrecto o usá <strong>Unir similares</strong>.</p>
                 <div class="table-scroll scroll-panel" id="detTable">
                   <table>
