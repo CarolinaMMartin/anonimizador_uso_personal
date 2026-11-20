@@ -1,6 +1,6 @@
 # Cambios — Anonimizador Judicial
 
-## Sin publicar · Revisión del 20 de noviembre de 2026
+## 3.4.8 · Detección y revisión · 20 de noviembre de 2026
 
 - Abre el navegador recién cuando la aplicación ya acepta conexiones. Antes podía mostrarse «Se rechazó la conexión» mientras el programa todavía iniciaba.
 - Separa las personas enumeradas con coma («Mariela Paz, Hernán Luna»). Conserva la forma invertida «APELLIDO, Nombre», también con apellidos compuestos o fuera del catálogo.

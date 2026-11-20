@@ -1,4 +1,4 @@
-# Manual de usuario — Anonimizador Judicial 3.4.7
+# Manual de usuario — Anonimizador Judicial 3.4.8
 
 Herramienta académica de uso personal desarrollada por IALAB, Laboratorio de
 Innovación e Inteligencia Artificial de la Facultad de Derecho, UBA. En un PDF, compará la vista Original con la página que cargaste. Si un acento aparece como un símbolo y también se copia así desde el PDF, usá el archivo fuente o una copia con OCR. Si quedaron páginas sin texto recuperable, revisá sus números antes de confirmar una exportación parcial.
@@ -34,16 +34,16 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ### Windows
 
-Descargá y extraé el portable IALAB 3.4.7 enlazado en el
+Descargá y extraé el portable IALAB 3.4.8 enlazado en el
 [README](../README.md). También podés
 [iniciar desde el código fuente](DESARROLLO.md).
-El archivo es `AnonimizadorJudicial-3.4.7-Windows.zip`; la cabecera muestra
-**v3.4.7**.
+El archivo es `AnonimizadorJudicial-3.4.8-Windows.zip`; la cabecera muestra
+**v3.4.8**.
 
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.4.7** en el indicador superior.
+3. Verificá **v3.4.8** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
@@ -60,7 +60,7 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy · Catálogos cargados
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.7**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.8**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---
@@ -133,6 +133,17 @@ Para aplicar esta mejora a una exportación anterior, volvé a cargar y analizar
 el documento original.
 Quitar una variante o rechazar un grupo separa sus reemplazos. Editar la
 etiqueta de un grupo confirmado cambia todas sus variantes.
+**Desanonimizar** conserva el texto original de todas las variantes del grupo,
+aunque tenga una sola. Para volver a ocultarlas, marcá sus filas en
+**Detecciones** o usá **Volver a anonimizar** desde la vista previa.
+
+En **Detecciones**, el buscador filtra las filas por texto original,
+sustitución, tipo o grupo.
+
+Las enumeraciones separadas por coma («Mariela Paz, Hernán Luna») se detectan
+como personas distintas; la forma «APELLIDO, Nombre» se mantiene como una sola.
+Algunos términos jurídicos, como «Conexidad Subjetiva», nunca se anonimizan
+automáticamente. Si querés ocultarlos igual, seleccionalos a mano.
 
 En la vista previa podés comparar el texto original con el anonimizado y
 seleccionar manualmente información que no haya sido detectada.
@@ -144,6 +155,8 @@ la reconozca. También se ocultan sus repeticiones iguales, sin distinguir
 mayúsculas, cuando forman un dato completo.
 Si la fila estaba desmarcada, se vuelve a activar al agregarla manualmente.
 Usá **En grupo** únicamente cuando quieras asociar el dato a un grupo.
+Si seleccionás un dato ya detectado, la barra también ofrece
+**Desanonimizar** (o **Volver a anonimizar** si ya estaba desmarcado).
 Comprobá el resultado en **Anonimizado** y luego en el archivo descargado.
 Cambiar el tipo de una fila se conserva también al exportar.
 
