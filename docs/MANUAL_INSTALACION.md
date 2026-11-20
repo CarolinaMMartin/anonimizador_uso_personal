@@ -1,26 +1,26 @@
-# Instalación — Anonimizador Judicial 3.4.7
+# Instalación — Anonimizador Judicial 3.4.8
 
-Edición IALAB 3.4.7 de uso personal y académico. El portable para Windows
+Edición IALAB 3.4.8 de uso personal y académico. El portable para Windows
 incluye el ejecutable y el modelo local. Para trabajar con el código fuente,
 seguí [Desarrollo del anonimizador](DESARROLLO.md).
 
 ## Descargar y extraer el portable
 
 El paquete para **Windows 10/11 de 64 bits** es
-**AnonimizadorJudicial-3.4.7-Windows.zip**. Usá el enlace de descarga
+**AnonimizadorJudicial-3.4.8-Windows.zip**. Usá el enlace de descarga
 del [README](../README.md). No requiere Python ni Internet para procesar
 documentos; la preparación del entorno de desarrollo sí requiere descargas.
 
 1. Descargá el ZIP del portable publicado en esta edición IALAB.
 2. Clic derecho → **Extraer todo**. Elegí una carpeta nueva con permiso de
-   escritura, por ejemplo Documentos\Anonimizador-IALAB-3.4.7.
+   escritura, por ejemplo Documentos\Anonimizador-IALAB-3.4.8.
 3. Conservá la carpeta completa. No ejecutes el programa dentro del ZIP ni
    mezcles archivos _internal de versiones distintas.
 
 El ZIP incluye el ejecutable, frontend, modelo local, manuales y licencias.
 El tamaño y el SHA-256 se informan junto a la entrega.
 **Code → Download ZIP** de GitHub contiene los fuentes, no el portable.
-La carpeta local de compilación es `dist/AnonimizadorJudicial-NLP-3.4.7/`.
+La carpeta local de compilación es `dist/AnonimizadorJudicial-NLP-3.4.8/`.
 Usá una carpeta nueva para mantener intactas otras instalaciones.
 
 ## Iniciar y verificar
@@ -28,7 +28,7 @@ Usá una carpeta nueva para mantener intactas otras instalaciones.
 1. Abrí la carpeta extraída y ejecutá **INICIAR.bat**.
 2. El navegador abre la dirección indicada al iniciar. Usa 127.0.0.1:8787
    o un puerto libre entre **8788 y 8796** si otra copia ocupa el primero.
-3. La cabecera debe identificar **IALAB** e indicar **v3.4.7**, el estado de Presidio/spaCy y
+3. La cabecera debe identificar **IALAB** e indicar **v3.4.8**, el estado de Presidio/spaCy y
    **Catálogos cargados**.
 
 Repetir INICIAR.bat vuelve a la instancia de esa misma carpeta. Las otras
@@ -38,7 +38,7 @@ el número de puerto: si dice `8789`, abrí <http://127.0.0.1:8789>.
 
 **VERIFICAR.bat** comprueba esa instancia, aunque use otro puerto. En /health:
 
-- app_version: 3.4.7.
+- app_version: 3.4.8.
 - nlp_layers.presidio.available: true.
 - nlp_layers.spacy.available: true.
 - nlp_layers.dictionaries: catálogos disponibles y cantidades cargadas.
@@ -48,7 +48,7 @@ Para usarla, consultá el archivo MANUAL_USUARIO.md incluido junto a este manual
 ## Si Windows bloquea la aplicación
 
 El aviso **«Control Inteligente de Aplicaciones ha bloqueado un archivo»**
-significa que Windows detuvo la ejecución. La versión 3.4.7 del anonimizador
+significa que Windows detuvo la ejecución. La versión 3.4.8 del anonimizador
 todavía no tiene firma digital y puede quedar bloqueada en Windows 11. Pulsá
 **De acuerdo** y avisá a quien te compartió el programa; indicá qué archivo
 intentaste abrir. Si es un equipo de trabajo, consultá a sistemas. Descargar
