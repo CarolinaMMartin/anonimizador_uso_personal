@@ -59,6 +59,127 @@ _CONTEXT = re.compile(
 _CONTEXT_END = re.compile(rf"{_CONTEXT.pattern}$", re.IGNORECASE)
 
 
+_HONOR_WORDS = frozenset(normalize_text(word) for word in (
+    "sr", "sra", "srta", "dr", "dra", "lic", "ing", "cdor", "cra", "arq", "señor",
+    "señora", "señorita", "don", "doña", "doctor", "doctora", "licenciado",
+    "licenciada", "ingeniero", "ingeniera",
+))
+
+# Un guion rodeado de espacios separa campos o títulos ("Pérez - Conexidad");
+# los apellidos compuestos llevan guion sin espacios ("Pérez-Gómez").
+_SPACED_SEPARATOR_RE = re.compile(r"[ \t ]+[-–—][ \t ]+")
+
+# Terminaciones de sustantivos abstractos y adjetivos que no forman nombres
+# propios cuando ninguna palabra del texto figura en los catálogos.
+_ABSTRACT_SUFFIX_RE = re.compile(
+    r"(?:idad|cion|sion|miento|ncia|tiva|tivo|siva|sivo|mente|ismo)$"
+)
+
+
+def cut_at_field_separator(value: str) -> str:
+    """Devuelve el tramo previo a un separador «espacio-guion-espacio»."""
+    match = _SPACED_SEPARATOR_RE.search(value)
+    return value[:match.start()] if match else value
+
+
+def is_abstract_phrase(value: str) -> bool:
+    """True si todas las palabras significativas son términos abstractos sin ancla.
+
+    «Conexidad Subjetiva» o «Prisión Preventiva» no son personas, aunque
+    aparezcan después de un rótulo como «Víctima:» o con mayúscula inicial.
+    Un nombre real con una sola palabra de esa forma («Concepción Arenales»)
+    se conserva porque basta una palabra que no lo sea.
+    """
+    names, surnames = get_person_anchors()
+    significant = [token.norm for token in _tokens(value) if token.norm not in _PARTICLES]
+    return bool(significant) and all(
+        token not in names and token not in surnames and _ABSTRACT_SUFFIX_RE.search(token)
+        for token in significant
+    )
+
+
+def _comma_reading(text: str, comma: int) -> str:
+    """Lee la coma en ``text[comma]``: «inversion», «lista» o «incierta».
+
+    La forma invertida («PÉREZ, Juan», «Fernández Noble, Julia Iris») pone
+    los nombres de pila después de la coma. Hay evidencia de lista cuando:
+
+    - después de la coma sigue un nombre completo, con apellido propio
+      («Mariela Paz, Hernán Luna»);
+    - después del nombre siguen más nombres de pila enumerados
+      («Martín, Sofía, Lucas y Valentina»);
+    - antes de la coma hay sólo nombres de pila («Martín, Sofía»).
+
+    Sin un nombre de pila del catálogo después de la coma la lectura es
+    incierta: puede ser una inversión con nombres fuera del catálogo.
+    """
+    names, surnames = get_person_anchors()
+    pure_names = names - surnames
+    pure_surnames = surnames - names
+    base = comma + 1
+    following = _tokens(text[base:base + 160])
+    if not following or not _HORIZONTAL.fullmatch(text[base:base + following[0].start] or " "):
+        return "incierta"
+    # Tramo de nombres después de la coma.
+    run_end = base + following[0].end
+    next_index = len(following)
+    for index, token in enumerate(following[1:], start=1):
+        gap = text[run_end:base + token.start]
+        if len(following[index - 1].raw) == 1:
+            gap = gap.removeprefix(".")  # inicial: «Ethel B. Pérez»
+        ends_run = (token.norm in PERSONA_BOUNDARY_WORDS or token.norm in {"y", "e"}
+                    or (not token.raw[0].isupper() and token.norm not in _PARTICLES))
+        if not _HORIZONTAL.fullmatch(gap) or ends_run:
+            next_index = index
+            break
+        if token.norm in pure_surnames:
+            return "lista"  # nombre completo después de la coma: es otra persona
+        run_end = base + token.end
+    if next_index < len(following):
+        candidate = following[next_index]
+        tail = text[run_end:base + candidate.start]
+        if candidate.norm in {"y", "e"} and _HORIZONTAL.fullmatch(tail) and next_index + 1 < len(following):
+            candidate, tail = following[next_index + 1], ","
+        if (tail.strip(" .") == "," and candidate.norm in pure_names
+                and following[0].norm in names):
+            return "lista"  # enumeración de nombres de pila
+    line_start = max(text.rfind("\n", 0, comma), text.rfind("\r", 0, comma)) + 1
+    left: list[_Token] = []
+    boundary = comma
+    for token in reversed(_tokens(text[line_start:comma])):
+        token = _Token(token.start + line_start, token.end + line_start, token.raw, token.norm)
+        gap = text[token.end:boundary]
+        if left and not _HORIZONTAL.fullmatch(gap):
+            break
+        if not left and gap.strip(" \t."):
+            return "incierta"
+        if (token.norm in PERSONA_BOUNDARY_WORDS or token.norm in _HONOR_WORDS
+                or token.norm in {"y", "e"}):
+            break
+        if token.norm in _PARTICLES:
+            boundary = token.start
+            continue
+        if not token.raw[0].isupper():
+            break
+        left.append(token)
+        boundary = token.start
+    if not left:
+        return "incierta"
+    if all(token.norm in pure_names for token in left) and following[0].norm in names:
+        return "lista"
+    return "inversion" if following[0].norm in names else "incierta"
+
+
+def comma_is_name_inversion(text: str, comma: int) -> bool:
+    """True si la coma invierte un nombre conocido («PÉREZ, Juan»)."""
+    return _comma_reading(text, comma) == "inversion"
+
+
+def comma_separates_people(text: str, comma: int) -> bool:
+    """True si hay evidencia de que la coma enumera personas distintas."""
+    return _comma_reading(text, comma) == "lista"
+
+
 def has_person_context(text: str, start: int) -> bool:
     label_end = start
     while label_end > 0 and text[label_end - 1].isspace():
@@ -113,7 +234,11 @@ def _conjunction_splits_name(
 ) -> bool:
     if not significant or words[index].norm not in {'y', 'e'} or index + 1 >= len(words):
         return False
-    if words[index + 1].norm not in names:
+    following = words[index + 1]
+    after = text[following.end:following.end + 2]
+    if after[:1] == ',' and comma_is_name_inversion(text, following.end):
+        return True  # «Pérez, Juan y López, Ana»: la conjunción abre otro nombre invertido
+    if following.norm not in names:
         return False
     right = []
     previous = words[index]
@@ -205,9 +330,8 @@ def person_name_spans(text: str) -> list[tuple[int, int, str, bool]]:
                 if len(last.raw) == 1:
                     gap = gap.removeprefix(".")
                 if ("," in gap and not comma_seen and gap.strip() == ","
-                        and token.norm in names
                         and significant
-                        and (significant[0].norm not in names or significant[0].norm in surnames)):
+                        and comma_is_name_inversion(text, text.index(",", last.end))):
                     comma_seen = True
                 elif not _HORIZONTAL.fullmatch(gap):
                     soft_wrap = bool(re.fullmatch(r"[ \t\u00a0]*\r?\n[ \t\u00a0]*", gap))

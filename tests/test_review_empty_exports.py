@@ -107,3 +107,26 @@ def test_cancelled_analysis_preserves_review_state(review, monkeypatch, previous
         'session_id': state.session_id, 'enabled_categories': ['EMAIL']})
     assert response.status_code == 409
     assert store.get(state.session_id).model_dump() == before
+
+
+def test_reanalysis_preserves_manual_alias_and_requires_current_revision_to_replace(review):
+    client, state = review
+    state.doc_text = 'Se recibió el aviso reservado bajo el alias bruma.'
+    payload = {'session_id': state.session_id}
+    assert client.post('/api/analyze', json=payload).is_success
+    start = state.doc_text.index('bruma')
+    assert client.post('/api/manual-detection', json={**payload, 'cat': 'OTRO',
+        'original': 'bruma', 'start': start, 'end': start + 5}).is_success
+
+    repeated = client.post('/api/analyze', json=payload)
+    assert repeated.json()['review_preserved']
+    changed = {**payload, 'enabled_categories': ['EMAIL']}
+    conflict = client.post('/api/analyze', json=changed)
+    assert conflict.status_code == 409
+    sequence = conflict.json()['detail']['review_sequence']
+    assert client.post('/api/analyze', json={**changed, 'replace_review_sequence': sequence - 1}).status_code == 409
+    for extension in ('docx', 'pdf'):
+        text = export_text(client.post('/api/export/' + extension, json=payload), extension)
+        assert '[DATO_1]' in text and 'bruma' not in text
+    assert client.post('/api/analyze', json={**changed, 'replace_review_sequence': sequence}).is_success
+    assert 'bruma' in export_text(client.post('/api/export/preview', json=payload), 'preview')

@@ -275,7 +275,9 @@ def test_portable_release_notes_and_dependency_links_stay_local():
 def test_bundled_changelog_links_resolve_inside_the_delivery(tmp_path, monkeypatch):
     import portable_docs
     repository = tmp_path / 'repository'
-    (repository / 'docs').mkdir(parents=True)
+    (repository / 'docs/manuales').mkdir(parents=True)
+    for name in portable_docs.PDF_MANUALS:
+        (repository / 'docs/manuales' / name).write_bytes(name.encode())
     (repository / 'CHANGELOG.md').write_text(
         '[manual](docs/MANUAL_USUARIO.md) [download](README.md)', encoding='utf-8')
     (repository / 'docs/MANUAL_USUARIO.md').write_text('Manual', encoding='utf-8')
@@ -286,6 +288,8 @@ def test_bundled_changelog_links_resolve_inside_the_delivery(tmp_path, monkeypat
     monkeypatch.setattr(portable_docs, 'ROOT', repository)
     monkeypatch.setattr(package, 'app_version', lambda: '9.0.0')
     package.bundle_docs(delivery)
+    for name in portable_docs.PDF_MANUALS:
+        assert (delivery / "Manuales" / name).read_bytes() == name.encode()
     changelog = (delivery / 'CHANGELOG.md').read_text(encoding='utf-8')
     assert '[manual](MANUAL_USUARIO.md)' in changelog
     assert (delivery / 'MANUAL_USUARIO.md').is_file()

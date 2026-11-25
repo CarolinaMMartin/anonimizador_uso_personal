@@ -54,6 +54,8 @@ def portable(tmp_path):
         "VERSION_APP.txt": APP_VERSION, "PUERTO_ACTUAL.txt": "8787",
         "LEEME_INSTALACION.txt": "Ejecutar INICIAR.bat", "MANUAL_INSTALACION.md": "zip",
         "_internal/tools/activate.ps1": "script", "_internal/tools/run.cmd": "script",
+        "Manuales/Resumen_ejecutivo.pdf": "archivo ajeno al repositorio",
+        "Manuales/privado.pdf": "archivo personal",
         "frontend/export.docx": "documento del usuario",
         "_internal/docx/templates/privado.docx": "documento del usuario",
         "frontend/equivalencias.csv": "datos personales",
@@ -96,6 +98,9 @@ def test_layout_contains_the_application_and_leaves_portable_scripts_out(layout)
         assert excluded not in files, f"No debe empaquetarse {excluded}"
     assert {"_internal/tools/activate.ps1", "_internal/tools/run.cmd", "frontend/export.docx",
             "_internal/docx/templates/privado.docx"} <= set(skipped)
+    assert not (target / "Manuales/privado.pdf").exists()
+    for name in build_msix.PDF_MANUALS:
+        assert (target / "Manuales" / name).read_bytes() == (ROOT / "docs/manuales" / name).read_bytes()
     assert build_msix.verify_layout(target, APP_VERSION) == []
 
 

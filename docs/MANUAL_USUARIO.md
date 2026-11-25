@@ -1,9 +1,9 @@
-# Manual de usuario — Anonimizador Judicial 3.4.5
+# Manual de usuario — Anonimizador Judicial 3.4.8
 
 Herramienta académica de uso personal desarrollada por IALAB, Laboratorio de
-Innovación e Inteligencia Artificial de la Facultad de Derecho, UBA. Esta
-copia utiliza la identidad visual del laboratorio y conserva las funciones
-de anonimización de la versión 3.4.4.
+Innovación e Inteligencia Artificial de la Facultad de Derecho, UBA. En un PDF, compará la vista Original con la página que cargaste. Si un acento aparece como un símbolo y también se copia así desde el PDF, usá el archivo fuente o una copia con OCR. Si quedaron páginas sin texto recuperable, revisá sus números antes de confirmar una exportación parcial.
+
+Al analizar otra vez con las mismas categorías, se conserva la revisión manual. Si cambiás las categorías después de revisar, la aplicación pide confirmación para reemplazar tus decisiones.
 
 ---
 
@@ -34,16 +34,16 @@ chasis o motor, se muestran en **Otros** y se reemplazan por `[DATO_1]`.
 
 ### Windows
 
-Descargá y extraé el portable IALAB 3.4.5 enlazado en el
+Descargá y extraé el portable IALAB 3.4.8 enlazado en el
 [README](../README.md). También podés
 [iniciar desde el código fuente](DESARROLLO.md).
-El archivo es `AnonimizadorJudicial-3.4.5-Windows.zip`; la cabecera muestra
-**v3.4.5**.
+El archivo es `AnonimizadorJudicial-3.4.8-Windows.zip`; la cabecera muestra
+**v3.4.8**.
 
 1. Doble clic en **`INICIAR.bat`**.
 2. Se abre la dirección local indicada al iniciar, normalmente <http://127.0.0.1:8787>.
    Si el puerto está ocupado, usa otro libre entre 8788 y 8796.
-3. Verificá **v3.4.5** en el indicador superior.
+3. Verificá **v3.4.8** en el indicador superior.
 
 Repetir `INICIAR.bat` abre la instancia existente de esa carpeta. No cierra las
 otras copias ni transfiere sus documentos.
@@ -60,7 +60,7 @@ El indicador superior debe mostrar algo similar a:
 100% local vX.Y.Z · Presidio · spaCy · Catálogos cargados
 ```
 
-`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.5**.
+`vX.Y.Z` es la versión instalada. Esta entrega es **3.4.8**.
 Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 ---
@@ -71,6 +71,11 @@ Sus cambios figuran en `CHANGELOG.md` incluido en el paquete.
 
 - Formatos: **Word (.docx)** o **PDF digital** con texto seleccionable.
 - Arrastrá el archivo o hacé clic en la zona de carga.
+- Si un PDF combina texto digital y páginas sin texto recuperable, la carga indica
+  cuántas páginas tiene el original y cuáles se omitieron. Para incluir su contenido,
+  cargá una copia con OCR. Si preferís trabajar con el texto parcial, revisá el aviso
+  del editor y marcá la casilla antes de exportar a Word o PDF o copiar Markdown.
+  Las imágenes dentro de páginas con texto tampoco se transcriben.
 - No se procesan PDFs completamente escaneados.
 - Límite: **40 MB**. Word extrae párrafos, tablas, encabezados y pies; verificá
   por separado contenido de imágenes, dibujos, notas y revisiones pendientes.
@@ -86,7 +91,10 @@ capa de texto.
 - Marcá las categorías que querés buscar.
 - Conservá **Otros** activada para incluir seguimiento de denuncias, pólizas,
   chasis, motor y enlaces.
-- Hacé clic en **Analizar documento**.
+- Hacé clic en **Analizar documento**. Si repetís la acción con la misma configuración,
+  se conserva la revisión. Al cambiar de modo o categorías, la aplicación pide
+  confirmación si el nuevo análisis descartaría correcciones manuales o del editor.
+  Cancelar permite volver a la revisión y exportarla.
 - Seleccioná al menos una categoría. **Detener** solicita la cancelación;
   el motor la atiende al llegar a un punto de control entre sus bloques.
 
@@ -125,6 +133,17 @@ Para aplicar esta mejora a una exportación anterior, volvé a cargar y analizar
 el documento original.
 Quitar una variante o rechazar un grupo separa sus reemplazos. Editar la
 etiqueta de un grupo confirmado cambia todas sus variantes.
+**Desanonimizar** conserva el texto original de todas las variantes del grupo,
+aunque tenga una sola. Para volver a ocultarlas, marcá sus filas en
+**Detecciones** o usá **Volver a anonimizar** desde la vista previa.
+
+En **Detecciones**, el buscador filtra las filas por texto original,
+sustitución, tipo o grupo.
+
+Las enumeraciones separadas por coma («Mariela Paz, Hernán Luna») se detectan
+como personas distintas; la forma «APELLIDO, Nombre» se mantiene como una sola.
+Algunos términos jurídicos, como «Conexidad Subjetiva», nunca se anonimizan
+automáticamente. Si querés ocultarlos igual, seleccionalos a mano.
 
 En la vista previa podés comparar el texto original con el anonimizado y
 seleccionar manualmente información que no haya sido detectada.
@@ -136,6 +155,8 @@ la reconozca. También se ocultan sus repeticiones iguales, sin distinguir
 mayúsculas, cuando forman un dato completo.
 Si la fila estaba desmarcada, se vuelve a activar al agregarla manualmente.
 Usá **En grupo** únicamente cuando quieras asociar el dato a un grupo.
+Si seleccionás un dato ya detectado, la barra también ofrece
+**Desanonimizar** (o **Volver a anonimizar** si ya estaba desmarcado).
 Comprobá el resultado en **Anonimizado** y luego en el archivo descargado.
 Cambiar el tipo de una fila se conserva también al exportar.
 
@@ -199,7 +220,7 @@ otro destino mediante la unión manual.
 3. Ajustá fuente, tamaño, interlineado, márgenes o alineación.
 4. Exportá a Word o PDF.
 
-La fuente elegida se aplica a Word; el PDF usa Times Roman. Tamaño,
+La fuente elegida se aplica a Word; el PDF usa Times Roman y una fuente local de apoyo para letras latinas extendidas. Tamaño,
 interlineado, alineación y márgenes se aplican a ambos formatos. La exportación
 reconstruye el texto y no conserva el diseño original ni sus tablas.
 Las ediciones del editor no cambian la tabla CSV ni se vuelven a analizar.

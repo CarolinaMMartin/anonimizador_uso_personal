@@ -37,6 +37,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import msix_manifest  # noqa: E402
+from portable_docs import PDF_MANUALS  # noqa: E402
 from package_release import (  # noqa: E402
     DIST_NAME, RESOURCE_TYPES, SPACY_MODEL, app_version, trusted_wheel_resources,
 )
@@ -56,6 +57,7 @@ PACKAGE_FILES = (
 )
 REQUIRED_FILES = (
     "AppxManifest.xml",
+    *(f"Manuales/{name}" for name in PDF_MANUALS),
     f"{DIST_NAME}.exe",
     "LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.txt",
     "frontend/index.html",
@@ -127,6 +129,11 @@ def stage_layout(package: Path, layout: Path = LAYOUT_DIR, *, version: str | Non
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
 
+    manuals = layout / "Manuales"
+    manuals.mkdir()
+    for name in PDF_MANUALS:
+        shutil.copyfile(ROOT / "docs" / "manuales" / name, manuals / name)
+
     manifest = msix_manifest.render_manifest(version)
     errors = msix_manifest.validate_manifest(manifest, version)
     if errors:
@@ -174,7 +181,7 @@ def verify_msix(msix: Path, version: str | None = None) -> list[str]:
     if manifest is None:
         return ["El paquete no contiene AppxManifest.xml"]
     errors += msix_manifest.validate_manifest(manifest, version)
-    for required in ("AppxBlockMap.xml", "[Content_Types].xml", "resources.pri", f"{DIST_NAME}.exe"):
+    for required in ("AppxBlockMap.xml", "[Content_Types].xml", "resources.pri", *REQUIRED_FILES):
         if required not in names:
             errors.append(f"El paquete no contiene {required}")
     if not any(name.startswith("_internal/") for name in names):

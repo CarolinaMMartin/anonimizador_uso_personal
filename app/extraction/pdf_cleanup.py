@@ -2,30 +2,22 @@
 from __future__ import annotations
 
 import re
+from unicodedata import normalize
 
 # Pie de página típico: "1 | Página" con letras espaciadas por el PDF.
 _PAGE_FOOTER_RE = re.compile(
-    r"^\s*\d+\s*\|\s*(?:P\s*)?[áaÁA]?\s*(?:g\s*)?(?:i\s*)?(?:n\s*)?(?:a\s*)?\s*$",
+    r"^[ \t]*\d+[ \t]*\|[ \t]*p[ \t]*[aá][ \t]*g[ \t]*i[ \t]*n[ \t]*a[ \t]*$",
     re.IGNORECASE | re.MULTILINE,
-)
-
-# Encabezados repetidos con letras separadas (P á g i n a).
-_SPACED_WORD_RE = re.compile(
-    r"\b((?:[A-Za-zÁÉÍÓÚÑáéíóúñ]\s){2,}[A-Za-zÁÉÍÓÚÑáéíóúñ])\b"
 )
 
 # Línea suelta con solo un número de página.
 _LONE_PAGE_NUM_RE = re.compile(r"^\s*\d{1,4}\s*$", re.MULTILINE)
 
 
-def _collapse_spaced_letters(match: re.Match[str]) -> str:
-    return re.sub(r"\s+", "", match.group(1))
-
-
 def clean_pdf_text(text: str) -> str:
     """Quita ruido de paginación y normaliza saltos de línea."""
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = _SPACED_WORD_RE.sub(_collapse_spaced_letters, text)
+    # Compose canonically equivalent letters before computing detection offsets.
+    text = normalize("NFC", text).replace("\r\n", "\n").replace("\r", "\n")
     text = _PAGE_FOOTER_RE.sub("", text)
     text = _LONE_PAGE_NUM_RE.sub("", text)
     # Colapsar muchas líneas vacías consecutivas.

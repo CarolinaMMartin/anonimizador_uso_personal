@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import shutil
 import sys
 import zipfile
 from importlib.metadata import distributions
@@ -27,6 +28,12 @@ def app_version() -> str:
                 if isinstance(node, ast.Assign) and any(
                     isinstance(target, ast.Name) and target.id == 'APP_VERSION' for target in node.targets))
 
+sys.path.insert(0, str(ROOT / "scripts"))
+from bundle_compliance import bundle_compliance  # noqa: E402
+from build_provenance import verify_build_provenance
+from portable_docs import PDF_MANUALS, portable_text
+
+
 # Archivos comunes obligatorios en cualquier paquete de entrega.
 COMMON_REQUIRED_FILES = (
     "LICENSE",
@@ -37,18 +44,13 @@ COMMON_REQUIRED_FILES = (
     "MANUAL_INSTALACION.md",
     "MANUAL_USUARIO.md",
     "CHANGELOG.md",
+    *(f"Manuales/{name}" for name in PDF_MANUALS),
 )
 REQUIRED_DIRS = ("LICENSES",)
 REQUIRED_MODEL_FILES = (
     f"models/{SPACY_MODEL}/LICENSE",
     f"models/{SPACY_MODEL}/config.cfg",
 )
-
-sys.path.insert(0, str(ROOT / "scripts"))
-from bundle_compliance import bundle_compliance  # noqa: E402
-from build_provenance import verify_build_provenance
-from portable_docs import portable_text
-
 
 def required_launchers() -> tuple[str, ...]:
     """Launchers obligatorios según el sistema donde se construye."""
@@ -159,6 +161,10 @@ def bundle_docs(pkg_dir: Path) -> None:
     """Incluye manuales en la raíz del paquete de entrega."""
     root = delivery_root(pkg_dir)
     docs_dir = ROOT / "docs"
+    manual_dir = root / "Manuales"
+    manual_dir.mkdir(exist_ok=True)
+    for name in PDF_MANUALS:
+        shutil.copyfile(docs_dir / "manuales" / name, manual_dir / name)
     for name in ('MANUAL_INSTALACION.md', 'MANUAL_USUARIO.md', 'DEPLOY.md',
                  'NOTAS_VERSION.md', f'VERIFICACION_{app_version()}.md'):
         src = docs_dir / name
@@ -210,8 +216,8 @@ def write_release_zip(root: Path, output: Path) -> None:
     # Some dependencies need DOCX/PDF/CSV resources (for example export
     # templates). Keep only files matching installed wheel resources byte
     # for byte; a user's document under the same directory is still excluded.
-    resource_types = RESOURCE_TYPES
     trusted_resources = trusted_wheel_resources()
+    trusted_resources.update({f"Manuales/{name}": ROOT / "docs/manuales" / name for name in PDF_MANUALS})
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for file in sorted(root.rglob('*')):
@@ -226,9 +232,11 @@ def write_release_zip(root: Path, output: Path) -> None:
                 continue
             if file.suffix.lower() in {'.db', '.log'} or file.name.endswith('.db-journal'):
                 continue
-            if file.suffix.lower() in resource_types:
+            if file.suffix.lower() in RESOURCE_TYPES:
                 trusted = trusted_resources.get(relative.as_posix())
                 if trusted is None or file.read_bytes() != trusted.read_bytes():
+                    if relative.parts[0] == "Manuales":
+                        raise ValueError(f"El manual no coincide con la copia del repositorio: {relative}")
                     continue
             if not file.resolve().is_relative_to(root.resolve()):
                 raise ValueError(f'El archivo apunta fuera del paquete: {relative}')

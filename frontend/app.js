@@ -6,6 +6,7 @@ let sessionGeneration = 0;
 let mutationTail = Promise.resolve();
 let reviewRevision = 0;
 let editorSnapshot = null;
+let lastAnalysisSettings = null;
 let previewSequence = 0;
 let localDecisionSequence = 0;
 const localDecisionTokens = new Map();
@@ -105,6 +106,8 @@ function resetDocumentState() {
   mutationTail = Promise.resolve();
   sessionId = null;
   currentDocName = '';
+  lastAnalysisSettings = null;
+  showPdfCoverage(null, []);
   docText = '';
   offsetText = null;
   browserOffsets = [];
@@ -277,6 +280,7 @@ async function parseApiError(res) {
     const data = await res.json();
     const d = data.detail;
     if (typeof d === 'string') return d;
+    if (typeof d?.message === 'string') return d.message;
     if (Array.isArray(d)) return d.map((x) => x.msg || JSON.stringify(x)).join('; ');
   } catch {
     /* ignore */
@@ -534,6 +538,26 @@ fileInput.addEventListener('change', (e) => {
   if (e.target.files.length) handleFile(e.target.files[0]);
 });
 
+function showPdfCoverage(total, omitted) {
+  const partial = omitted.length > 0;
+  const message = partial
+    ? `PDF de ${total} páginas. Páginas omitidas por falta de texto recuperable: ${omitted.join(', ')}. Para incluirlas, cargá una copia con reconocimiento de texto (OCR).`
+    : '';
+  $('uploadPageWarning').textContent = message;
+  $('uploadPageWarning').hidden = !partial;
+  $('exportPageWarning').textContent = message;
+  $('partialPdfNotice').hidden = !partial;
+  $('ackPartialPdf').checked = false;
+  updatePartialExportButtons();
+}
+
+function updatePartialExportButtons() {
+  const blocked = !$('partialPdfNotice').hidden && !$('ackPartialPdf').checked;
+  for (const id of ['exportDocx', 'exportPdf', 'copyMdBtn']) $(id).disabled = blocked;
+}
+
+$('ackPartialPdf').addEventListener('change', updatePartialExportButtons);
+
 async function handleFile(file) {
   resetDocumentState();
   const generation = sessionGeneration;
@@ -553,6 +577,7 @@ async function handleFile(file) {
     if (generation !== sessionGeneration || signal.aborted) return;
     sessionId = data.session_id;
     currentDocName = file.name || 'documento';
+    showPdfCoverage(data.pdf_page_count, data.omitted_pdf_pages || []);
     $('fileInfo').innerHTML =
       `<strong>${escapeHTML(file.name)}</strong> · ${data.char_count.toLocaleString('es')} caracteres · ${data.paragraph_count} párrafos`;
     $('analyzeBtn').disabled = false;
@@ -584,29 +609,43 @@ $('analyzeBtn').addEventListener('click', async () => {
     return;
   }
   const context = sessionContext();
+  const labelMode = getLabelMode();
+  const settings = JSON.stringify([labelMode, enabledCategories.slice().sort()]);
   const signal = beginRequest();
   setProcessBusy(true);
-  for (const id of ['workspace', 'exportPanel', 'editorPanel']) $(id).hidden = true;
   try {
     await flushPendingSaves();
     assertCurrentSession(context);
     if (signal.aborted) return;
-    const res = await sessionFetch(API + '/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal,
-      body: JSON.stringify({
-        session_id: sessionId,
-        label_mode: getLabelMode(),
-        enabled_categories: enabledCategories,
-      }),
-    }, context);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Error en análisis');
+    if (settings === lastAnalysisSettings) {
+      showToast('La configuración es la misma. Podés continuar con tu revisión.', 'success');
+      return;
     }
+    const message = 'Un nuevo análisis descartará las correcciones manuales y del editor. ¿Querés reemplazar la revisión actual?';
+    const editorEdited = Boolean(editorSnapshot?.dirty);
+    if (editorEdited && !confirm(message)) return;
+
+    const body = { session_id: context.id, label_mode: labelMode, enabled_categories: enabledCategories };
+    const analyze = () => sessionFetch(API + '/api/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      signal, body: JSON.stringify(body),
+    }, context);
+    let res = await analyze();
+    if (res.status === 409) {
+      const { detail } = await res.json();
+      if (detail?.code === 'review_replacement') {
+        if (signal.aborted || (!editorEdited && !confirm(message))) return;
+        body.replace_review_sequence = detail.review_sequence;
+        res = await analyze();
+      }
+    }
+    if (!res.ok) throw new Error(await parseApiError(res));
     const data = await res.json();
     if (signal.aborted) return;
+    if (data.review_preserved) {
+      showToast('Se conservó la revisión manual.', 'success');
+      return;
+    }
     applyReviewData(data);
     reviewChanged();
     editorSnapshot = null;
@@ -616,6 +655,7 @@ $('analyzeBtn').addEventListener('click', async () => {
     renderTable();
     renderClusters();
     await loadPreview();
+    lastAnalysisSettings = settings;
     $('statsRow').hidden = false;
     $('workspace').hidden = false;
     $('exportPanel').hidden = false;
@@ -874,8 +914,12 @@ function renderTable() {
       const clusterHint = inCluster
         ? `<span class="cluster-in-badge">● ${escapeHTML(clusterDisplayLabel(inCluster))}</span>`
         : '';
+      const searchBlob = [
+        d.original, d.placeholder, d.cat, CAT_LABELS_FOR_SEARCH[d.cat] || '',
+        inCluster ? clusterDisplayLabel(inCluster) : '',
+      ].join(' ');
       return `
-    <tr data-id="${d.id}" class="${d.enabled ? '' : 'row-disabled'}">
+    <tr data-id="${d.id}" class="${d.enabled ? '' : 'row-disabled'}" data-search="${escapeHTML(searchBlob)}">
       <td><input type="checkbox" ${d.enabled ? 'checked' : ''} class="toggle-det" aria-label="Incluir"></td>
       <td>
         <select class="cat-select pill-${d.cat}" aria-label="Tipo de dato">
@@ -966,6 +1010,44 @@ function renderTable() {
       }
     });
   });
+  applyDetectionFilter();
+}
+
+const CAT_LABELS_FOR_SEARCH = {
+  PERSONA: 'Persona', DNI: 'DNI', CUIT: 'CUIT CUIL', EMPRESA: 'Empresa', EMAIL: 'Email correo',
+  TELEFONO: 'Teléfono', DOMICILIO: 'Domicilio dirección', PATENTE: 'Patente dominio',
+  EXPEDIENTE: 'Expediente causa', ORGANISMO: 'Organismo', OTRO: 'Otro',
+};
+
+let detectionFilterQuery = '';
+
+function applyDetectionFilter() {
+  const tbody = $('detBody');
+  const count = $('detFilterCount');
+  if (!tbody || typeof tbody.querySelectorAll !== 'function') return;
+  const q = normalizeForMatch(detectionFilterQuery);
+  const rows = [...tbody.querySelectorAll('tr[data-id]')];
+  let visible = 0;
+  rows.forEach((tr) => {
+    const hide = !!q && !normalizeForMatch(tr.dataset.search || '').includes(q);
+    tr.classList.toggle('hidden-by-filter', hide);
+    if (!hide) visible += 1;
+  });
+  [...tbody.querySelectorAll('.det-filter-empty-row')].forEach((row) => row.remove());
+  if (q && rows.length && !visible && typeof tbody.insertAdjacentHTML === 'function') {
+    tbody.insertAdjacentHTML(
+      'beforeend',
+      `<tr class="det-filter-empty-row"><td colspan="6" class="det-filter-empty">No hay detecciones que coincidan con «${escapeHTML(detectionFilterQuery.trim())}».</td></tr>`
+    );
+  }
+  if (count) count.textContent = q && rows.length ? `${visible} de ${rows.length}` : '';
+}
+
+if ($('detFilter')) {
+  $('detFilter').addEventListener('input', (e) => {
+    detectionFilterQuery = e.target.value;
+    applyDetectionFilter();
+  });
 }
 
 async function ensureDetectionCluster(detId) {
@@ -1047,6 +1129,48 @@ async function ignoreSimilarDetections(detId) {
   renderStatsFromDetections();
   renderPreviewLocal();
   showToast(`Ignoradas ${targets.length} filas similares`, 'success');
+}
+
+// Desanonimizar = conservar el texto original (la detección queda desmarcada).
+async function setDetectionsEnabled(targets, enabled, message) {
+  if (!requireSession()) return false;
+  const pending = targets.filter((item) => item.enabled !== enabled);
+  if (!pending.length) return true;
+  try {
+    await flushPendingSaves();
+  } catch (e) {
+    showToast(e.message, 'error');
+    return false;
+  }
+  reviewChanged();
+  for (const item of pending) {
+    const current = detections.find((d) => d.id === item.id);
+    if (!current) continue;
+    current.enabled = enabled;
+    if (!(await saveDetectionPatch(current.id, { enabled }))) {
+      renderTable();
+      renderClusters();
+      return false;
+    }
+  }
+  renderTable();
+  renderClusters();
+  renderStatsFromDetections();
+  renderPreviewLocal();
+  if (message) showToast(message, 'success');
+  return true;
+}
+
+function clusterMembers(c) {
+  const members = detections.filter((d) => d.cluster_id === c.cluster_id);
+  if (members.length) return members;
+  const surfaces = new Set(c.surfaces.map((s) => s.trim().toLowerCase()));
+  return detections.filter((d) => surfaces.has(d.original.trim().toLowerCase()));
+}
+
+function clusterIsDeanonymized(c) {
+  const members = clusterMembers(c);
+  return members.length > 0 && members.every((d) => !d.enabled);
 }
 
 let clusterFilterQuery = '';
@@ -1212,12 +1336,16 @@ function detectionsNotInCluster(c) {
 function clusterCard(c) {
   const target = c.target_cluster_id ? clusters.find((group) => group.cluster_id === c.target_cluster_id) : null;
   const label = target ? `Incorporar a ${target.placeholder}` : c.canonical_label || c.placeholder || `${c.cat} (pendiente)`;
-  const statusClass = c.status === 'confirmed' ? 'confirmed' : '';
+  const deanonymized = clusterIsDeanonymized(c);
+  const statusClass = [c.status === 'confirmed' ? 'confirmed' : '', deanonymized ? 'cluster-deanonymized' : '']
+    .filter(Boolean).join(' ');
   const available = detectionsNotInCluster(c);
   const searchBlob = [label, c.placeholder, c.cat, ...c.surfaces].join(' ');
   return `
     <div class="cluster-card ${statusClass}" data-cluster-id="${c.cluster_id}" data-search="${escapeHTML(searchBlob)}">
-      <h4>${escapeHTML(label)} <span class="cluster-status ${c.status === 'confirmed' ? 'cluster-status-confirmed' : ''}">${c.status === 'confirmed' ? 'Confirmado' : 'Por revisar'}</span></h4>
+      <h4>${escapeHTML(label)} <span class="cluster-status ${c.status === 'confirmed' ? 'cluster-status-confirmed' : ''}">${c.status === 'confirmed' ? 'Confirmado' : 'Por revisar'}</span>${
+        deanonymized ? ' <span class="cluster-status cluster-status-off">Sin anonimizar</span>' : ''
+      }</h4>
       ${target ? `<p class="cluster-confidence">Destino confirmado: ${escapeHTML(clusterDisplayLabel(target))}. Las variantes todavía conservan su reemplazo actual.</p>` : ''}
       ${c.status !== 'confirmed' && c.surfaces.length > 1 ? `<p class="cluster-confidence">Coincidencia entre variantes: ${escapeHTML(c.confidence)}</p>` : ''}
       <label class="cluster-category-row">
@@ -1256,6 +1384,9 @@ function clusterCard(c) {
             : ''
         }
         <button class="btn btn-sm btn-secondary" data-action="edit" data-id="${c.cluster_id}">Editar reemplazo</button>
+        <button class="btn btn-sm btn-outline" data-action="toggle-anon" data-id="${c.cluster_id}" title="${
+          deanonymized ? 'Volver a reemplazar todas las variantes del grupo' : 'Conservar el texto original de todas las variantes del grupo'
+        }">${deanonymized ? 'Volver a anonimizar' : 'Desanonimizar'}</button>
         <button class="btn btn-sm btn-reject" data-action="reject" data-id="${c.cluster_id}">Rechazar</button>
       </div>
     </div>`;
@@ -1264,6 +1395,20 @@ function clusterCard(c) {
 async function handleClusterAction(btn) {
   const action = btn.dataset.action;
   const clusterId = btn.dataset.id;
+  if (action === 'toggle-anon') {
+    const c = clusters.find((x) => x.cluster_id === clusterId);
+    if (!c) return;
+    const enable = clusterIsDeanonymized(c);
+    const members = clusterMembers(c);
+    await setDetectionsEnabled(
+      members,
+      enable,
+      enable
+        ? `Grupo anonimizado de nuevo (${members.length} ${members.length === 1 ? 'variante' : 'variantes'})`
+        : `Grupo desanonimizado: se conserva el texto original (${members.length} ${members.length === 1 ? 'variante' : 'variantes'})`
+    );
+    return;
+  }
   if (action === 'confirm') {
     try {
       if (!(await confirmClusterById(clusterId))) return;
@@ -1551,6 +1696,9 @@ async function downloadExport(url, filename, payloadExtra = {}) {
     use_confirmed_only: false,
     ...payloadExtra,
   };
+  if ('text' in payloadExtra && !$('partialPdfNotice').hidden) {
+    body.acknowledge_partial_pdf = $('ackPartialPdf').checked;
+  }
   const res = await sessionFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1797,6 +1945,45 @@ function showSelectionToolbar(sel) {
   prev.textContent = sel.text.length > 48 ? sel.text.slice(0, 48) + '…' : sel.text;
   bar.hidden = false;
   initSelectionGroupPicker();
+  syncSelectionDeanonButton();
+}
+
+// Detecciones que se superponen con la selección (anonimizadas o no).
+function detectionsInSelection(sel) {
+  if (!sel) return [];
+  let start, end;
+  try {
+    start = toDocumentOffset(sel.start);
+    end = toDocumentOffset(sel.end);
+  } catch {
+    return [];
+  }
+  return detections.filter((d) => (d.positions || []).some((p) => p.start < end && p.end > start));
+}
+
+function syncSelectionDeanonButton() {
+  const btn = $('selDeanonBtn');
+  if (!btn) return;
+  const hits = detectionsInSelection(pendingSelection);
+  btn.hidden = !hits.length;
+  const anyEnabled = hits.some((d) => d.enabled);
+  btn.textContent = anyEnabled ? 'Desanonimizar' : 'Volver a anonimizar';
+  btn.title = anyEnabled
+    ? 'Conservar el texto original de este dato en todo el documento'
+    : 'Volver a reemplazar este dato en todo el documento';
+}
+
+async function toggleSelectionAnonymization() {
+  const hits = detectionsInSelection(pendingSelection);
+  if (!hits.length) return;
+  const enable = !hits.some((d) => d.enabled);
+  const label = hits.map((d) => d.original).join(', ');
+  const ok = await setDetectionsEnabled(
+    hits,
+    enable,
+    enable ? `Anonimizado de nuevo: ${label}` : `Desanonimizado: ${label}`
+  );
+  if (ok) clearTextSelection();
 }
 
 function hideSelectionToolbar() {
@@ -1906,6 +2093,9 @@ if ($('selCat')) {
     selectionClusterId = '';
     initSelectionGroupPicker();
   });
+}
+if ($('selDeanonBtn')) {
+  $('selDeanonBtn').addEventListener('click', toggleSelectionAnonymization);
 }
 if ($('selCancelBtn')) {
   $('selCancelBtn').addEventListener('click', clearTextSelection);

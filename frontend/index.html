@@ -7,7 +7,7 @@
   <title>Anonimizador de uso personal</title>
   <meta name="theme-color" content="#F1F1F1">
   <link rel="icon" type="image/png" href="/static/assets/ialab/isotype_azul.png">
-  <link rel="stylesheet" href="/static/styles.css?v=3.4.5">
+  <link rel="stylesheet" href="/static/styles.css?v=3.4.8">
 </head>
 <body>
 <div class="app">
@@ -60,6 +60,7 @@
       </div>
       <input type="file" id="fileInput" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
       <div class="file-info" id="fileInfo"></div>
+      <p class="callout callout-warn" id="uploadPageWarning" role="status" hidden></p>
     </section>
 
     <section class="card" id="panelConfig">
@@ -216,6 +217,7 @@
                 <label class="matching-option" title="Afecta las repeticiones. El fragmento seleccionado siempre se respeta."><input type="checkbox" id="selPartial"> Permitir coincidencias parciales en repeticiones</label>
                 <button type="button" class="btn btn-sm btn-outline" id="selAnonOnlyBtn">Solo anonimizar</button>
                 <button type="button" class="btn btn-sm btn-primary" id="selAnonGroupBtn">En grupo</button>
+                <button type="button" class="btn btn-sm btn-outline" id="selDeanonBtn" hidden title="Conservar el texto original de este dato en todo el documento">Desanonimizar</button>
                 <button type="button" class="btn btn-sm btn-ghost" id="selCancelBtn">Cancelar</button>
               </div>
             </div>
@@ -235,6 +237,10 @@
               </div>
 
               <div class="review-tab-panel active" id="panelDetections" role="tabpanel" aria-labelledby="tabDetections">
+                <div class="det-toolbar">
+                  <input type="search" class="search-input" id="detFilter" placeholder="Buscar detección…" aria-label="Buscar detección por texto, sustitución, tipo o grupo" autocomplete="off">
+                  <span class="det-filter-count" id="detFilterCount" aria-live="polite"></span>
+                </div>
                 <p class="help-text table-help">Cada fila es un dato encontrado. Cambiá <strong>Tipo</strong>, editá <strong>Sustitución</strong>, desmarcá lo incorrecto o usá <strong>Unir similares</strong>.</p>
                 <div class="table-scroll scroll-panel" id="detTable">
                   <table>
@@ -296,6 +302,12 @@
       </div>
       <p class="help-text">Editá el texto si hace falta y elegí el formato del documento final.</p>
 
+      <div class="callout callout-warn" id="partialPdfNotice" hidden>
+        <strong>Exportación parcial</strong>
+        <p id="exportPageWarning"></p>
+        <label><input type="checkbox" id="ackPartialPdf"> Revisé las páginas omitidas y quiero usar solo el texto recuperado.</label>
+      </div>
+
       <div class="editor-layout">
         <aside class="editor-format" aria-label="Formato del documento">
           <h3 class="format-title">Formato</h3>
@@ -305,7 +317,7 @@
             <option value="Arial">Arial</option>
             <option value="Calibri">Calibri</option>
           </select>
-          <p class="field-hint">El PDF usa Times Roman. Tamaño, interlineado y márgenes se aplican a ambos formatos.</p>
+          <p class="field-hint">El PDF usa Times Roman y una fuente local de apoyo para letras latinas extendidas. Tamaño, interlineado y márgenes se aplican a ambos formatos.</p>
           <label class="field-label" for="fmtSize">Tamaño</label>
           <select class="field-input" id="fmtSize">
             <option value="11">11 pt</option>
@@ -365,6 +377,6 @@
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="/static/app.js?v=3.4.5"></script>
+<script src="/static/app.js?v=3.4.8"></script>
 </body>
 </html>

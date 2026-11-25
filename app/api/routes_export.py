@@ -13,7 +13,7 @@ from app.export.export_utils import (
     text_to_paragraphs,
 )
 from app.export.http_headers import content_disposition_attachment
-from app.export.pdf_export import build_pdf_bytes
+from app.export.pdf_export import UnsupportedPdfLetter, build_pdf_bytes
 from app.models.schemas import (
     AnonymizedPreviewResponse,
     ExportDocumentRequest,
@@ -33,6 +33,16 @@ def _reviewed_document(session_id: str):
         raise HTTPException(400, "No hay documento cargado")
     if not (state.has_review or state.detections):
         raise HTTPException(400, "El documento todavía no fue revisado. Analizalo o agregá una selección manual primero.")
+    return state
+
+
+def _document_for_export(req: ExportDocumentRequest):
+    state = _reviewed_document(req.session_id)
+    if state.omitted_pdf_pages and not req.acknowledge_partial_pdf:
+        raise HTTPException(409, detail={
+            "message": "Confirmá que querés exportar solo el texto recuperado del PDF.",
+            "omitted_pdf_pages": state.omitted_pdf_pages,
+        })
     return state
 
 
@@ -63,7 +73,7 @@ async def export_preview(req: ExportRequest):
 
 @router.post("/export/docx")
 async def export_docx(req: ExportDocumentRequest):
-    state = _reviewed_document(req.session_id)
+    state = _document_for_export(req)
 
     try:
         anon = resolve_export_text(state, req)
@@ -86,7 +96,7 @@ async def export_docx(req: ExportDocumentRequest):
 
 @router.post("/export/pdf")
 async def export_pdf(req: ExportDocumentRequest):
-    state = _reviewed_document(req.session_id)
+    state = _document_for_export(req)
 
     try:
         anon = resolve_export_text(state, req)
@@ -102,6 +112,8 @@ async def export_pdf(req: ExportDocumentRequest):
         )
     except HTTPException:
         raise
+    except UnsupportedPdfLetter as e:
+        raise HTTPException(422, str(e)) from e
     except Exception as e:
         logger.exception("Error exportando PDF")
         raise HTTPException(500, f"Error al generar PDF: {e}") from e

@@ -73,3 +73,37 @@ def test_recognition_hook_does_nothing_yet_and_adds_no_ocr_dependency():
     requirements = (Path(__file__).resolve().parent.parent / "requirements.txt").read_text(encoding="utf-8").lower()
     for name in ("tesseract", "easyocr", "rapidocr", "paddleocr", "ocrmypdf"):
         assert name not in requirements
+
+
+def test_scanned_page_is_reported_and_partial_exports_require_acknowledgement():
+    from PIL import Image, ImageDraw
+    from fastapi.testclient import TestClient
+    from reportlab.lib.utils import ImageReader
+    from app.main import app
+    from app.models.store import store
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    pdf.drawString(72, 750, 'Primera pagina digital del expediente.')
+    pdf.showPage()
+    scan = Image.new('RGB', (400, 80), 'white')
+    ImageDraw.Draw(scan).text((5, 5), 'Acta adjunta escaneada', fill='black')
+    pdf.drawImage(ImageReader(scan), 72, 650)
+    pdf.showPage()
+    pdf.save()
+    with TestClient(app) as client:
+        uploaded = client.post('/api/upload', files={'file': ('mixto.pdf', buffer.getvalue())})
+        assert uploaded.is_success
+        data = uploaded.json()
+        assert data['pdf_page_count'] == 2 and data['omitted_pdf_pages'] == [2]
+        payload = {'session_id': data['session_id']}
+        try:
+            assert client.post('/api/analyze', json=payload).is_success
+            preview = client.post('/api/export/preview', json=payload).json()['text']
+            for extension in ('docx', 'pdf'):
+                uri = '/api/export/' + extension
+                blocked = client.post(uri, json={**payload, 'text': preview})
+                assert blocked.status_code == 409 and blocked.json()['detail']['omitted_pdf_pages'] == [2]
+                assert client.post(uri, json={**payload, 'text': preview, 'acknowledge_partial_pdf': True}).is_success
+        finally:
+            store.delete(data['session_id'])

@@ -780,3 +780,64 @@ test('incorporation response from an old document cannot overwrite a new review'
   assert.equal(app.clusters().length, 0);
   assert.equal(app.detections()[0].original, 'JUAN PEREZ');
 });
+
+test('the same analysis settings keep a corrected editor and cancellation keeps the review visible', async () => {
+  let calls = 0;
+  const { app, sandbox, element } = createApp(async url => {
+    if (url === '/api/analyze') {
+      calls++;
+      return json({ detections: [], clusters: [], stats: {} });
+    }
+    return json({ text: 'texto', highlights: [] });
+  });
+  let cat = 'EMAIL';
+  sandbox.document.querySelectorAll = selector => selector.includes(':checked') ? [{ dataset: { cat } }] : [];
+  await element('analyzeBtn').listeners.click();
+  await app.openEditorPanel();
+  app.editor('Dato ocultado por la operadora');
+  await element('analyzeBtn').listeners.click();
+  cat = 'DNI';
+  sandbox.confirm = () => false;
+  await element('analyzeBtn').listeners.click();
+  assert.equal(calls, 1);
+  assert.equal(element('editorText').value, 'Dato ocultado por la operadora');
+  assert.equal(element('editorPanel').hidden, false);
+});
+
+test('partial PDF coverage is shown in both panels and consent resets for every upload', () => {
+  const { sandbox, element } = createApp();
+  sandbox.showPdfCoverage(3, [1, 3]);
+  assert.match(element('uploadPageWarning').textContent, /1, 3/);
+  assert.equal(element('exportPageWarning').textContent, element('uploadPageWarning').textContent);
+  assert.equal(element('partialPdfNotice').hidden, false);
+  assert.equal(element('copyMdBtn').disabled, true);
+  element('ackPartialPdf').checked = true;
+  element('ackPartialPdf').listeners.change();
+  assert.equal(element('exportPdf').disabled, false);
+  sandbox.showPdfCoverage(2, [2]);
+  assert.equal(element('exportDocx').disabled, true);
+  sandbox.showPdfCoverage(null, []);
+  assert.equal(element('partialPdfNotice').hidden, true);
+  assert.equal(element('exportDocx').disabled, false);
+});
+
+test('changing categories retries with the revision number only after explicit confirmation', async () => {
+  const bodies = [];
+  const { sandbox, element } = createApp(async (url, options) => {
+    if (url === '/api/analyze') {
+      const body = JSON.parse(options.body);
+      bodies.push(body);
+      if (!body.replace_review_sequence) return json({ detail: { code: 'review_replacement', review_sequence: 3 } }, 409);
+      return json({ detections: [], clusters: [], stats: {} });
+    }
+    return json({ text: 'texto', highlights: [] });
+  });
+  sandbox.document.querySelectorAll = selector => selector.includes(':checked') ? [{ dataset: { cat: 'DNI' } }] : [];
+  sandbox.confirm = () => false;
+  await element('analyzeBtn').listeners.click();
+  assert.equal(bodies.length, 1);
+  sandbox.confirm = () => true;
+  await element('analyzeBtn').listeners.click();
+  assert.deepEqual(bodies.map(body => body.replace_review_sequence), [undefined, undefined, 3]);
+  assert.equal(element('workspace').hidden, false);
+});

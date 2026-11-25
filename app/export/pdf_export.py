@@ -2,14 +2,20 @@
 from __future__ import annotations
 
 import io
+import re
+from functools import lru_cache
+from unicodedata import combining, name, normalize
 from xml.sax.saxutils import escape
 
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer
 
+from app.runtime_paths import bundle_dir
 from app.export.docx_format import DEFAULT_DOCX_FORMAT, DocxExportFormat
 
 _ALIGN_MAP = {
@@ -18,6 +24,40 @@ _ALIGN_MAP = {
     "center": TA_CENTER,
     "right": TA_RIGHT,
 }
+
+
+# Keep a base letter and its diacritical marks in the same font run.
+_WORD = re.compile(r"(?:[^\W\d_]|[\u0300-\u036f])+")
+
+
+class UnsupportedPdfLetter(ValueError):
+    pass
+
+
+@lru_cache(maxsize=1)
+def _latin_font() -> TTFont:
+    font = TTFont("IALAB-Roboto", str(bundle_dir() / "frontend/assets/fonts/Roboto.ttf"))
+    pdfmetrics.registerFont(font)
+    return font
+
+
+def _format_word(match: re.Match[str]) -> str:
+    word = match.group()
+    if not any(ord(c) > 255 and (name(c, "").startswith("LATIN ") or combining(c)) for c in word):
+        return word
+    font = _latin_font()
+    if any(not font.face.charToGlyph.get(ord(c)) for c in word):
+        raise UnsupportedPdfLetter("La fuente del PDF no puede representar una letra del texto. "
+                                   "Exportá a Word para conservar la escritura original.")
+    return f'<font name="{font.fontName}">{word}</font>'
+
+
+def _paragraph_markup(raw: str) -> str:
+    # Normalize only the output copy; manual selections refer to the reviewed text.
+    text = escape(normalize("NFC", raw))
+    if not text.isascii():
+        text = _WORD.sub(_format_word, text)
+    return text.replace("\n", "<br/>")
 
 
 def _paragraph_style(fmt: DocxExportFormat) -> ParagraphStyle:
@@ -53,8 +93,7 @@ def build_pdf_bytes(
         if not raw.strip():
             story.append(Spacer(1, style.leading * (raw.count("\n") + 1) + style.spaceAfter))
             continue
-        safe = escape(raw).replace("\n", "<br/>")
-        story.append(Paragraph(safe, style))
+        story.append(Paragraph(_paragraph_markup(raw), style))
 
     if not story:
         story.append(Paragraph(escape("(documento vacío)"), style))

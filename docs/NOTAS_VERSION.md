@@ -1,26 +1,26 @@
-# Anonimizador IALAB 3.4.5
+# Anonimizador IALAB 3.4.8
 
-Actualización de estética del 18 de noviembre de 2026.
+Actualización de detección y revisión del 20 de noviembre de 2026.
 
 ## Descargar para Windows
 
-[Descargar ZIP completo · 3.4.5](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.5/AnonimizadorJudicial-3.4.5-Windows.zip.sha256).
+[Descargar ZIP completo · 3.4.8](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.8/AnonimizadorJudicial-3.4.8-Windows.zip) · [SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.8/AnonimizadorJudicial-3.4.8-Windows.zip.sha256).
 
 Extraé el ZIP en una carpeta nueva y abrí **INICIAR.bat**. El paquete incluye
 el ejecutable, la interfaz actualizada, Python, el modelo local y los manuales.
-La cabecera y `/health` identifican la versión **3.4.5**.
+La cabecera y `/health` identifican la versión **3.4.8**.
 
 ## Qué cambia
 
-- Encabezado blanco con logo azul del IALAB.
-- Paneles redondeados, bordes sutiles y más espacio entre elementos.
-- Botones principales redondeados con acentos violeta del laboratorio.
-- Información de formatos sobre fondo gris neutro.
-- Ajustes de distribución en pantallas pequeñas.
+- Abre el navegador recién cuando la aplicación acepta conexiones. Antes podía mostrarse «Se rechazó la conexión» mientras el programa todavía iniciaba.
+- Separa las personas enumeradas con coma («Mariela Paz, Hernán Luna») y conserva la forma invertida «APELLIDO, Nombre».
+- No toma como persona las frases formadas solo por términos abstractos y corta los nombres en un separador «espacio-guion-espacio».
+- Agrega una lista de términos que la detección automática nunca anonimiza, empezando por «Conexidad Subjetiva». Si el término aparece pegado a un nombre, se conserva el nombre.
+- Permite desanonimizar un grupo completo, también con una sola variante, y desanonimizar o volver a anonimizar un dato seleccionado en la vista previa.
+- Separa el nombre del archivo del aviso de páginas PDF sin texto.
+- Rediseña la tabla de Detecciones y agrega un buscador por texto, sustitución, tipo o grupo.
 
-Se conservan las funciones de detección, revisión manual, agrupación y
-exportación Word/PDF/CSV de 3.4.4. El cambio de estética también se incluye
-en el ZIP descargable; no requiere editar archivos de una instalación anterior.
+El ZIP publicado el 20 de noviembre conserva los PDF de la 3.4.6. La rama de Microsoft Store incluye el [manual de usuario](manuales/Manual_de_usuario.pdf), el [manual técnico](manuales/Manual_tecnico.pdf) y el [resumen ejecutivo](manuales/Resumen_ejecutivo.pdf) actualizados a la 3.4.8.
 
 ## Verificación y procedencia
 
@@ -30,7 +30,7 @@ el inicio real, las comprobaciones de análisis y exportación, la procedencia
 del binario y el inicio/análisis del ZIP extraído en otra carpeta.
 
 El ZIP incluye `SOURCE_COMMIT.txt`, `BUILD_PROVENANCE.json`, el inventario de
-dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.5.md)
+dependencias y las licencias. Consultá [la verificación de esta entrega](VERIFICACION_3.4.8.md)
 y [el historial de cambios](../CHANGELOG.md).
 
 ## Uso y límites

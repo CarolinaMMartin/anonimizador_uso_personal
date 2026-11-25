@@ -2,7 +2,7 @@
 
 ## En preparación · Paquete para Microsoft Store
 
-Todavía sin publicar. El portable ZIP no cambia de comportamiento.
+El paquete en preparación usa la versión 3.4.8 del anonimizador (3.4.8.0 en el manifiesto) e incluye los tres PDF oficiales en `Manuales/`.
 
 - Suma un paquete MSIX como salida adicional del build, con la identidad
   «Anonimizador de uso personal» reservada en Partner Center. Ver
@@ -28,6 +28,29 @@ Todavía sin publicar. El portable ZIP no cambia de comportamiento.
   sumarlo.
 - Agrega un [escrito de ejemplo ficticio](docs/ejemplos/escrito_ficticio.docx)
   y la [directiva de privacidad](PRIVACY.md).
+
+## 3.4.8 · Detección y revisión · 20 de noviembre de 2026
+
+- Abre el navegador recién cuando la aplicación ya acepta conexiones. Antes podía mostrarse «Se rechazó la conexión» mientras el programa todavía iniciaba.
+- Separa las personas enumeradas con coma («Mariela Paz, Hernán Luna»). Conserva la forma invertida «APELLIDO, Nombre», también con apellidos compuestos o fuera del catálogo.
+- Deja de tomar como persona las frases formadas solo por términos abstractos («Conexidad Subjetiva») y corta el nombre en un separador «espacio-guion-espacio».
+- Permite desanonimizar un grupo completo, también si tiene una sola variante, y desanonimizar o volver a anonimizar un dato desde la selección en la vista previa.
+- Agrega una lista de términos que la detección automática nunca anonimiza (`data/dictionaries/no_anonimizar.json`), empezando por «Conexidad Subjetiva». Si el término aparece pegado a un nombre, se recorta y el nombre se conserva.
+- Separa el nombre del archivo del aviso de páginas PDF sin texto.
+- Rediseña la tabla de Detecciones con cabecera neutra y bordes redondeados, y agrega un buscador por texto, sustitución, tipo o grupo.
+
+## 3.4.7 · Paquete nuevo de Windows · 19 de noviembre de 2026
+
+- Publica el programa de la 3.4.6 en un ZIP nuevo. Microsoft Defender bloqueaba la descarga del ZIP 3.4.6 con una detección heurística; los mismos archivos en otro paquete pasaron el mismo control.
+- Conserva sin cambios la lógica de anonimización, la interfaz y los manuales de la 3.4.6. Los PDF de la carpeta **Manuales** todavía mencionan y enlazan la 3.4.6.
+- La verificación de esta entrega se describe en [VERIFICACION_3.4.7.md](docs/VERIFICACION_3.4.7.md).
+
+## 3.4.6 · Revisión manual, PDF y documentación · 19 de noviembre de 2026
+
+- Conserva las decisiones manuales si repetís el análisis con las mismas categorías. Si las cambiás después de revisar, pide confirmación antes de reemplazar la revisión.
+- Identifica las páginas del PDF que quedaron sin texto recuperable y pide confirmación antes de exportar solo el texto disponible.
+- Reúne letras y acentos separados en la capa de texto del PDF y mejora la representación de letras en la exportación. Conserva símbolos legítimos como ° y ®.
+- Incluye el manual de usuario, el manual técnico y el resumen ejecutivo con la identidad visual del IALAB en la carpeta **Manuales** del ZIP.
 
 ## 3.4.5 · Actualización de estética IALAB — 18 de noviembre de 2026
 

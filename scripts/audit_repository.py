@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from package_release import app_version
+from portable_docs import PDF_MANUALS
 
 PUBLIC_REPOSITORY = 'CarolinaMMartin/anonimizador_uso_personal'
 # Current delivery instructions; historical reports retain their versions.
@@ -22,7 +23,7 @@ PUBLICATION_DOCUMENTS = (
     'docs/RELEASE_CHECKLIST.md', 'docs/COMPLIANCE.md',
     '.github/ISSUE_TEMPLATE/config.yml',
 )
-# El único documento versionado: un escrito totalmente ficticio para las notas
+# El único DOCX versionado: un escrito totalmente ficticio para las notas
 # de certificación de la Store y las pruebas manuales. No se admite ningún otro
 # .docx, y este debe coincidir con el texto de scripts/make_example_document.py.
 EXAMPLE_DOCUMENT = 'docs/ejemplos/escrito_ficticio.docx'
@@ -31,7 +32,10 @@ DATA_SUFFIXES = {'.db', '.docx', '.pdf', '.csv', '.exe', '.log'}
 
 def is_unexpected_data_file(rel: str) -> bool:
     """Documentos, bases o binarios que no deben versionarse."""
-    return Path(rel).suffix.lower() in DATA_SUFFIXES and rel != EXAMPLE_DOCUMENT
+    path = Path(rel)
+    if path.parent == Path("docs/manuales") and path.name in PDF_MANUALS:
+        return False
+    return path.suffix.lower() in DATA_SUFFIXES and rel != EXAMPLE_DOCUMENT
 
 
 def check_example_document(root: Path = ROOT) -> list[str]:
@@ -77,13 +81,23 @@ def _windows_downloads(text: str):
     ]
 
 
+SUSPENSION_HEADING = '## Descarga de Windows suspendida'
+
+
+class DistributionSuspended(ValueError):
+    """Public documentation is valid, but no Windows release may be built."""
+
+
 def check_publication_links(documents: dict[str, str], version: str,
                             repository: str = PUBLIC_REPOSITORY) -> list[str]:
     """Reject wrong repositories, stale release tags and mismatched assets."""
     errors = []
     downloads = _windows_downloads(documents.get('README.md', ''))
     assets = {parts[5] for _, parts in downloads}
-    if len(assets) != 1:
+    suspended = SUSPENSION_HEADING in documents.get('README.md', '').splitlines()
+    if suspended and assets:
+        errors.append('Windows ZIP is linked during a distribution suspension')
+    if not suspended and len(assets) != 1:
         errors.append('README.md must identify exactly one Windows ZIP download')
     asset = next(iter(assets)) if len(assets) == 1 else None
     if asset and f'-{version}-' not in asset:
@@ -141,6 +155,8 @@ def release_download_info(root: Path = ROOT) -> dict[str, str]:
     errors = check_publication_links(documents, version)
     if errors:
         raise ValueError('\n'.join(errors))
+    if SUSPENSION_HEADING in documents['README.md'].splitlines():
+        raise DistributionSuspended('Distribución de Windows suspendida.')
     url, parts = _windows_downloads(documents['README.md'])[0]
     return {'repository': PUBLIC_REPOSITORY, 'version': version,
             'asset_name': parts[5], 'download_url': url}
@@ -206,6 +222,8 @@ def audit():
             errors.append(f'Launcher stops unrelated processes: {name}')
     try:
         release_download_info()
+    except DistributionSuspended as exc:
+        print(str(exc))
     except (ValueError, OSError, StopIteration) as exc:
         errors.append(f'Publication metadata: {exc}')
     result = {'version': app_version(), 'checked': counts, 'errors': errors}

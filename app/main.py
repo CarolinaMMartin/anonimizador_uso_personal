@@ -88,7 +88,33 @@ def ensure_std_streams() -> None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 
+def wait_until_listening(host: str, port: int, timeout: float = 120.0, interval: float = 0.25) -> bool:
+    """Espera hasta que el servidor acepte conexiones en host:port."""
+    import socket
+    import time
+
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=1.0):
+                return True
+        except OSError:
+            time.sleep(interval)
+    return False
+
+
+def open_browser_when_ready(url: str, host: str, port: int, timeout: float = 120.0) -> None:
+    """Abre el navegador recién cuando el servidor escucha.
+
+    Si se abre antes, el navegador muestra «Se rechazó la conexión» mientras
+    el ejecutable todavía está iniciando (PC lenta, antivirus analizando).
+    """
+    if wait_until_listening(host, port, timeout=timeout):
+        webbrowser.open(url)
+
+
 def run_server(open_browser: bool = True, cache_bust: bool = True):
+    import threading
     import time
     import uvicorn
 
@@ -98,7 +124,12 @@ def run_server(open_browser: bool = True, cache_bust: bool = True):
     if cache_bust:
         url += f"?_{int(time.time())}"
     if open_browser and os.environ.get('ANON_NO_BROWSER') != '1':
-        webbrowser.open(url)
+        threading.Thread(
+            target=open_browser_when_ready,
+            args=(url, HOST, PORT),
+            name="abrir-navegador",
+            daemon=True,
+        ).start()
     uvicorn.run(app, host=HOST, port=PORT, log_level="info")
 
 
