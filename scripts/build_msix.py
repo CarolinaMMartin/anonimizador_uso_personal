@@ -61,6 +61,7 @@ REQUIRED_FILES = (
     f"{DIST_NAME}.exe",
     "LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.txt",
     "frontend/index.html",
+    "_internal/docx/templates/default.docx",
     f"models/{SPACY_MODEL}/config.cfg",
     f"models/{SPACY_MODEL}/LICENSE",
 )
@@ -78,6 +79,10 @@ def msix_filename(version: str | None = None) -> str:
 
 def is_excluded(relative: Path) -> bool:
     """Scripts de arranque, estado local y datos que nunca se empaquetan."""
+    # python-docx opens default.docx. Its unpacked source includes OPC metadata
+    # such as [Content_Types].xml and _rels/.rels, reserved in app packages.
+    if relative.parts[:4] == ("_internal", "docx", "templates", "default-docx-template"):
+        return True
     if any(part in EXCLUDED_PARTS or part.startswith(".env") for part in relative.parts):
         return True
     suffix = relative.suffix.lower()
@@ -257,7 +262,7 @@ def generate_pri(layout: Path, work: Path = PRI_WORK_DIR) -> Path:
 def pack(layout: Path, output: Path) -> Path:
     makeappx = find_sdk_tool("makeappx.exe")
     output.parent.mkdir(parents=True, exist_ok=True)
-    run([makeappx, "pack", "/o", "/h", "SHA256", "/d", layout, "/p", output])
+    run([makeappx, "pack", "/v", "/o", "/h", "SHA256", "/d", layout, "/p", output])
     return output
 
 

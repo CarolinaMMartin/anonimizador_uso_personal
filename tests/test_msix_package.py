@@ -40,6 +40,8 @@ def portable(tmp_path):
         "_internal/base_library.zip": "runtime",
         "_internal/data/dictionaries/nombres.json": "[]",
         "_internal/docx/templates/default.docx": "wheel-template",
+        "_internal/docx/templates/default-docx-template/[Content_Types].xml": "opc",
+        "_internal/docx/templates/default-docx-template/_rels/.rels": "relationships",
         "frontend/index.html": "<html></html>",
         "frontend/app.js": "",
         "models/es_core_news_md/config.cfg": "[nlp]",
@@ -98,6 +100,7 @@ def test_layout_contains_the_application_and_leaves_portable_scripts_out(layout)
         assert excluded not in files, f"No debe empaquetarse {excluded}"
     assert {"_internal/tools/activate.ps1", "_internal/tools/run.cmd", "frontend/export.docx",
             "_internal/docx/templates/privado.docx"} <= set(skipped)
+    assert not (target / "_internal/docx/templates/default-docx-template").exists()
     assert not (target / "Manuales/privado.pdf").exists()
     for name in build_msix.PDF_MANUALS:
         assert (target / "Manuales" / name).read_bytes() == (ROOT / "docs/manuales" / name).read_bytes()
@@ -258,6 +261,14 @@ def test_built_msix_file():
     assert build_msix.verify_msix(msix, APP_VERSION) == []
     with zipfile.ZipFile(msix) as archive:
         assert archive.testzip() is None
+        from io import BytesIO
+        from docx import Document
+
+        template = Document(BytesIO(archive.read("_internal/docx/templates/default.docx")))
+        template.add_paragraph("Exportación de prueba")
+        exported = BytesIO()
+        template.save(exported)
+        assert Document(exported).paragraphs[-1].text == "Exportación de prueba"
         names = set(archive.namelist())
     assert "Assets/StoreLogo.png" in names
     assert any(name.startswith("models/es_core_news_md/") for name in names)
