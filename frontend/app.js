@@ -108,9 +108,7 @@ function resetDocumentState() {
   currentDocName = '';
   lastAnalysisSettings = null;
   showPdfCoverage(null, []);
-  docText = '';
-  offsetText = null;
-  browserOffsets = [];
+  setDocText('');
   detections = [];
   clusters = [];
   lastPreviewHighlights = [];
@@ -217,7 +215,7 @@ fetch(API + '/health')
   .catch(() => {});
 
 let sessionId = null;
-let docText = '';
+let docText = ''; // Asignar solo con setDocText(): invalida la tabla de posiciones.
 let currentDocName = '';
 let detections = [];
 let clusters = [];
@@ -307,6 +305,16 @@ function setActiveStep(n) {
 }
 
 let openComboRoot = null;
+
+// Un solo listener cierra el desplegable abierto. Registrar uno por desplegable
+// los acumulaba en cada redibujado de la tabla y de los grupos, junto con las
+// filas ya descartadas que cada uno retenía en memoria.
+document.addEventListener('click', (e) => {
+  if (openComboRoot && !openComboRoot.contains(e.target)) {
+    openComboRoot.classList.remove('open');
+    openComboRoot = null;
+  }
+});
 
 let selectionClusterId = '';
 
@@ -410,13 +418,6 @@ function mountGroupPicker(
       close();
     }
   });
-
-  if (!root.dataset.boundClose) {
-    root.dataset.boundClose = '1';
-    document.addEventListener('click', (e) => {
-      if (!root.contains(e.target)) close();
-    });
-  }
 
   return {
     trigger,
@@ -783,7 +784,7 @@ async function saveDetectionPatch(detId, patch, { refresh = false, quiet = true 
     if (Array.isArray(data.clusters)) renderClusters();
     if (refresh) {
       renderTable();
-      await loadPreview();
+      refreshPreview();
     } else {
       syncDetectionLabels();
       renderPreviewLocal();
@@ -887,7 +888,7 @@ async function assignDetectionToCluster(detId, clusterValue) {
     renderClusters();
     renderTable();
     renderStatsFromDetections();
-    await loadPreview();
+    refreshPreview();
     clearTextSelection();
     showToast('Agregado al grupo', 'success');
     return true;
@@ -1004,7 +1005,7 @@ function renderTable() {
         reviewChanged();
         renderTable();
         renderClusters();
-        await loadPreview();
+        refreshPreview();
       } catch (err) {
         showToast(err.message, 'error');
       }
@@ -1110,7 +1111,7 @@ async function joinSimilarDetections(detId) {
   }
   renderClusters();
   renderTable();
-  await loadPreview();
+  refreshPreview();
   showToast(`Unidas ${similar.length + 1} variantes en un grupo`, 'success');
 }
 
@@ -1286,7 +1287,7 @@ async function absorbClusterInto(targetId, sourceId) {
     renderClusters();
     renderTable();
     renderStatsFromDetections();
-    await loadPreview();
+    refreshPreview();
     showToast('Grupos unidos', 'success');
     return true;
   } catch (e) {
@@ -1315,7 +1316,7 @@ async function changeClusterCategory(clusterId, cat) {
     renderClusters();
     renderTable();
     renderStatsFromDetections();
-    await loadPreview();
+    refreshPreview();
     showToast('Tipo de dato corregido en todo el grupo', 'success');
     return true;
   } catch (e) {
@@ -1414,7 +1415,7 @@ async function handleClusterAction(btn) {
       if (!(await confirmClusterById(clusterId))) return;
       renderClusters();
       renderTable();
-      await loadPreview();
+      refreshPreview();
       showToast('Grupo confirmado', 'success');
     } catch (e) {
       showToast(e.message, 'error');
@@ -1431,7 +1432,7 @@ async function handleClusterAction(btn) {
       reviewChanged();
       renderClusters();
       renderTable();
-      await loadPreview();
+      refreshPreview();
       showToast('Grupo rechazado', 'success');
     } catch (e) {
       showToast(e.message, 'error');
@@ -1458,7 +1459,7 @@ async function handleClusterAction(btn) {
       reviewChanged();
       renderClusters();
       renderTable();
-      await loadPreview();
+      refreshPreview();
     } catch (e) {
       showToast(e.message, 'error');
     }
@@ -1481,7 +1482,7 @@ async function handleClusterAction(btn) {
       reviewChanged();
       renderClusters();
       renderTable();
-      await loadPreview();
+      refreshPreview();
       showToast('Variante separada en su propio grupo', 'success');
     } catch (e) {
       showToast(e.message, 'error');
@@ -1499,19 +1500,32 @@ async function loadPreview() {
   if (!res.ok) throw new Error(await parseApiError(res));
   const data = await res.json();
   if (sequence !== previewSequence) return;
-  docText = data.text;
+  setDocText(data.text);
   lastPreviewHighlights = Array.isArray(data.highlights) ? data.highlights : [];
+  refreshPreview();
+}
+
+// Durante la revisión el texto original no cambia: solo cambian los reemplazos,
+// que ya llegan en la respuesta de cada acción. Por eso las acciones redibujan
+// con los datos locales y no vuelven a pedir el documento completo.
+function refreshPreview() {
   renderPreviewLocal();
   if (window.searchTool) window.searchTool.refresh();
 }
 
 // Python usa puntos Unicode; el navegador usa unidades UTF-16. Convertir
 // únicamente en los límites de la API para no desplazar datos tras un emoji.
-let offsetText = null;
-let browserOffsets = [];
+// La tabla se invalida solo al asignar el texto. Decidirlo comparando el texto
+// en cada consulta recorría el documento entero cuando el servidor devolvía una
+// copia idéntica, y esa consulta se hace miles de veces por redibujado.
+let browserOffsets = null;
+function setDocText(text) {
+  docText = text;
+  browserOffsets = null;
+}
+
 function documentOffsets() {
-  if (offsetText !== docText) {
-    offsetText = docText;
+  if (!browserOffsets) {
     browserOffsets = [0];
     let offset = 0;
     for (const char of docText) {
@@ -1625,8 +1639,18 @@ function appliedReplacements() {
 
 function effectiveReplacementNote(detection, applied) {
   if (!docText || !detection.enabled) return '';
-  const labels = detection.positions.map((p) => applied.find((r) =>
-    r.start < toBrowserOffset(p.end) && toBrowserOffset(p.start) < r.end)?.placeholder);
+  // `applied` está ordenado y sin solapamientos: el primer rango que termina
+  // después del inicio de la aparición es el único que puede cubrirla.
+  const labels = detection.positions.map((p) => {
+    const start = toBrowserOffset(p.start), end = toBrowserOffset(p.end);
+    let low = 0, high = applied.length;
+    while (low < high) {
+      const mid = (low + high) >> 1;
+      if (applied[mid].end > start) high = mid;
+      else low = mid + 1;
+    }
+    return low < applied.length && applied[low].start < end ? applied[low].placeholder : undefined;
+  });
   if (labels.every((label) => label === detection.placeholder)) return '';
   return 'Aplicado por aparición: ' + labels.map((label, i) => `${i + 1}: ${label || 'sin reemplazo'}`).join('; ');
 }
@@ -2050,7 +2074,7 @@ async function runManualDetectionAndMaybeGroup(assignToGroup) {
     renderTable();
     renderClusters();
     renderStatsFromDetections();
-    await loadPreview();
+    refreshPreview();
     if (groupId && det) {
       assertCurrentSession(context);
       await assignDetectionToCluster(det.id, groupId);
@@ -2341,7 +2365,7 @@ const searchTool = (() => {
       renderTable();
       renderClusters();
       renderStatsFromDetections();
-      await loadPreview();
+      refreshPreview();
       showToast(`Anonimizadas ${positions.length} coincidencias de "${q}"`, 'success');
       const input = inputEl();
       if (input) {

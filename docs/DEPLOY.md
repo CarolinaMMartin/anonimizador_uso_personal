@@ -1,20 +1,20 @@
-# Construcción y distribución — 3.4.8
+# Construcción y distribución — 3.4.9
 
 Esta edición IALAB se publica en `CarolinaMMartin/anonimizador_uso_personal`.
-El portable Windows 3.4.8 se distribuye como
-`AnonimizadorJudicial-3.4.8-Windows.zip`,
+El portable Windows 3.4.9 se distribuye como
+`AnonimizadorJudicial-3.4.9-Windows.zip`,
 acompañado por su SHA-256. La carpeta local de compilación es
-`dist/AnonimizadorJudicial-NLP-3.4.8/`.
+`dist/AnonimizadorJudicial-NLP-3.4.9/`.
 
 Generar un ZIP local no publica una Release ni modifica las descargas
 existentes. Los resultados de esta copia se registran en
-[VERIFICACION_3.4.8.md](VERIFICACION_3.4.8.md). Los resultados históricos del
+[VERIFICACION_3.4.9.md](VERIFICACION_3.4.9.md). Los resultados históricos del
 MPF no validan el nuevo paquete. macOS requiere construir y verificar un
 paquete propio en ese sistema.
 
 ## Bloqueo de Windows 11 pendiente de resolver
 
-La compilación 3.4.8 no está firmada. El Control Inteligente de Aplicaciones
+La compilación 3.4.9 no está firmada. El Control Inteligente de Aplicaciones
 puede bloquear el ejecutable o el lanzador en algunos equipos. Una prueba
 funcional en Windows sin esa protección no demuestra que el paquete se pueda
 abrir en Windows 11 con la protección activa.
@@ -47,7 +47,7 @@ $env:ANON_REQUIRE_MSIX = '1'
 ```
 
 Resultado: la carpeta `build/msix/AnonimizadorUsoPersonal/` y el archivo
-`dist/AnonimizadorUsoPersonal-3.4.8-x64.msix`, sin firmar. `build_msix.py`
+`dist/AnonimizadorUsoPersonal-3.4.9-x64.msix`, sin firmar. `build_msix.py`
 necesita `makepri.exe` y `makeappx.exe` del Windows SDK; los busca en
 `ANON_WINDOWS_SDK_BIN`, en el PATH y en el SDK instalado. Con `--layout-only`
 arma y verifica solo la carpeta, sin el SDK. Con `--package` toma otra carpeta
@@ -65,7 +65,7 @@ libre. Con identidad de paquete la aplicación abre en ventana propia
 
 El manifiesto se genera desde la plantilla
 [packaging/msix/AppxManifest.xml](../packaging/msix/AppxManifest.xml). La
-versión sale de `APP_VERSION` en cuatro partes: `3.4.8` pasa a `3.4.8.0`. Los
+versión sale de `APP_VERSION` en cuatro partes: `3.4.9` pasa a `3.4.9.0`. Los
 valores siguientes son los del producto reservado en Partner Center; si no
 coinciden exactamente, la Store rechaza el paquete.
 
@@ -147,19 +147,19 @@ dependencias heredadas de otra instalación de Python.
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt
 .venv\Scripts\python scripts\install_nlp.py
-$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.8'
+$env:ANON_PKG_DIR = 'dist/AnonimizadorJudicial-NLP-3.4.9'
 .venv\Scripts\python -m pytest tests -q
 node --test tests/frontend_session.test.cjs
 .venv\Scripts\python scripts\audit_repository.py
-.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.8
+.venv\Scripts\python scripts\build_portable_full.py --output dist/AnonimizadorJudicial-NLP-3.4.9
 .venv\Scripts\python -m pytest tests -q
-.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.8 --keep-running
-$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.8/PUERTO_ACTUAL.txt'
-.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.8 --port $appPort --use-existing --category-cases --all-categories
-.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.8 --port $appPort
+.venv\Scripts\python scripts\check_windows_launcher.py --package dist/AnonimizadorJudicial-NLP-3.4.9 --keep-running
+$appPort = Get-Content -LiteralPath 'dist/AnonimizadorJudicial-NLP-3.4.9/PUERTO_ACTUAL.txt'
+.venv\Scripts\python scripts\portable_smoke.py --package dist/AnonimizadorJudicial-NLP-3.4.9 --port $appPort --use-existing --category-cases --all-categories
+.venv\Scripts\python scripts\check_sensitive_portable.py --package dist/AnonimizadorJudicial-NLP-3.4.9 --port $appPort
 .venv\Scripts\python scripts\check_identity_flow.py --url "http://127.0.0.1:$appPort"
 .venv\Scripts\python scripts\check_identity_flow.py --caption-cases --url "http://127.0.0.1:$appPort"
-.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.8 --output dist/AnonimizadorJudicial-3.4.8-Windows.zip
+.venv\Scripts\python scripts\package_release.py --package dist/AnonimizadorJudicial-NLP-3.4.9 --output dist/AnonimizadorJudicial-3.4.9-Windows.zip
 ```
 
 La instalación descarga dependencias y el modelo fijo `es_core_news_md` 3.8.0. Un modelo local válido evita volver a descargarlo. El programa empaquetado funciona sin conexión.
