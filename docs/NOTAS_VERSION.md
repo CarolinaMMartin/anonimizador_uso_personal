@@ -20,7 +20,7 @@ La cabecera y `/health` identifican la versión **3.4.9**.
 
 Desanonimizar un grupo todavía guarda una variante por vez; en un grupo con muchas variantes puede tardar algunos segundos.
 
-Los PDF de la carpeta **Manuales** son los de la 3.4.6 y no describen estas novedades.
+El ZIP de Windows conserva los PDF de la 3.4.6. La rama de Microsoft Store incluye el [manual de usuario](manuales/Manual_de_usuario.pdf), el [manual técnico](manuales/Manual_tecnico.pdf) y el [resumen ejecutivo](manuales/Resumen_ejecutivo.pdf) actualizados a la 3.4.8; no mencionan la corrección de la 3.4.9.
 
 ## Verificación y procedencia
 

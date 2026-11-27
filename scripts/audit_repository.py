@@ -23,6 +23,36 @@ PUBLICATION_DOCUMENTS = (
     'docs/RELEASE_CHECKLIST.md', 'docs/COMPLIANCE.md',
     '.github/ISSUE_TEMPLATE/config.yml',
 )
+# El único DOCX versionado: un escrito totalmente ficticio para las notas
+# de certificación de la Store y las pruebas manuales. No se admite ningún otro
+# .docx, y este debe coincidir con el texto de scripts/make_example_document.py.
+EXAMPLE_DOCUMENT = 'docs/ejemplos/escrito_ficticio.docx'
+DATA_SUFFIXES = {'.db', '.docx', '.pdf', '.csv', '.exe', '.log'}
+
+
+def is_unexpected_data_file(rel: str) -> bool:
+    """Documentos, bases o binarios que no deben versionarse."""
+    path = Path(rel)
+    if path.parent == Path("docs/manuales") and path.name in PDF_MANUALS:
+        return False
+    return path.suffix.lower() in DATA_SUFFIXES and rel != EXAMPLE_DOCUMENT
+
+
+def check_example_document(root: Path = ROOT) -> list[str]:
+    """El ejemplo versionado contiene solo el texto ficticio del generador."""
+    path = root / EXAMPLE_DOCUMENT
+    if not path.is_file():
+        return []
+    from docx import Document
+    from make_example_document import document_paragraphs
+
+    try:
+        found = [paragraph.text for paragraph in Document(str(path)).paragraphs]
+    except Exception as exc:  # noqa: BLE001 - un archivo ilegible es un hallazgo.
+        return [f'Unreadable example document: {EXAMPLE_DOCUMENT}: {exc}']
+    if found != document_paragraphs():
+        return [f'Example document differs from scripts/make_example_document.py: {EXAMPLE_DOCUMENT}']
+    return []
 
 
 def _github_links(text: str):
@@ -143,8 +173,7 @@ def audit():
         parts = path.relative_to(ROOT).parts
         if parts[0] in {'.venv', 'models', 'build', 'dist'} or '__pycache__' in parts:
             errors.append(f'Generated resources tracked: {rel}')
-        official_manual = path.parent == ROOT / 'docs/manuales' and path.name in PDF_MANUALS
-        if not official_manual and path.suffix.lower() in {'.db', '.docx', '.pdf', '.csv', '.exe', '.log'}:
+        if is_unexpected_data_file(rel):
             errors.append(f'Unexpected data/binary file: {rel}')
         if path.name.startswith('.env'):
             errors.append(f'Environment file tracked: {rel}')
@@ -173,6 +202,7 @@ def audit():
                     errors.append(f'Old local release label: {rel}')
         except (ValueError, SyntaxError, UnicodeError) as exc:
             errors.append(f'{rel}: {exc}')
+    errors.extend(check_example_document())
     rules = json.loads((ROOT / 'data/dictionaries/regex_limpio_v2.json').read_text(encoding='utf-8'))
     for rule in rules:
         try:

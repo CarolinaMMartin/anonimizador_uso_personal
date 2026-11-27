@@ -1,5 +1,34 @@
 # Cambios — Anonimizador Judicial
 
+## En preparación · Paquete para Microsoft Store
+
+El paquete en preparación usa la versión 3.4.9 del anonimizador (3.4.9.0 en el manifiesto) e incluye los tres PDF oficiales en `Manuales/`.
+
+- Suma un paquete MSIX como salida adicional del build, con la identidad
+  «Anonimizador de uso personal» reservada en Partner Center. Ver
+  [DEPLOY.md](docs/DEPLOY.md#paquete-msix-para-microsoft-store).
+- El ejecutable resuelve por sí mismo la instancia única y el puerto libre
+  entre 8787 y 8796 cuando se abre sin `INICIAR.bat`. Abrirlo dos veces trae
+  al frente la instancia abierta.
+- En el paquete de Store la aplicación abre en ventana propia; cerrar la
+  ventana termina el proceso. Escribe solo en la carpeta de datos del usuario.
+- La ventana arranca el motor de WebView2 sin red en segundo plano: sin
+  comprobaciones de seguridad en línea, sin envío de volcados y sin
+  actualización de componentes, y con los pedidos del motor ajenos al equipo
+  derivados a un proxy inexistente. Medido: desaparece la descarga de
+  configuración y componentes; queda, en la mitad de las corridas, una
+  conexión del motor a los servicios de identidad de Microsoft que la
+  aplicación no logra evitar. Ver
+  [VERIFICACION_RED_WEBVIEW2.md](docs/VERIFICACION_RED_WEBVIEW2.md).
+- El ejecutable y el paquete de Store usan un logo propio de la aplicación
+  (`packaging/app.ico`). El portable también lo muestra en su ejecutable.
+- El título de la interfaz pasa a «Anonimizador de uso personal».
+- Los PDF de solo imagen informan que el reconocimiento de documentos
+  escaneados todavía no está disponible. La extracción queda preparada para
+  sumarlo.
+- Agrega un [escrito de ejemplo ficticio](docs/ejemplos/escrito_ficticio.docx)
+  y la [directiva de privacidad](PRIVACY.md).
+
 ## 3.4.9 · Revisión de documentos largos · 27 de noviembre de 2026
 
 - Corrige la lentitud al revisar documentos largos. Quitar una variante, confirmar, rechazar o unir un grupo podía tardar minutos, porque después de cada acción la aplicación volvía a pedir el texto y recorría esa copia completa en cada conversión de posiciones. En un documento ficticio de 400.000 caracteres y 1.866 apariciones, medido en Chrome, quitar una variante pasó de 161 s a 0,4 s.

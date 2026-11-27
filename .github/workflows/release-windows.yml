@@ -107,6 +107,24 @@ jobs:
             dist/${{ steps.version.outputs.asset_name }}.sha256
           if-no-files-found: error
           retention-days: 30
+      # Salida adicional del mismo build: paquete para Microsoft Store.
+      # No se firma (la Store lo firma al certificarlo) y no se adjunta a la
+      # Release: se envía a mano desde Partner Center.
+      - name: Build MSIX package for Microsoft Store
+        env:
+          ANON_REQUIRE_MSIX: "1"
+        shell: pwsh
+        run: |
+          python scripts/build_msix.py
+          if ($LASTEXITCODE -ne 0) { throw 'Fallo el empaquetado MSIX.' }
+          python -m pytest tests/test_msix_manifest.py tests/test_msix_package.py -q
+          if ($LASTEXITCODE -ne 0) { throw 'El paquete MSIX no paso las pruebas de estructura.' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anonimizador-msix-${{ steps.version.outputs.version }}
+          path: dist/*.msix
+          if-no-files-found: error
+          retention-days: 30
   publish:
     needs: build
     if: (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[publicar-version]'))

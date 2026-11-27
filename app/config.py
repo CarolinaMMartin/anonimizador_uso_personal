@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-from app.runtime_paths import app_dir, bundle_dir
+from app.runtime_paths import app_dir, bundle_dir, user_data_dir
 
 HOST = "127.0.0.1"
 PORT = int(os.environ.get("ANON_PORT", "8787"))
@@ -35,7 +35,9 @@ RESOURCE_DATA_DIR = BUNDLE_DIR / "data"
 
 # Ruta disponible para el almacenamiento SQLite opcional. La instancia de
 # uso personal trabaja en memoria y no crea una base de sesiones.
-DATA_DIR = app_dir() / "data"
+# Todo lo que se escribe va a la carpeta de datos del usuario: en portable es
+# la carpeta del ejecutable; en el paquete de Store, %LOCALAPPDATA%.
+DATA_DIR = user_data_dir() / "data"
 DB_PATH = DATA_DIR / "sessions.db"
 
 # Límite de tamaño para documentos cargados (protege la memoria del proceso)
