@@ -1,6 +1,6 @@
-# Licencias y privacidad — 3.4.8
+# Licencias y privacidad — 3.4.9
 
-Documentación de la edición IALAB: 19 de noviembre de 2026. La verificación de esta copia se registra en [VERIFICACION_3.4.8.md](VERIFICACION_3.4.8.md). Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
+Documentación de la edición IALAB: 19 de noviembre de 2026. La verificación de esta copia se registra en [VERIFICACION_3.4.9.md](VERIFICACION_3.4.9.md). Este documento describe los archivos incluidos y el funcionamiento; los términos aplicables están en las licencias originales.
 
 ## Código, marca y terceros
 
