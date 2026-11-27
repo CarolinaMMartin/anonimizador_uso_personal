@@ -13,15 +13,17 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 
 function createApp(handler = async () => json({})) {
   const elements = new Map();
+  const documentListeners = [];
+  const node = (id) => ({
+    id, hidden: true, value: '', textContent: '', innerHTML: '', dataset: {}, listeners: {},
+    classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+    style: { setProperty() {}, getPropertyValue() { return ''; } },
+    addEventListener(event, callback) { this.listeners[event] = callback; },
+    querySelectorAll() { return []; },
+    setAttribute() {}, focus() {}, select() {}, click() {}, append() {}, appendChild() {}, contains() { return true; },
+  });
   function element(id) {
-    if (!elements.has(id)) elements.set(id, {
-      id, hidden: true, value: '', textContent: '', innerHTML: '', dataset: {}, listeners: {},
-      classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
-      style: { setProperty() {}, getPropertyValue() { return ''; } },
-      addEventListener(event, callback) { this.listeners[event] = callback; },
-      querySelectorAll() { return []; },
-      setAttribute() {}, focus() {}, select() {}, click() {}, append() {}, contains() { return true; },
-    });
+    if (!elements.has(id)) elements.set(id, node(id));
     return elements.get(id);
   }
   const storage = { getItem() { return null; }, setItem() {} };
@@ -33,7 +35,8 @@ function createApp(handler = async () => json({})) {
     window: { addEventListener() {}, getSelection: () => null },
     document: {
       getElementById: element, querySelectorAll: () => [],
-      querySelector: () => ({ value: 'cat' }), addEventListener() {},
+      querySelector: () => ({ value: 'cat' }), createElement: () => node(),
+      addEventListener(event, callback) { documentListeners.push([event, callback]); },
     },
   };
   vm.createContext(sandbox);
@@ -44,12 +47,14 @@ function createApp(handler = async () => json({})) {
       runManualDetectionAndMaybeGroup, buildMarkdownExport, assertEditorCurrent,
       assignDetectionToCluster, absorbClusterInto, changeClusterCategory, clustersForCategory, clusterCard, confirmClusterById,
       looksSimilarDetection, joinSimilarDetections, ignoreSimilarDetections,
-      toBrowserOffset, toDocumentOffset,
-      setDocument(text) { docText = text; detections = []; },
+      toBrowserOffset, toDocumentOffset, mountGroupPicker, handleClusterAction,
+      setDocument(text) { setDocText(text); detections = []; },
+      notes() { const applied = appliedReplacements(); return detections.map((d) => effectiveReplacementNote(d, applied)); },
+      lookups(count) { let sum = 0; for (let i = 0; i < count; i++) sum += toBrowserOffset(i % 1000); return sum; },
       setReview(rows, groups) { detections = rows; clusters = groups; },
       init(id = 'A') {
         resetDocumentState(); sessionId = id;
-        docText = 'JUAN PEREZ solicita que se rechace la demanda';
+        setDocText('JUAN PEREZ solicita que se rechace la demanda');
         detections = [{ id: 0, cat: 'PERSONA', original: 'JUAN PEREZ', placeholder: '[PERSONA_1]',
           enabled: true, positions: [{ start: 0, end: 10 }], cluster_id: null }];
       },
@@ -72,7 +77,7 @@ function createApp(handler = async () => json({})) {
     };
   `, sandbox);
   sandbox.controls.init();
-  return { app: sandbox.controls, element, sandbox };
+  return { app: sandbox.controls, element, sandbox, documentListeners };
 }
 
 test('analyze without categories keeps the current review and makes no request', async () => {
@@ -551,7 +556,8 @@ test('manual selection sends Unicode offsets and refreshes the actual accepted r
   app.setDocument(text);
   app.select('Campana 39', 'DOMICILIO');
   await app.runManualDetectionAndMaybeGroup(false);
-  assert.deepEqual(calls, ['/api/manual-detection', '/api/preview?session_id=A&mode=orig']);
+  // The accepted review comes in the response; the unchanged document is not requested again.
+  assert.deepEqual(calls, ['/api/manual-detection']);
   assert.equal(app.detections()[0].original, 'Campana 39');
   app.mode('anon');
   app.renderPreviewLocal();
@@ -840,4 +846,148 @@ test('changing categories retries with the revision number only after explicit c
   await element('analyzeBtn').listeners.click();
   assert.deepEqual(bodies.map(body => body.replace_review_sequence), [undefined, undefined, 3]);
   assert.equal(element('workspace').hidden, false);
+});
+
+// Long documents. Every review action used to request the whole text again; the
+// identical copy made each position lookup compare the complete document, and the
+// per-occurrence note repeated that lookup for every pair of occurrences.
+const elapsedMs = (run) => {
+  const started = process.hrtime.bigint();
+  run();
+  return Number(process.hrtime.bigint() - started) / 1e6;
+};
+
+test('review actions redraw from their own response without requesting the document again', async () => {
+  const text = 'Ana Ruiz declaró. A. Ruiz volvió.';
+  const rows = () => [
+    { id: 0, cat: 'PERSONA', original: 'Ana Ruiz', placeholder: '[PERSONA_1]', enabled: true,
+      positions: [{ start: 0, end: 8 }], cluster_id: 'g1', mention_ids: ['m0'] },
+    { id: 1, cat: 'PERSONA', original: 'A. Ruiz', placeholder: '[PERSONA_2]', enabled: true,
+      positions: [{ start: 18, end: 25 }], cluster_id: 'g1', mention_ids: ['m1'] },
+  ];
+  const groups = () => [
+    { cluster_id: 'g1', cat: 'PERSONA', status: 'suggested', surfaces: ['Ana Ruiz', 'A. Ruiz'],
+      mention_ids: ['m0', 'm1'], placeholder: null, canonical_label: null, confidence: 'media', reasons: [] },
+    { cluster_id: 'g2', cat: 'PERSONA', status: 'confirmed', surfaces: ['Ana Ruiz Paz'],
+      mention_ids: ['m9'], placeholder: '[PERSONA_9]', canonical_label: '[PERSONA_9]', confidence: 'alta', reasons: [] },
+  ];
+  const actions = {
+    reject: (app) => app.handleClusterAction({ dataset: { action: 'reject', id: 'g1' } }),
+    'remove-surface': (app) => app.handleClusterAction({ dataset: { action: 'remove-surface', id: 'g1', surface: 'A. Ruiz' } }),
+    confirm: (app) => app.handleClusterAction({ dataset: { action: 'confirm', id: 'g1' } }),
+    absorb: (app) => app.absorbClusterInto('g2', 'g1'),
+    category: (app) => app.changeClusterCategory('g1', 'OTRO'),
+    assign: (app) => app.assignDetectionToCluster(1, 'g2'),
+  };
+  for (const [name, run] of Object.entries(actions)) {
+    const calls = [];
+    const { app, element } = createApp(async (url) => {
+      calls.push(url);
+      return json({ cluster: groups()[0], clusters: groups(),
+        detections: rows().map((row) => ({ ...row, placeholder: '[RESPUESTA]' })) });
+    });
+    app.setDocument(text);
+    app.setReview(rows(), groups());
+    app.mode('anon');
+    await run(app);
+    assert.equal(calls.length, 1, name);
+    assert.doesNotMatch(calls[0], /\/api\/preview/, name);
+    assert.equal(element('docPreview').textContent, '[RESPUESTA] declaró. [RESPUESTA] volvió.', name);
+    assert.equal(app.docText(), text, name);
+  }
+});
+
+test('an identical copy of the text does not make position lookups depend on its length', async () => {
+  const text = '— ' + 'expediente '.repeat(40000);
+  // Each response is parsed into a new string with the same content.
+  const { app } = createApp(async () => json({ text, highlights: [] }));
+  app.setReview([], []);
+  await app.loadPreview();
+  app.lookups(1000);
+  const before = elapsedMs(() => app.lookups(50000));
+  await app.loadPreview();
+  app.lookups(1000);
+  const after = elapsedMs(() => app.lookups(50000));
+  assert.equal(app.docText(), text);
+  assert.ok(after < before * 20 + 250, `50.000 consultas: ${before.toFixed(1)} ms antes y ${after.toFixed(1)} ms después de recargar`);
+});
+
+test('per-occurrence notes agree with a full scan of the applied replacements', () => {
+  const noteFromFullScan = (row, applied, toBrowser) => {
+    if (!row.enabled) return '';
+    const labels = row.positions.map((p) => applied.find((r) =>
+      r.start < toBrowser(p.end) && toBrowser(p.start) < r.end)?.placeholder);
+    if (labels.every((label) => label === row.placeholder)) return '';
+    return 'Aplicado por aparición: ' + labels.map((label, i) => `${i + 1}: ${label || 'sin reemplazo'}`).join('; ');
+  };
+
+  // Adjacent replacements: the one ending where an occurrence starts does not cover it.
+  const { app, sandbox } = createApp();
+  app.setDocument('abcdefgh');
+  app.setReview([
+    { id: 0, cat: 'PERSONA', original: 'abcd', placeholder: '[A]', enabled: true, positions: [{ start: 0, end: 4 }] },
+    { id: 1, cat: 'PERSONA', original: 'efgh', placeholder: '[B]', enabled: true, positions: [{ start: 4, end: 8 }] },
+  ], []);
+  assert.deepEqual([...app.notes()], ['', '']);
+
+  // Overlapping, contained, repeated and disabled rows after an emoji, which shifts browser offsets.
+  let seed = 20261127;
+  const random = (limit) => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % limit; };
+  const rows = Array.from({ length: 80 }, (_, id) => ({
+    id, cat: 'PERSONA', original: 'x', placeholder: `[P_${id % 9}]`, enabled: id % 5 !== 0, manual_order: random(4),
+    positions: Array.from({ length: 1 + random(5) }, () => {
+      const start = 1 + random(1500);
+      return { start, end: start + 1 + random(9) };
+    }),
+  }));
+  app.setDocument('📄' + 'x'.repeat(1600));
+  app.setReview(rows, []);
+  const applied = sandbox.appliedReplacements();
+  const expected = rows.map((row) => noteFromFullScan(row, applied, (offset) => offset + 1));
+  assert.deepEqual([...app.notes()], expected);
+  assert.ok(expected.filter(Boolean).length > 20 && applied.length > 20);
+});
+
+test('per-occurrence notes stay fast with tens of thousands of occurrences', () => {
+  const { app } = createApp();
+  const occurrences = 20000;
+  const rows = Array.from({ length: 200 }, (_, id) => ({
+    id, cat: 'PERSONA', original: 'dato', placeholder: `[P_${id}]`, enabled: true, positions: [],
+  }));
+  for (let i = 0; i < occurrences; i++) rows[i % rows.length].positions.push({ start: i * 5, end: i * 5 + 4 });
+  app.setDocument('dato '.repeat(occurrences));
+  app.setReview(rows, []);
+  let notes;
+  const ms = elapsedMs(() => { notes = app.notes(); });
+  assert.equal(notes.length, rows.length);
+  assert.equal(notes.every((note) => note === ''), true);
+  assert.ok(ms < 1000, `notas de ${occurrences} apariciones en ${ms.toFixed(0)} ms`);
+});
+
+test('group pickers share one document listener however often the lists are redrawn', () => {
+  const { app, documentListeners } = createApp();
+  const clickListeners = () => documentListeners.filter(([event]) => event === 'click').map(([, callback]) => callback);
+  const atLoad = clickListeners().length;
+  const pickerRoot = () => {
+    const classes = new Set();
+    const root = {
+      innerHTML: '', className: '', dataset: {}, inside: {},
+      classList: { add: (name) => classes.add(name), remove: (name) => classes.delete(name), contains: (name) => classes.has(name) },
+      append() {}, contains(target) { return target === root || target === root.inside; },
+    };
+    return root;
+  };
+  const roots = Array.from({ length: 60 }, pickerRoot);
+  const pickers = roots.map((root) => app.mountGroupPicker(root, { getItems: () => [], onPick() {} }));
+  assert.equal(clickListeners().length, atLoad);
+
+  const click = (target) => clickListeners().forEach((listener) => listener({ target }));
+  pickers[0].open();
+  pickers[1].open();
+  assert.equal(roots[0].classList.contains('open'), false);
+  assert.equal(roots[1].classList.contains('open'), true);
+  click(roots[1].inside);
+  assert.equal(roots[1].classList.contains('open'), true);
+  click({});
+  assert.equal(roots[1].classList.contains('open'), false);
 });

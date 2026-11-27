@@ -1,5 +1,13 @@
 # Cambios — Anonimizador Judicial
 
+## Sin publicar · Revisión de documentos largos · 27 de noviembre de 2026
+
+- Corrige la lentitud al revisar documentos largos. Quitar una variante, confirmar, rechazar o unir un grupo podía tardar minutos, porque después de cada acción la aplicación volvía a pedir el texto y recorría esa copia completa en cada conversión de posiciones. En un documento ficticio de 400.000 caracteres y 1.866 apariciones, medido en Chrome, quitar una variante pasó de 161 s a 0,4 s.
+- Deja de pedir el documento después de cada acción de revisión. El texto original no cambia mientras se revisa; la vista previa se redibuja con los reemplazos que devuelve cada acción.
+- Calcula la nota «Aplicado por aparición» buscando sobre los reemplazos ya ordenados, sin comparar cada aparición con todas las demás.
+- Usa un único control para cerrar los desplegables de grupos. Antes se sumaba uno por desplegable en cada redibujado y la aplicación se volvía más lenta a medida que avanzaba la revisión.
+- Las acciones que guardan una variante por vez, como desanonimizar un grupo, todavía hacen un pedido por variante.
+
 ## 3.4.8 · Detección y revisión · 20 de noviembre de 2026
 
 - Abre el navegador recién cuando la aplicación ya acepta conexiones. Antes podía mostrarse «Se rechazó la conexión» mientras el programa todavía iniciaba.
