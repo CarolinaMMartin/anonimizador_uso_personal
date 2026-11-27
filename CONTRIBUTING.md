@@ -4,7 +4,7 @@ El proyecto procesa documentos localmente con regex, Presidio y spaCy. Mantener 
 
 ## Entorno
 
-Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Las verificaciones de la entrega están en [VERIFICACION_3.4.8.md](docs/VERIFICACION_3.4.8.md). Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
+Python 3.12–3.13. El entorno de compilación de Windows usa Python 3.12.14 de 64 bits. Las verificaciones de la entrega están en [VERIFICACION_3.4.9.md](docs/VERIFICACION_3.4.9.md). Node.js se utiliza para las pruebas del frontend, sin dependencias npm.
 
 ```powershell
 python -m venv .venv

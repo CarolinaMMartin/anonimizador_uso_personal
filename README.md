@@ -7,27 +7,25 @@ La aplicación reemplaza nombres, documentos, teléfonos, domicilios y otros dat
 por etiquetas como **[PERSONA_1]**. Vos revisás el resultado y lo descargás.
 Es gratuita y trabaja en tu computadora, sin enviar tus documentos a Internet.
 
-## Edición IALAB — 3.4.8
+## Edición IALAB — 3.4.9
 
-Esta versión espera a que la aplicación esté lista antes de abrir el navegador,
-separa las personas enumeradas con coma y no anonimiza los términos de la lista
-de excepciones, como «Conexidad Subjetiva». En la revisión podés desanonimizar
-un grupo completo o un dato seleccionado en la vista previa, y buscar entre
-las detecciones.
+Esta versión corrige la lentitud al revisar documentos largos: quitar una
+variante, confirmar, rechazar o unir un grupo podía tardar minutos. La
+detección, los grupos sugeridos y las exportaciones son los de la 3.4.8.
 
-## Descargar para Windows · IALAB 3.4.8
+## Descargar para Windows · IALAB 3.4.9
 
 El ZIP incluye el programa, el modelo local y una carpeta **Manuales** con los tres PDF.
 
-[**Descargar para Windows · 3.4.8**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.8/AnonimizadorJudicial-3.4.8-Windows.zip) ·
-[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.8/AnonimizadorJudicial-3.4.8-Windows.zip.sha256)
+[**Descargar para Windows · 3.4.9**](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.9/AnonimizadorJudicial-3.4.9-Windows.zip) ·
+[Archivo SHA-256](https://github.com/CarolinaMMartin/anonimizador_uso_personal/releases/download/v3.4.9/AnonimizadorJudicial-3.4.9-Windows.zip.sha256)
 
 Descargá el ZIP completo para **Windows 10 y 11 de
 64 bits**, elegí **Extraer todo** y abrí **INICIAR.bat** desde la carpeta
 extraída. El portable incluye Python y el modelo local; conservá toda la carpeta.
 **Code → Download ZIP** contiene el código fuente y no incluye el ejecutable.
 
-[Estado de verificación](docs/VERIFICACION_3.4.8.md) ·
+[Estado de verificación](docs/VERIFICACION_3.4.9.md) ·
 [Ayuda para abrir la aplicación](docs/MANUAL_INSTALACION.md)
 
 ## Instalar desde Microsoft Store (en preparación)
@@ -46,7 +44,7 @@ Todavía no hay un paquete IALAB actualizado para macOS. El ZIP Windows no
 funciona en Mac ni celulares. La entrega no tiene firma digital; si Windows
 impide abrirla, consultá [el aviso de instalación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación).
 Si el antivirus bloquea esta descarga, dejala bloqueada y consultá
-[la verificación de la entrega](docs/VERIFICACION_3.4.8.md).
+[la verificación de la entrega](docs/VERIFICACION_3.4.9.md).
 
 ## Anonimizar un documento
 
@@ -86,7 +84,7 @@ respetan al descargar.
 
 | Qué sucede | Qué hacer |
 | --- | --- |
-| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.8` que está dentro. |
+| No encuentro INICIAR | Extraé el ZIP completo mediante **Extraer todo**. Luego abrí la carpeta `AnonimizadorJudicial-NLP-3.4.9` que está dentro. |
 | Windows dice «Control Inteligente de Aplicaciones ha bloqueado un archivo» | [Leé esta indicación](docs/MANUAL_INSTALACION.md#si-windows-bloquea-la-aplicación). Esta versión aún no está firmada para esos equipos. |
 | No se abre el navegador | Esperá el inicio y copiá en el navegador la dirección que muestra la ventana. También podés abrir **VERIFICAR.bat** en esa misma carpeta. |
 | El PDF es un escaneo o una foto | Necesitás una copia con texto seleccionable. La aplicación no lee el texto dentro de imágenes. |
@@ -102,7 +100,7 @@ nueva**. Abrí **INICIAR** desde esa carpeta;
 los accesos directos anteriores siguen abriendo la versión anterior.
 El número de versión aparece en la parte superior de la aplicación.
 
-Verificá que el indicador superior muestre **v3.4.8**.
+Verificá que el indicador superior muestre **v3.4.9**.
 
 [Ver las novedades](docs/NOTAS_VERSION.md).
 
